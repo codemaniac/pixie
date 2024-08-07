@@ -2,7 +2,7 @@ NAME := pixie
 VERSION := 0.1.0-dev
 
 CC := gcc
-CFLAGS := -Wall -pedantic -O2
+CFLAGS := -std=gnu17 -Wall -Wextra -pedantic -O2
 FORMATTER := clang-format
 
 BIN_DIR := ./bin
