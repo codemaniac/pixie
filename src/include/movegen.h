@@ -10,7 +10,7 @@ typedef struct {
     struct MovesListNode* next;
 } MovesListNode;
 
-MovesListNode* generate_pseudo_legal_moves(Position* position);
+MovesListNode* generate_pseudo_legal_moves(const Position* position);
 void           print_moves_list(MovesListNode* head);
 void           delete_moves_list(MovesListNode* head);
 

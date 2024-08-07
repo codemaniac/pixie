@@ -2,15 +2,14 @@
 #include "include/piece.h"
 #include <stdbool.h>
 
-bool is_square_attacked(Position* position, uint8_t sq) {
-    uint8_t  orientation = (position->active_color == WHITE) ? 1 : -1;
-    u_int8_t attack_sq;
+bool is_square_attacked(const Position* position, const uint8_t sq) {
+    const uint8_t orientation = (position->active_color == WHITE) ? 1 : -1;
+    u_int8_t      attack_sq;
 
     // Check pawn attacks
-    u_int8_t pawn_attack_rays[] = {9, 11};
     for (uint8_t i = 0; i < 2; i++)
     {
-        attack_sq = sq + pawn_attack_rays[i] * orientation;
+        attack_sq = sq + PAWN_CAPTURE_DIRECTIONS[i] * orientation;
         if (POS_IS_SQ_ON_BOARD(attack_sq)
             && !POS_IS_SQ_INVALID(position, attack_sq)
             && PIECE_GET_TYPE(POS_PIECE(position, attack_sq)) == PAWN
@@ -98,7 +97,7 @@ bool is_square_attacked(Position* position, uint8_t sq) {
     return false;
 }
 
-bool is_position_in_check(Position* position) {
+bool is_position_in_check(const Position* position) {
     if (position->active_color == WHITE)
     {
         return is_square_attacked(position, position->board->wK_sq);

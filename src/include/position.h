@@ -49,8 +49,8 @@ typedef struct {
     uint8_t full_move_number;
 } Position;
 
-bool is_square_attacked(Position* position, uint8_t sq);
+bool is_square_attacked(const Position* position, const uint8_t sq);
 
-bool is_position_in_check(Position* position);
+bool is_position_in_check(const Position* position);
 
 #endif

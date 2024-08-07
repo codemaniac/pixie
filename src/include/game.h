@@ -11,6 +11,6 @@ typedef struct {
     MoveHistoryEntry history[MAXGAMEMOVES];
 } Game;
 
-Game* initialize_game(char* fen);
+Game* initialize_game(const char* fen);
 
 #endif

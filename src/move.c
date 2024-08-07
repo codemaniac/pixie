@@ -6,14 +6,14 @@
 #include <stdio.h>
 #include <string.h>
 
-Move encode_move(Piece    piece,
-                 uint8_t  from_sq,
-                 uint8_t  to_sq,
-                 Piece    captured_piece,
-                 Piece    promoted_piece,
-                 bool     flag_ps,
-                 bool     flag_ep,
-                 uint32_t flag_ca) {
+Move encode_move(const Piece    piece,
+                 const uint8_t  from_sq,
+                 const uint8_t  to_sq,
+                 const Piece    captured_piece,
+                 const Piece    promoted_piece,
+                 const bool     flag_ps,
+                 const bool     flag_ep,
+                 const uint32_t flag_ca) {
     uint32_t move_id = (piece) | (from_sq << 4) | (to_sq << 11)
                      | (captured_piece << 18) | (promoted_piece << 23);
     if (flag_ps)
@@ -29,54 +29,58 @@ Move encode_move(Piece    piece,
         move_id |= flag_ca;
     }
 
-    Move move = {.move_id = move_id};
+    const Move move = {.move_id = move_id};
     return move;
 }
 
-Move encode_quite_move(Piece piece, uint8_t from_sq, uint8_t to_sq) {
+Move encode_quite_move(const Piece   piece,
+                       const uint8_t from_sq,
+                       const uint8_t to_sq) {
     return encode_move(piece, from_sq, to_sq, NO_PIECE, NO_PIECE, false, false,
                        0);
 }
 
-Move encode_capture_move(Piece   piece,
-                         uint8_t from_sq,
-                         uint8_t to_sq,
-                         Piece   captured_piece) {
+Move encode_capture_move(const Piece   piece,
+                         const uint8_t from_sq,
+                         const uint8_t to_sq,
+                         const Piece   captured_piece) {
     return encode_move(piece, from_sq, to_sq, captured_piece, NO_PIECE, false,
                        false, 0);
 }
 
-Move encode_pawn_start_move(Piece pawn, uint8_t from_sq, uint8_t to_sq) {
+Move encode_pawn_start_move(const Piece   pawn,
+                            const uint8_t from_sq,
+                            const uint8_t to_sq) {
     return encode_move(pawn, from_sq, to_sq, NO_PIECE, NO_PIECE, true, false,
                        0);
 }
 
-Move encode_pawn_promotion_move(Piece   pawn,
-                                uint8_t from_sq,
-                                uint8_t to_sq,
-                                Piece   captured_piece,
-                                Piece   promoted_piece) {
+Move encode_pawn_promotion_move(const Piece   pawn,
+                                const uint8_t from_sq,
+                                const uint8_t to_sq,
+                                const Piece   captured_piece,
+                                const Piece   promoted_piece) {
     return encode_move(pawn, from_sq, to_sq, captured_piece, promoted_piece,
                        false, false, 0);
 }
 
-Move encode_pawn_enpassant_move(Piece   pawn,
-                                uint8_t from_sq,
-                                uint8_t to_sq,
-                                Piece   captured_pawn) {
+Move encode_pawn_enpassant_move(const Piece   pawn,
+                                const uint8_t from_sq,
+                                const uint8_t to_sq,
+                                const Piece   captured_pawn) {
     return encode_move(pawn, from_sq, to_sq, captured_pawn, NO_PIECE, false,
                        true, 0);
 }
 
-Move encode_king_castle_move(Piece    king,
-                             uint8_t  from_sq,
-                             uint8_t  to_sq,
-                             uint32_t flag_ca) {
+Move encode_king_castle_move(const Piece    king,
+                             const uint8_t  from_sq,
+                             const uint8_t  to_sq,
+                             const uint32_t flag_ca) {
     return encode_move(king, from_sq, to_sq, NO_PIECE, NO_PIECE, false, false,
                        flag_ca);
 }
 
-void do_move(Position* position, Move move) {
+void do_move(Position* position, const Move move) {
 
     POS_SET_PIECE(position, MOVE_FROM_SQ(move.move_id), SQUARE_EMPTY);
 
@@ -159,7 +163,7 @@ void do_move(Position* position, Move move) {
     }
 }
 
-void undo_move(Position* position, Move move) {
+void undo_move(Position* position, const Move move) {
     POS_SET_PIECE(position, MOVE_FROM_SQ(move.move_id),
                   MOVE_PIECE(move.move_id));
 

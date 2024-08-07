@@ -32,44 +32,48 @@ typedef struct {
     uint8_t prev_full_move_number;
 } MoveHistoryEntry;
 
-Move encode_move(Piece    piece,
-                 uint8_t  from_sq,
-                 uint8_t  to_sq,
-                 Piece    captured_piece,
-                 Piece    promoted_piece,
-                 bool     flag_ps,
-                 bool     flag_ep,
-                 uint32_t flag_ca);
+Move encode_move(const Piece    piece,
+                 const uint8_t  from_sq,
+                 const uint8_t  to_sq,
+                 const Piece    captured_piece,
+                 const Piece    promoted_piece,
+                 const bool     flag_ps,
+                 const bool     flag_ep,
+                 const uint32_t flag_ca);
 
-Move encode_quite_move(Piece piece, uint8_t from_sq, uint8_t to_sq);
+Move encode_quite_move(const Piece   piece,
+                       const uint8_t from_sq,
+                       const uint8_t to_sq);
 
-Move encode_capture_move(Piece   piece,
-                         uint8_t from_sq,
-                         uint8_t to_sq,
-                         Piece   captured_piece);
+Move encode_capture_move(const Piece   piece,
+                         const uint8_t from_sq,
+                         const uint8_t to_sq,
+                         const Piece   captured_piece);
 
-Move encode_pawn_start_move(Piece pawn, uint8_t from_sq, uint8_t to_sq);
+Move encode_pawn_start_move(const Piece   pawn,
+                            const uint8_t from_sq,
+                            const uint8_t to_sq);
 
-Move encode_pawn_promotion_move(Piece   pawn,
-                                uint8_t from_sq,
-                                uint8_t to_sq,
-                                Piece   captured_piece,
-                                Piece   promoted_piece);
+Move encode_pawn_promotion_move(const Piece   pawn,
+                                const uint8_t from_sq,
+                                const uint8_t to_sq,
+                                const Piece   captured_piece,
+                                const Piece   promoted_piece);
 
-Move encode_pawn_enpassant_move(Piece   pawn,
-                                uint8_t from_sq,
-                                uint8_t to_sq,
-                                Piece   captured_pawn);
+Move encode_pawn_enpassant_move(const Piece   pawn,
+                                const uint8_t from_sq,
+                                const uint8_t to_sq,
+                                const Piece   captured_pawn);
 
-Move encode_king_castle_move(Piece    piece,
-                             uint8_t  from_sq,
-                             uint8_t  to_sq,
-                             uint32_t flag_ca);
+Move encode_king_castle_move(const Piece    piece,
+                             const uint8_t  from_sq,
+                             const uint8_t  to_sq,
+                             const uint32_t flag_ca);
 
-void do_move(Position* position, Move move);
+void do_move(Position* position, const Move move);
 
-void undo_move(Position* position, Move move);
+void undo_move(Position* position, const Move move);
 
-void print_move(Move move);
+void print_move(const Move move);
 
 #endif

@@ -16,8 +16,8 @@ int str_indexof(const char* str, const char ch) {
     return (int) (index - str);
 }
 
-void display_binary(uint32_t number) {
-    for (int i = 31; i >= 0; i--)
+void display_binary(const uint32_t number) {
+    for (int8_t i = 31; i >= 0; i--)
     {
         putchar((number & (1 << i)) ? '1' : '0');
         if (i % 8 == 0)

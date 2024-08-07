@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-MovesListNode* __create_move_list_node(Move move) {
+static MovesListNode* __create_move_list_node(const Move move) {
     MovesListNode* node = (MovesListNode*) malloc(sizeof(MovesListNode));
     if (node == NULL)
     {
@@ -18,8 +18,8 @@ MovesListNode* __create_move_list_node(Move move) {
     return node;
 }
 
-MovesListNode* __insert_move_to_list(MovesListNode* moves_list_tail,
-                                     Move           move) {
+static MovesListNode* __insert_move_to_list(MovesListNode* moves_list_tail,
+                                            const Move     move) {
     if (moves_list_tail == NULL)
     {
         // TODO: Raise exception - Invalid Move List!
@@ -30,14 +30,14 @@ MovesListNode* __insert_move_to_list(MovesListNode* moves_list_tail,
     return new_tail_node;
 }
 
-MovesListNode* __generate_pawn_moves(Position*      position,
-                                     uint8_t        src,
-                                     MovesListNode* moves_list_tail) {
-    Piece   pawn        = POS_PIECE(position, src);
-    int8_t  orientation = (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
-    uint8_t starting_rank =
+static MovesListNode* __generate_pawn_moves(const Position* position,
+                                            const uint8_t   src,
+                                            MovesListNode*  moves_list_tail) {
+    const Piece   pawn        = POS_PIECE(position, src);
+    const int8_t  orientation = (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
+    const uint8_t starting_rank =
       (POS_ACTIVE_COLOR(position) == WHITE) ? RANK_2 : RANK_7;
-    uint8_t penultimate_rank =
+    const uint8_t penultimate_rank =
       (POS_ACTIVE_COLOR(position) == WHITE) ? RANK_7 : RANK_2;
 
     Move           move;
@@ -159,10 +159,10 @@ MovesListNode* __generate_pawn_moves(Position*      position,
     return new_moves_list_tail;
 }
 
-MovesListNode* __generate_knight_moves(Position*      position,
-                                       uint8_t        src,
-                                       MovesListNode* moves_list_tail) {
-    Piece knight = POS_PIECE(position, src);
+static MovesListNode* __generate_knight_moves(const Position* position,
+                                              const uint8_t   src,
+                                              MovesListNode*  moves_list_tail) {
+    const Piece knight = POS_PIECE(position, src);
 
     Move           move;
     MovesListNode* new_moves_list_tail = moves_list_tail;
@@ -194,10 +194,10 @@ MovesListNode* __generate_knight_moves(Position*      position,
     return new_moves_list_tail;
 }
 
-MovesListNode* __generate_bishop_moves(Position*      position,
-                                       uint8_t        src,
-                                       MovesListNode* moves_list_tail) {
-    Piece bishop = POS_PIECE(position, src);
+static MovesListNode* __generate_bishop_moves(const Position* position,
+                                              const uint8_t   src,
+                                              MovesListNode*  moves_list_tail) {
+    const Piece bishop = POS_PIECE(position, src);
 
     Move           move;
     MovesListNode* new_moves_list_tail = moves_list_tail;
@@ -235,10 +235,10 @@ MovesListNode* __generate_bishop_moves(Position*      position,
     return new_moves_list_tail;
 }
 
-MovesListNode* __generate_rook_moves(Position*      position,
-                                     uint8_t        src,
-                                     MovesListNode* moves_list_tail) {
-    Piece rook = POS_PIECE(position, src);
+static MovesListNode* __generate_rook_moves(const Position* position,
+                                            const uint8_t   src,
+                                            MovesListNode*  moves_list_tail) {
+    const Piece rook = POS_PIECE(position, src);
 
     Move           move;
     MovesListNode* new_moves_list_tail = moves_list_tail;
@@ -276,10 +276,10 @@ MovesListNode* __generate_rook_moves(Position*      position,
     return new_moves_list_tail;
 }
 
-MovesListNode* __generate_queen_moves(Position*      position,
-                                      uint8_t        src,
-                                      MovesListNode* moves_list_tail) {
-    Piece queen = POS_PIECE(position, src);
+static MovesListNode* __generate_queen_moves(const Position* position,
+                                             const uint8_t   src,
+                                             MovesListNode*  moves_list_tail) {
+    const Piece queen = POS_PIECE(position, src);
 
     Move           move;
     MovesListNode* new_moves_list_tail = moves_list_tail;
@@ -317,10 +317,10 @@ MovesListNode* __generate_queen_moves(Position*      position,
     return new_moves_list_tail;
 }
 
-MovesListNode* __generate_king_moves(Position*      position,
-                                     uint8_t        src,
-                                     MovesListNode* moves_list_tail) {
-    Piece king = POS_PIECE(position, src);
+static MovesListNode* __generate_king_moves(const Position* position,
+                                            const uint8_t   src,
+                                            MovesListNode*  moves_list_tail) {
+    const Piece king = POS_PIECE(position, src);
 
     Move           move;
     MovesListNode* new_moves_list_tail = moves_list_tail;
@@ -416,8 +416,8 @@ MovesListNode* __generate_king_moves(Position*      position,
     return new_moves_list_tail;
 }
 
-MovesListNode* generate_pseudo_legal_moves(Position* position) {
-    Move           null_move       = {.move_id = 0};
+MovesListNode* generate_pseudo_legal_moves(const Position* position) {
+    const Move     null_move       = {.move_id = 0};
     MovesListNode* moves_list      = __create_move_list_node(null_move);
     MovesListNode* moves_list_tail = moves_list;
 

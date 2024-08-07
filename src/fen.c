@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Position* fen_to_position(char* fen) {
+Position* fen_to_position(const char* fen) {
     char fen_copy[MAX_FEN_SIZE];
 
     strncpy(fen_copy, fen, sizeof(fen_copy));
@@ -83,10 +83,10 @@ Position* fen_to_position(char* fen) {
     Position* position = malloc(sizeof(Position));
     position->board    = create_empty_board();
 
-    char*       ch           = parts[0];
-    const char* white_pieces = ".PNBRQK";
-    const char* black_pieces = ".pnbrqk";
-    uint8_t     rank = 7, file = 0;
+    char*              ch           = parts[0];
+    static const char* white_pieces = ".PNBRQK";
+    static const char* black_pieces = ".pnbrqk";
+    uint8_t            rank = 7, file = 0;
 
     while (*ch)
     {

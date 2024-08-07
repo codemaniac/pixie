@@ -3,7 +3,7 @@
 #include "include/position.h"
 #include <stdlib.h>
 
-Game* initialize_game(char* fen) {
+Game* initialize_game(const char* fen) {
     Game* game = malloc(sizeof(Game));
     if (game == NULL)
     {

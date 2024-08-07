@@ -18,6 +18,6 @@ typedef struct {
 
 Board* create_empty_board(void);
 
-void print_board(Board* board);
+void print_board(const Board* board);
 
 #endif
