@@ -165,20 +165,20 @@ Position* fen_to_position(char* fen) {
         {
             switch (parts[2][i])
             {
-            case 'K' :
-                position->casteling_rights |= WKCA;
-                break;
-            case 'Q' :
-                position->casteling_rights |= WQCA;
-                break;
-            case 'k' :
-                position->casteling_rights |= BKCA;
-                break;
-            case 'q' :
-                position->casteling_rights |= BQCA;
-                break;
-            default :
-                break;
+                case 'K':
+                    position->casteling_rights |= WKCA;
+                    break;
+                case 'Q':
+                    position->casteling_rights |= WQCA;
+                    break;
+                case 'k':
+                    position->casteling_rights |= BKCA;
+                    break;
+                case 'q':
+                    position->casteling_rights |= BQCA;
+                    break;
+                default:
+                    break;
             }
         }
     }

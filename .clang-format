@@ -26,6 +26,7 @@ BreakStringLiterals: false
 ColumnLimit: 80
 ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
+IndentCaseLabels: true
 IndentGotoLabels: false
 IndentPPDirectives: BeforeHash
 IndentWidth: 4
@@ -37,7 +38,7 @@ SortIncludes: true
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false
-SpaceBeforeCaseColon: true
+SpaceBeforeCaseColon: false
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeInheritanceColon: false
 SpaceInEmptyBlock: false

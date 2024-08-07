@@ -429,35 +429,34 @@ MovesListNode* generate_pseudo_legal_moves(Position* position) {
             continue;
         }
 
-        if (PIECE_GET_TYPE(POS_PIECE(position, i)) == PAWN)
+        switch (PIECE_GET_TYPE(POS_PIECE(position, i)))
         {
-            moves_list_tail =
-              __generate_pawn_moves(position, i, moves_list_tail);
-        }
-        else if (PIECE_GET_TYPE(POS_PIECE(position, i)) == KNIGHT)
-        {
-            moves_list_tail =
-              __generate_knight_moves(position, i, moves_list_tail);
-        }
-        else if (PIECE_GET_TYPE(POS_PIECE(position, i)) == BISHOP)
-        {
-            moves_list_tail =
-              __generate_bishop_moves(position, i, moves_list_tail);
-        }
-        else if (PIECE_GET_TYPE(POS_PIECE(position, i)) == ROOK)
-        {
-            moves_list_tail =
-              __generate_rook_moves(position, i, moves_list_tail);
-        }
-        else if (PIECE_GET_TYPE(POS_PIECE(position, i)) == QUEEN)
-        {
-            moves_list_tail =
-              __generate_queen_moves(position, i, moves_list_tail);
-        }
-        else if (PIECE_GET_TYPE(POS_PIECE(position, i)) == KING)
-        {
-            moves_list_tail =
-              __generate_king_moves(position, i, moves_list_tail);
+            case PAWN:
+                moves_list_tail =
+                  __generate_pawn_moves(position, i, moves_list_tail);
+                break;
+            case KNIGHT:
+                moves_list_tail =
+                  __generate_knight_moves(position, i, moves_list_tail);
+                break;
+            case BISHOP:
+                moves_list_tail =
+                  __generate_bishop_moves(position, i, moves_list_tail);
+                break;
+            case ROOK:
+                moves_list_tail =
+                  __generate_rook_moves(position, i, moves_list_tail);
+                break;
+            case QUEEN:
+                moves_list_tail =
+                  __generate_queen_moves(position, i, moves_list_tail);
+                break;
+            case KING:
+                moves_list_tail =
+                  __generate_king_moves(position, i, moves_list_tail);
+                break;
+            default:
+                break;
         }
     }
 
