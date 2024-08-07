@@ -15,11 +15,18 @@ int main() {
   printf("\nCandidate Moves:\n");
   print_moves_list(candidate_moves);
 
-  printf("\nPerforming Move:\n");
   MovesListNode *test_move = (MovesListNode *)candidate_moves->next;
   Move m = test_move->move;
+
+  printf("\nSelected move:\n");
   print_move(m);
+
+  printf("\nPerforming Move:\n");
   do_move(position, m);
+  print_board(position->board);
+
+  printf("\nUndo move:\n");
+  undo_move(position, m);
   print_board(position->board);
 
   delete_moves_list(candidate_moves);

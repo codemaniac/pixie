@@ -45,6 +45,8 @@ Move encode_king_castle_move(Piece piece, uint8_t from_sq, uint8_t to_sq,
 
 void do_move(Position *position, Move move);
 
+void undo_move(Position *position, Move move);
+
 void print_move(Move move);
 
 #endif
