@@ -21,7 +21,16 @@
 
 typedef struct {
   uint32_t move_id;
+  int16_t evaluation;
 } Move;
+
+typedef struct {
+  Move *move;
+  uint8_t prev_casteling_rights;
+  uint8_t prev_enpassant_target;
+  uint8_t prev_half_move_clock;
+  uint8_t prev_full_move_number;
+} MoveHistoryEntry;
 
 Move encode_move(Piece piece, uint8_t from_sq, uint8_t to_sq,
                  Piece captured_piece, Piece promoted_piece, bool flag_ps,

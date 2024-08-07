@@ -1,17 +1,17 @@
 #include "include/board.h"
-#include "include/fen.h"
+#include "include/game.h"
 #include "include/move.h"
 #include "include/movegen.h"
-#include "include/position.h"
 #include <stdio.h>
 
 int main() {
   char *fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-  Position *position = fen_to_position(fen);
-  print_board(position->board);
+  Game *game = initialize_game(fen);
 
-  MovesListNode *candidate_moves = generate_moves_list(position);
+  print_board(game->position->board);
+
+  MovesListNode *candidate_moves = generate_moves_list(game->position);
   printf("\nCandidate Moves:\n");
   print_moves_list(candidate_moves);
 
@@ -22,12 +22,12 @@ int main() {
   print_move(m);
 
   printf("\nPerforming Move:\n");
-  do_move(position, m);
-  print_board(position->board);
+  do_move(game->position, m);
+  print_board(game->position->board);
 
   printf("\nUndo move:\n");
-  undo_move(position, m);
-  print_board(position->board);
+  undo_move(game->position, m);
+  print_board(game->position->board);
 
   delete_moves_list(candidate_moves);
   return 0;

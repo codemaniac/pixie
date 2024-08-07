@@ -27,11 +27,7 @@ typedef enum {
   BLACK_KING
 } Piece;
 
-#define NOCA 0
-#define WKCA 1
-#define WQCA 2
-#define BKCA 4
-#define BQCA 8
+enum { NOCA = 0, WKCA = 1, WQCA = 2, BKCA = 4, BQCA = 8 };
 
 static const uint8_t PAWN_CAPTURE_DIRECTIONS[] = {9, 11};
 static const int8_t KNIGHT_MOVE_DIRECTIONS[] = {-21, -19, -12, -8,

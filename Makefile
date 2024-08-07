@@ -18,11 +18,12 @@ clean:
 dir:
 	@mkdir -p $(BUILD_DIR) $(BIN_DIR)
 
-$(NAME): main.o board.o evaluate.o fen.o log.o move.o movegen.o perft.o piece.o position.o search.o uci.o utils.o
+$(NAME): main.o board.o evaluate.o fen.o game.o log.o move.o movegen.o perft.o piece.o position.o search.o uci.o utils.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME)-$(VERSION) $(BUILD_DIR)/main.o \
 		$(BUILD_DIR)/board.o \
 		$(BUILD_DIR)/evaluate.o \
 		$(BUILD_DIR)/fen.o \
+		$(BUILD_DIR)/game.o \
 		$(BUILD_DIR)/log.o \
 		$(BUILD_DIR)/move.o \
 		$(BUILD_DIR)/movegen.o \
@@ -43,6 +44,9 @@ evaluate.o: $(SRC_DIR)/evaluate.c $(INCLUDE_DIR)/evaluate.h
 
 fen.o: $(SRC_DIR)/fen.c $(INCLUDE_DIR)/fen.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/fen.c -o $(BUILD_DIR)/fen.o
+
+game.o: $(SRC_DIR)/game.c $(INCLUDE_DIR)/game.h
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/game.c -o $(BUILD_DIR)/game.o
 
 log.o: $(SRC_DIR)/log.c $(INCLUDE_DIR)/log.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/log.c -o $(BUILD_DIR)/log.o
