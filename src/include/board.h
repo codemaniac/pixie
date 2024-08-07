@@ -16,7 +16,7 @@ typedef struct {
     uint8_t bK_sq;
 } Board;
 
-Board* create_empty_board();
+Board* create_empty_board(void);
 
 void print_board(Board* board);
 
