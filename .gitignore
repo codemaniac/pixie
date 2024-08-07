@@ -60,3 +60,4 @@ dkms.conf
 # Output folders
 bin/
 build/
+compile_commands.json

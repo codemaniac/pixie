@@ -1,9 +1,16 @@
+debug ?= 1
 NAME := pixie
 VERSION := 0.1.0-dev
 
 CC := gcc
-CFLAGS := -std=gnu17 -Wall -Wextra -pedantic -O2
+CFLAGS := -std=gnu17 -Wall -Wextra -pedantic
 FORMATTER := clang-format
+
+ifeq ($(debug), 1)
+	CFLAGS := $(CFLAGS) -g -O0
+else
+	CFLAGS := $(CFLAGS) -O2
+endif
 
 BIN_DIR := ./bin
 BUILD_DIR := ./build
@@ -15,12 +22,16 @@ all: clean dir $(NAME)
 
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
+	@rm -f compile_commands.json
 
 dir:
 	@mkdir -p $(BUILD_DIR) $(BIN_DIR)
 
 format:
 	@$(FORMATTER) -style=file -i $(SRC_DIR)/*.c $(INCLUDE_DIR)/*.h
+
+bear:
+	@bear -- make
 
 $(NAME): main.o board.o fen.o game.o move.o movegen.o piece.o position.o utils.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME)-$(VERSION) $(BUILD_DIR)/main.o \
@@ -60,4 +71,4 @@ position.o: $(SRC_DIR)/position.c $(INCLUDE_DIR)/position.h
 utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/utils.c -o $(BUILD_DIR)/utils.o
 
-.PHONY: clean dir format
+.PHONY: clean dir format bear
