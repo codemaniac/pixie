@@ -6,12 +6,12 @@
 #include <stdint.h>
 
 typedef struct {
-  Move move;
-  struct MovesListNode *next;
+    Move                  move;
+    struct MovesListNode* next;
 } MovesListNode;
 
-MovesListNode *generate_moves_list(Position *position);
-void print_moves_list(MovesListNode *head);
-void delete_moves_list(MovesListNode *head);
+MovesListNode* generate_pseudo_legal_moves(Position* position);
+void           print_moves_list(MovesListNode* head);
+void           delete_moves_list(MovesListNode* head);
 
 #endif

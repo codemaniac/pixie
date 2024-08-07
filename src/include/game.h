@@ -7,10 +7,10 @@
 #define MAXGAMEMOVES 2048
 
 typedef struct {
-  Position *position;
-  MoveHistoryEntry history[MAXGAMEMOVES];
+    Position*        position;
+    MoveHistoryEntry history[MAXGAMEMOVES];
 } Game;
 
-Game *initialize_game(char *fen);
+Game* initialize_game(char* fen);
 
 #endif

@@ -19,38 +19,38 @@
 #define POS_SET_PIECE(pos, sq, p) (pos->board->squares[sq] = p)
 
 typedef enum {
-  RANK_1,
-  RANK_2,
-  RANK_3,
-  RANK_4,
-  RANK_5,
-  RANK_6,
-  RANK_7,
-  RANK_8
+    RANK_1,
+    RANK_2,
+    RANK_3,
+    RANK_4,
+    RANK_5,
+    RANK_6,
+    RANK_7,
+    RANK_8
 } Rank;
 
 typedef enum {
-  FILE_A,
-  FILE_B,
-  FILE_C,
-  FILE_D,
-  FILE_E,
-  FILE_F,
-  FILE_G,
-  FILE_H
+    FILE_A,
+    FILE_B,
+    FILE_C,
+    FILE_D,
+    FILE_E,
+    FILE_F,
+    FILE_G,
+    FILE_H
 } File;
 
 typedef struct {
-  Board *board;
-  Color active_color;
-  uint8_t casteling_rights;
-  uint8_t enpassant_target;
-  uint8_t half_move_clock;
-  uint8_t full_move_number;
+    Board*  board;
+    Color   active_color;
+    uint8_t casteling_rights;
+    uint8_t enpassant_target;
+    uint8_t half_move_clock;
+    uint8_t full_move_number;
 } Position;
 
-bool is_square_attacked(Position *position, uint8_t sq);
+bool is_square_attacked(Position* position, uint8_t sq);
 
-bool is_position_in_check(Position *position);
+bool is_position_in_check(Position* position);
 
 #endif

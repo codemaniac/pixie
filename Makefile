@@ -3,6 +3,7 @@ VERSION := 0.1.0-dev
 
 CC := gcc
 CFLAGS := -Wall -O2
+FORMATTER := clang-format
 
 BIN_DIR := ./bin
 BUILD_DIR := ./build
@@ -17,6 +18,9 @@ clean:
 
 dir:
 	@mkdir -p $(BUILD_DIR) $(BIN_DIR)
+
+format:
+	@$(FORMATTER) -style=file -i $(SRC_DIR)/*.c $(INCLUDE_DIR)/*.h
 
 $(NAME): main.o board.o evaluate.o fen.o game.o log.o move.o movegen.o perft.o piece.o position.o search.o uci.o utils.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME)-$(VERSION) $(BUILD_DIR)/main.o \
@@ -75,4 +79,4 @@ uci.o: $(SRC_DIR)/uci.c $(INCLUDE_DIR)/uci.h
 utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/utils.c -o $(BUILD_DIR)/utils.o
 
-.PHONY: clean dir
+.PHONY: clean dir format

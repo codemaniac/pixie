@@ -20,41 +20,55 @@
 #define MOVE_FLAG_BQCA 0x80000000
 
 typedef struct {
-  uint32_t move_id;
-  int16_t evaluation;
+    uint32_t move_id;
+    int16_t  evaluation;
 } Move;
 
 typedef struct {
-  Move *move;
-  uint8_t prev_casteling_rights;
-  uint8_t prev_enpassant_target;
-  uint8_t prev_half_move_clock;
-  uint8_t prev_full_move_number;
+    Move*   move;
+    uint8_t prev_casteling_rights;
+    uint8_t prev_enpassant_target;
+    uint8_t prev_half_move_clock;
+    uint8_t prev_full_move_number;
 } MoveHistoryEntry;
 
-Move encode_move(Piece piece, uint8_t from_sq, uint8_t to_sq,
-                 Piece captured_piece, Piece promoted_piece, bool flag_ps,
-                 bool flag_ep, uint32_t flag_ca);
+Move encode_move(Piece    piece,
+                 uint8_t  from_sq,
+                 uint8_t  to_sq,
+                 Piece    captured_piece,
+                 Piece    promoted_piece,
+                 bool     flag_ps,
+                 bool     flag_ep,
+                 uint32_t flag_ca);
 
 Move encode_quite_move(Piece piece, uint8_t from_sq, uint8_t to_sq);
 
-Move encode_capture_move(Piece piece, uint8_t from_sq, uint8_t to_sq,
-                         Piece captured_piece);
+Move encode_capture_move(Piece   piece,
+                         uint8_t from_sq,
+                         uint8_t to_sq,
+                         Piece   captured_piece);
 
 Move encode_pawn_start_move(Piece pawn, uint8_t from_sq, uint8_t to_sq);
 
-Move encode_pawn_promotion_move(Piece pawn, uint8_t from_sq, uint8_t to_sq,
-                                Piece captured_piece, Piece promoted_piece);
+Move encode_pawn_promotion_move(Piece   pawn,
+                                uint8_t from_sq,
+                                uint8_t to_sq,
+                                Piece   captured_piece,
+                                Piece   promoted_piece);
 
-Move encode_pawn_enpassant_move(Piece pawn, uint8_t from_sq, uint8_t to_sq,
-                                Piece captured_pawn);
+Move encode_pawn_enpassant_move(Piece   pawn,
+                                uint8_t from_sq,
+                                uint8_t to_sq,
+                                Piece   captured_pawn);
 
-Move encode_king_castle_move(Piece piece, uint8_t from_sq, uint8_t to_sq,
+Move encode_king_castle_move(Piece    piece,
+                             uint8_t  from_sq,
+                             uint8_t  to_sq,
                              uint32_t flag_ca);
 
-void do_move(Position *position, Move move);
+void do_move(Position* position, Move move);
 
-void undo_move(Position *position, Move move);
+void undo_move(Position* position, Move move);
 
 void print_move(Move move);
 

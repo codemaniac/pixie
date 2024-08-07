@@ -5,7 +5,7 @@
 
 #define MAX_FEN_SIZE 100
 
-Position *fen_to_position(char *fen);
-char *position_to_fen(Position *position);
+Position* fen_to_position(char* fen);
+char*     position_to_fen(Position* position);
 
 #endif
