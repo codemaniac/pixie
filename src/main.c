@@ -4,7 +4,7 @@
 #include "include/movegen.h"
 #include <stdio.h>
 
-int main() {
+int main(void) {
     char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     Game* game = initialize_game(fen);

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-Board* create_empty_board() {
+Board* create_empty_board(void) {
     Board* board = malloc(sizeof(Board));
     for (int i = 0; i < 120; i++)
     {
