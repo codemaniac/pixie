@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     int             nerrors;
 
     void* argtable[] = {
-      help    = arg_litn(NULL, "help", 0, 1, "display helpt"),
+      help    = arg_litn(NULL, "help", 0, 1, "display help"),
       version = arg_litn(NULL, "version", 0, 1, "display version info"),
       verbose = arg_litn("v", "verbose", 0, 1, "verbose output"),
       end     = arg_end(20),
