@@ -7,9 +7,9 @@ CFLAGS := -std=gnu17 -Wall -Wextra -pedantic
 FORMATTER := clang-format
 
 ifeq ($(debug), 1)
-	CFLAGS := $(CFLAGS) -g -O0
+	CFLAGS := $(CFLAGS) -DDEBUG -g -O0
 else
-	CFLAGS := $(CFLAGS) -O2
+	CFLAGS := $(CFLAGS) -DLOG_QUIET -O2
 endif
 
 BIN_DIR := ./bin
@@ -33,7 +33,7 @@ format:
 bear:
 	@bear -- make
 
-$(NAME): main.o board.o fen.o game.o move.o movegen.o piece.o position.o utils.o
+$(NAME): main.o board.o fen.o game.o move.o movegen.o piece.o position.o utils.o logc.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME)-$(VERSION) $(BUILD_DIR)/main.o \
 		$(BUILD_DIR)/board.o \
 		$(BUILD_DIR)/fen.o \
@@ -42,7 +42,8 @@ $(NAME): main.o board.o fen.o game.o move.o movegen.o piece.o position.o utils.o
 		$(BUILD_DIR)/movegen.o \
 		$(BUILD_DIR)/piece.o \
 		$(BUILD_DIR)/position.o \
-		$(BUILD_DIR)/utils.o
+		$(BUILD_DIR)/utils.o \
+		$(BUILD_DIR)/logc.o
 
 main.o: $(SRC_DIR)/main.c
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/main.c -o $(BUILD_DIR)/main.o
@@ -70,5 +71,10 @@ position.o: $(SRC_DIR)/position.c $(INCLUDE_DIR)/position.h
 
 utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/utils.c -o $(BUILD_DIR)/utils.o
+
+# LIBS
+
+logc.o: $(LIB_DIR)/logc/log.c $(LIB_DIR)/logc/log.h
+	@$(CC) $(CFLAGS) -c -DLOG_USE_COLOR $(LIB_DIR)/logc/log.c -o $(BUILD_DIR)/logc.o
 
 .PHONY: clean dir format bear

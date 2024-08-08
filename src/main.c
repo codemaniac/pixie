@@ -2,9 +2,33 @@
 #include "include/game.h"
 #include "include/move.h"
 #include "include/movegen.h"
+#include "lib/logc/log.h"
 #include <stdio.h>
 
+#define VERSION "0.1.0-dev"
+
+#ifndef LOG_QUIET
+    #define LOG_QUIET_VAL 0
+#else
+    #define LOG_QUIET_VAL 1
+#endif
+
 int main(void) {
+
+#ifdef DEBUG
+    log_set_quiet(LOG_QUIET_VAL);
+    log_set_level(LOG_TRACE);
+#else
+    log_set_quiet(LOG_QUIET_VAL);
+    log_set_level(LOG_INFO);
+#endif
+
+    log_info("Pixie %s", VERSION);
+
+#ifdef DEBUG
+    log_warn("Pixie is running in DEBUG mode!");
+#endif
+
     const char* fen =
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
