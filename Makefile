@@ -32,13 +32,14 @@ format:
 bear:
 	@bear -- make
 
-$(NAME): main.o board.o fen.o game.o move.o movegen.o piece.o position.o utils.o logc.o argtable3.o
+$(NAME): main.o board.o fen.o game.o move.o movegen.o perft.o piece.o position.o utils.o logc.o argtable3.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME) $(BUILD_DIR)/main.o \
 		$(BUILD_DIR)/board.o \
 		$(BUILD_DIR)/fen.o \
 		$(BUILD_DIR)/game.o \
 		$(BUILD_DIR)/move.o \
 		$(BUILD_DIR)/movegen.o \
+		$(BUILD_DIR)/perft.o \
 		$(BUILD_DIR)/piece.o \
 		$(BUILD_DIR)/position.o \
 		$(BUILD_DIR)/utils.o \
@@ -62,6 +63,9 @@ move.o: $(SRC_DIR)/move.c $(INCLUDE_DIR)/move.h
 
 movegen.o: $(SRC_DIR)/movegen.c $(INCLUDE_DIR)/movegen.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/movegen.c -o $(BUILD_DIR)/movegen.o
+
+perft.o: $(SRC_DIR)/perft.c $(INCLUDE_DIR)/perft.h
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/perft.c -o $(BUILD_DIR)/perft.o
 
 piece.o: $(SRC_DIR)/piece.c $(INCLUDE_DIR)/piece.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/piece.c -o $(BUILD_DIR)/piece.o

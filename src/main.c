@@ -2,8 +2,10 @@
 #include "include/game.h"
 #include "include/move.h"
 #include "include/movegen.h"
+#include "include/perft.h"
 #include "lib/argtable3/argtable3.h"
 #include "lib/logc/log.h"
+#include <stdint.h>
 #include <stdio.h>
 
 #define PROGRAM_NAME "pixie"
@@ -102,6 +104,9 @@ int main(int argc, char* argv[]) {
     printf("\nUndo move:\n");
     undo_move(game->position, m);
     print_board(game->position->board);
+
+    uint64_t nodes = perft(game->position, 2);
+    printf("\nPERFT NODES = %llu\n", nodes);
 
     delete_moves_list(candidate_moves);
     return 0;
