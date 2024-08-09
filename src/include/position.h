@@ -40,13 +40,81 @@ typedef enum {
     FILE_H
 } File;
 
+enum {
+    A1 = 21,
+    B1,
+    C1,
+    D1,
+    E1,
+    F1,
+    G1,
+    H1,
+    A2 = 31,
+    B2,
+    C2,
+    D2,
+    E2,
+    F2,
+    G2,
+    H2,
+    A3 = 41,
+    B3,
+    C3,
+    D3,
+    E3,
+    F3,
+    G3,
+    H3,
+    A4 = 51,
+    B4,
+    C4,
+    D4,
+    E4,
+    F4,
+    G4,
+    H4,
+    A5 = 61,
+    B5,
+    C5,
+    D5,
+    E5,
+    F5,
+    G5,
+    H5,
+    A6 = 71,
+    B6,
+    C6,
+    D6,
+    E6,
+    F6,
+    G6,
+    H6,
+    A7 = 81,
+    B7,
+    C7,
+    D7,
+    E7,
+    F7,
+    G7,
+    H7,
+    A8 = 91,
+    B8,
+    C8,
+    D8,
+    E8,
+    F8,
+    G8,
+    H8,
+};
+
 typedef struct {
-    Board*  board;
-    Color   active_color;
-    uint8_t casteling_rights;
-    uint8_t enpassant_target;
-    uint8_t half_move_clock;
-    uint8_t full_move_number;
+    Board*   board;
+    Color    active_color;
+    uint8_t  casteling_rights;
+    uint8_t  enpassant_target;
+    uint8_t  half_move_clock;
+    uint8_t  full_move_number;
+    uint64_t hash;
 } Position;
 
 bool is_square_attacked(const Position* position, const uint8_t sq);

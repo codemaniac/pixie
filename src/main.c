@@ -1,10 +1,13 @@
 #include "include/board.h"
 #include "include/game.h"
+#include "include/hashkey.h"
 #include "include/move.h"
 #include "include/movegen.h"
 #include "include/perft.h"
+#include "include/piece.h"
 #include "lib/argtable3/argtable3.h"
 #include "lib/logc/log.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -79,36 +82,18 @@ int main(int argc, char* argv[]) {
     log_warn("%s is running in DEBUG mode!", PROGRAM_NAME);
 #endif
 
+    hashkey_init();
+
     const char* fen =
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     Game* game = initialize_game(fen);
 
-    print_board(game->position->board);
+    printf("\nSTARTING PERFT\n");
 
-    MovesListNode* candidate_moves =
-      generate_pseudo_legal_moves(game->position);
-    printf("\nCandidate Moves:\n");
-    print_moves_list(candidate_moves);
+    uint64_t nodes = perft(game, 2);
+    printf("PERFT NODES = %llu\n", nodes);
 
-    MovesListNode* test_move = (MovesListNode*) candidate_moves->next;
-    Move           m         = test_move->move;
-
-    printf("\nSelected move:\n");
-    print_move(m);
-
-    printf("\nPerforming Move:\n");
-    do_move(game->position, m);
-    print_board(game->position->board);
-
-    printf("\nUndo move:\n");
-    undo_move(game->position, m);
-    print_board(game->position->board);
-
-    uint64_t nodes = perft(game->position, 2);
-    printf("\nPERFT NODES = %llu\n", nodes);
-
-    delete_moves_list(candidate_moves);
     return 0;
 
 exit:

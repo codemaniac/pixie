@@ -25,11 +25,12 @@ typedef struct {
 } Move;
 
 typedef struct {
-    Move*   move;
-    uint8_t prev_casteling_rights;
-    uint8_t prev_enpassant_target;
-    uint8_t prev_half_move_clock;
-    uint8_t prev_full_move_number;
+    Move     move;
+    uint8_t  prev_casteling_rights;
+    uint8_t  prev_enpassant_target;
+    uint8_t  prev_half_move_clock;
+    uint8_t  prev_full_move_number;
+    uint64_t prev_hash;
 } MoveHistoryEntry;
 
 Move encode_move(const Piece    piece,
@@ -70,9 +71,14 @@ Move encode_king_castle_move(const Piece    piece,
                              const uint8_t  to_sq,
                              const uint32_t flag_ca);
 
-void do_move(Position* position, const Move move);
+bool do_pawn_move(Position* position, const Move move);
+bool do_rook_move(Position* position, const Move move);
+bool do_king_move(Position* position, const Move move);
+bool do_knight_bishop_queen_move(Position* position, const Move move);
 
-void undo_move(Position* position, const Move move);
+void undo_pawn_move(Position* position, Move move);
+void undo_king_move(Position* position, Move move);
+void undo_piece_move(Position* position, Move move);
 
 void print_move(const Move move);
 

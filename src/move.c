@@ -80,13 +80,10 @@ Move encode_king_castle_move(const Piece    king,
                        flag_ca);
 }
 
-void do_move(Position* position, const Move move) {
-
-    POS_SET_PIECE(position, MOVE_FROM_SQ(move.move_id), SQUARE_EMPTY);
-
+bool do_pawn_move(Position* position, const Move move) {
     if (MOVE_PROMOTED(move.move_id))
     {
-        // Promotion move
+        // Pawn promotion move
         POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
                       MOVE_PROMOTED(move.move_id));
     }
@@ -96,139 +93,236 @@ void do_move(Position* position, const Move move) {
         POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
                       MOVE_PIECE(move.move_id));
         // Remove EP captured pawn
-        int8_t orientation = (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
+        const int8_t orientation =
+          (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
         POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id) - 10 * orientation,
                       SQUARE_EMPTY);
     }
-    else if (move.move_id & MOVE_FLAG_WKCA)
+    else if (move.move_id & MOVE_FLAG_PS)
     {
-        // WKCA
-        // TODO: Check castle eligibility
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_E), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_F), WHITE_ROOK);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_G), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_H), SQUARE_EMPTY);
-        position->casteling_rights ^= WKCA;
-        position->casteling_rights ^= WQCA;
-    }
-    else if (move.move_id & MOVE_FLAG_WQCA)
-    {
-        // WQCA
-        // TODO: Check castle eligibility
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_E), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_D), WHITE_ROOK);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_C), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_B), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_A), SQUARE_EMPTY);
-        position->casteling_rights ^= WKCA;
-        position->casteling_rights ^= WQCA;
-    }
-    else if (move.move_id & MOVE_FLAG_BKCA)
-    {
-        // BKCA
-        // TODO: Check castle eligibility
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_E), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_F), WHITE_ROOK);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_G), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_H), SQUARE_EMPTY);
-        position->casteling_rights ^= BKCA;
-        position->casteling_rights ^= BQCA;
-    }
-    else if (move.move_id & MOVE_FLAG_BQCA)
-    {
-        // BQCA
-        // TODO: Check castle eligibility
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_E), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_D), WHITE_ROOK);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_C), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_B), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_A), SQUARE_EMPTY);
-        position->casteling_rights ^= BKCA;
-        position->casteling_rights ^= BQCA;
+        // Pawn start move
+        POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
+                      MOVE_PIECE(move.move_id));
+        // Set En passant target square in position
+        const int8_t orientation =
+          (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
+        position->enpassant_target =
+          MOVE_TO_SQ(move.move_id) - 10 * orientation;
     }
     else
     {
         // Quite or capture move
         POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
                       MOVE_PIECE(move.move_id));
-
-        // Handle pawn start move
-        if (move.move_id & MOVE_FLAG_PS)
-        {
-            // Set En passant target square in position
-            int8_t orientation = (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
-            position->enpassant_target =
-              MOVE_TO_SQ(move.move_id) - 10 * orientation;
-        }
     }
+
+    if (!is_position_in_check(position))
+    {
+        // Reset half move clock
+        position->half_move_clock = 0;
+
+        return true;
+    }
+
+    return false;
 }
 
-void undo_move(Position* position, const Move move) {
+bool do_rook_move(Position* position, const Move move) {
+    // Quite or capture move
+    POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id), MOVE_PIECE(move.move_id));
+
+    if (!is_position_in_check(position))
+    {
+        // Remove castle permissions
+        const uint8_t ca_perm_nullifier =
+          (POS_ACTIVE_COLOR(position) == WHITE) ? 0xC : 0x3;
+        position->casteling_rights &= ca_perm_nullifier;
+        // Reset half move clock
+        if (MOVE_CAPTURED(move.move_id))
+        {
+            // Reset half move clock
+            position->half_move_clock = 0;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool do_king_move(Position* position, const Move move) {
+    if (move.move_id & MOVE_FLAG_WKCA)
+    {
+        // WKCA
+        POS_SET_PIECE(position, E1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, F1, WHITE_ROOK);
+        POS_SET_PIECE(position, G1, WHITE_KING);
+        POS_SET_PIECE(position, H1, SQUARE_EMPTY);
+        position->board->wK_sq = G1;
+    }
+    else if (move.move_id & MOVE_FLAG_WQCA)
+    {
+        // WQCA
+        POS_SET_PIECE(position, E1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, D1, WHITE_ROOK);
+        POS_SET_PIECE(position, C1, WHITE_KING);
+        POS_SET_PIECE(position, B1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, A1, SQUARE_EMPTY);
+        position->board->wK_sq = C1;
+    }
+    else if (move.move_id & MOVE_FLAG_BKCA)
+    {
+        // BKCA
+        POS_SET_PIECE(position, E8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, F8, WHITE_ROOK);
+        POS_SET_PIECE(position, G8, WHITE_KING);
+        POS_SET_PIECE(position, H8, SQUARE_EMPTY);
+        position->board->bK_sq = G8;
+    }
+    else if (move.move_id & MOVE_FLAG_BQCA)
+    {
+        // BQCA
+        POS_SET_PIECE(position, E8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, D8, WHITE_ROOK);
+        POS_SET_PIECE(position, C8, WHITE_KING);
+        POS_SET_PIECE(position, B8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, A8, SQUARE_EMPTY);
+        position->board->bK_sq = C8;
+    }
+    else
+    {
+        // Quite or capture move
+        POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
+                      MOVE_PIECE(move.move_id));
+        if (POS_ACTIVE_COLOR(position) == WHITE)
+        {
+            position->board->wK_sq = MOVE_TO_SQ(move.move_id);
+        }
+        else
+        {
+            position->board->bK_sq = MOVE_TO_SQ(move.move_id);
+        }
+    }
+
+    if (!is_position_in_check(position))
+    {
+        // Remove castle permissions
+        const uint8_t ca_perm_nullifier =
+          (POS_ACTIVE_COLOR(position) == WHITE) ? 0xC : 0x3;
+        position->casteling_rights &= ca_perm_nullifier;
+        // Reset half move clock
+        if (MOVE_CAPTURED(move.move_id))
+        {
+            // Reset half move clock
+            position->half_move_clock = 0;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+bool do_knight_bishop_queen_move(Position* position, const Move move) {
+    // Quite or capture move
+    POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id), MOVE_PIECE(move.move_id));
+
+    if (!is_position_in_check(position))
+    {
+        // Reset half move clock
+        if (MOVE_CAPTURED(move.move_id))
+        {
+            // Reset half move clock
+            position->half_move_clock = 0;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+void undo_pawn_move(Position* position, Move move) {
     POS_SET_PIECE(position, MOVE_FROM_SQ(move.move_id),
                   MOVE_PIECE(move.move_id));
-
     if (MOVE_CAPTURED(move.move_id) != NO_PIECE)
     {
         if (move.move_id & MOVE_FLAG_EP)
         {
-            int8_t orientation = (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
+            const int8_t orientation =
+              (POS_ACTIVE_COLOR(position) == WHITE) ? 1 : -1;
             POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id) - 10 * orientation,
                           MOVE_CAPTURED(move.move_id));
         }
         else
         {
-            // Capture and promotion with capture
             POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
                           MOVE_CAPTURED(move.move_id));
         }
     }
+    else
+    {
+        // Undo quite move and quite promotion move
+        POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id), SQUARE_EMPTY);
+    }
+}
+
+void undo_king_move(Position* position, Move move) {
+    POS_SET_PIECE(position, MOVE_FROM_SQ(move.move_id),
+                  MOVE_PIECE(move.move_id));
+    if (MOVE_CAPTURED(move.move_id) != NO_PIECE)
+    {
+        POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
+                      MOVE_CAPTURED(move.move_id));
+    }
     else if (move.move_id & MOVE_FLAG_WKCA)
     {
-        // WKCA
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_E), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_F), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_G), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_H), WHITE_ROOK);
-        position->casteling_rights ^= WKCA;
-        position->casteling_rights ^= WQCA;
+        POS_SET_PIECE(position, E1, WHITE_KING);
+        POS_SET_PIECE(position, F1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, G1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, H1, WHITE_ROOK);
     }
     else if (move.move_id & MOVE_FLAG_WQCA)
     {
-        // WQCA
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_E), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_D), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_C), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_B), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_1, FILE_A), WHITE_ROOK);
-        position->casteling_rights ^= WKCA;
-        position->casteling_rights ^= WQCA;
+        POS_SET_PIECE(position, E1, WHITE_KING);
+        POS_SET_PIECE(position, D1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, C1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, B1, SQUARE_EMPTY);
+        POS_SET_PIECE(position, A1, WHITE_ROOK);
     }
     else if (move.move_id & MOVE_FLAG_BKCA)
     {
-        // BKCA
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_E), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_F), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_G), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_H), WHITE_ROOK);
-        position->casteling_rights ^= BKCA;
-        position->casteling_rights ^= BQCA;
+        POS_SET_PIECE(position, E8, WHITE_KING);
+        POS_SET_PIECE(position, F8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, G8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, H8, WHITE_ROOK);
     }
     else if (move.move_id & MOVE_FLAG_BQCA)
     {
-        // BQCA
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_E), WHITE_KING);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_D), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_C), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_B), SQUARE_EMPTY);
-        POS_SET_PIECE(position, POS_RF_TO_SQ(RANK_8, FILE_A), WHITE_ROOK);
-        position->casteling_rights ^= BKCA;
-        position->casteling_rights ^= BQCA;
+        POS_SET_PIECE(position, E8, WHITE_KING);
+        POS_SET_PIECE(position, D8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, C8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, B8, SQUARE_EMPTY);
+        POS_SET_PIECE(position, A8, WHITE_ROOK);
     }
     else
     {
-        // Quite move and quite promotion move
         POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id), SQUARE_EMPTY);
-        // TODO: If pawn start, rollback to previous ep target
+    }
+}
+
+void undo_piece_move(Position* position, Move move) {
+    POS_SET_PIECE(position, MOVE_FROM_SQ(move.move_id),
+                  MOVE_PIECE(move.move_id));
+
+    if (MOVE_CAPTURED(move.move_id) != NO_PIECE)
+    {
+        // Undo capture move by piece
+        POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id),
+                      MOVE_CAPTURED(move.move_id));
+    }
+    else
+    {
+        // Undo quite move by piece
+        POS_SET_PIECE(position, MOVE_TO_SQ(move.move_id), SQUARE_EMPTY);
     }
 }
 

@@ -32,12 +32,13 @@ format:
 bear:
 	@bear -- make
 
-$(NAME): main.o board.o fen.o game.o move.o movegen.o perft.o piece.o position.o utils.o logc.o argtable3.o
+$(NAME): main.o board.o fen.o game.o hashkey.o move.o movegen.o perft.o piece.o position.o utils.o logc.o argtable3.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME) $(BUILD_DIR)/main.o \
 		$(BUILD_DIR)/board.o \
 		$(BUILD_DIR)/fen.o \
 		$(BUILD_DIR)/game.o \
 		$(BUILD_DIR)/move.o \
+		$(BUILD_DIR)/hashkey.o \
 		$(BUILD_DIR)/movegen.o \
 		$(BUILD_DIR)/perft.o \
 		$(BUILD_DIR)/piece.o \
@@ -57,6 +58,9 @@ fen.o: $(SRC_DIR)/fen.c $(INCLUDE_DIR)/fen.h
 
 game.o: $(SRC_DIR)/game.c $(INCLUDE_DIR)/game.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/game.c -o $(BUILD_DIR)/game.o
+
+hashkey.o: $(SRC_DIR)/hashkey.c $(INCLUDE_DIR)/hashkey.h
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/hashkey.c -o $(BUILD_DIR)/hashkey.o
 
 move.o: $(SRC_DIR)/move.c $(INCLUDE_DIR)/move.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/move.c -o $(BUILD_DIR)/move.o

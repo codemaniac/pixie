@@ -199,5 +199,9 @@ Position* fen_to_position(const char* fen) {
         position->enpassant_target = SQUARE_INVALID;
     }
 
+    position->half_move_clock = atoi(parts[4]);
+
+    position->full_move_number = atoi(parts[5]);
+
     return position;
 }
