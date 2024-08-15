@@ -31,7 +31,7 @@ void static __do_move_prepare_handler(Game* game, const Move move) {
     if (history_entry == NULL)
     {
         log_fatal("Memory allocation failed!");
-        exit(1);
+        exit(ENOMEM);
     }
     history_entry->move                  = move;
     history_entry->prev_casteling_rights = game->position->casteling_rights;
@@ -41,14 +41,14 @@ void static __do_move_prepare_handler(Game* game, const Move move) {
     history_entry->prev_hash             = game->position->hash;
     game->history[game->ply_count]       = history_entry;
 
+    // Increment game ply count
+    game->ply_count++;
+
     // Start making the move
     POS_SET_PIECE(game->position, MOVE_FROM_SQ(move.move_id), SQUARE_EMPTY);
 }
 
 void static __do_move_success_handler(Game* game) {
-    // Increment game ply count
-    game->ply_count++;
-
     // Generate position hashkey
     game->position->hash = hashkey_position(game->position);
 

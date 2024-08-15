@@ -72,7 +72,19 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    log_info("Pixie %s", VERSION);
+    printf("\n");
+    printf("   ___ _      _");
+    printf("\n");
+    printf("  / _ (_)_  _(_) ___");
+    printf("\n");
+    printf(" / /_)/ \\ \\/ / |/ _ \\");
+    printf("\n");
+    printf("/ ___/| |>  <| |  __/");
+    printf("\n");
+    printf("\\/    |_/_/\\_\\_|\\___|");
+    printf("\n\n");
+
+    log_info("Starting Pixie %s", VERSION);
 
 #ifdef DEBUG
     log_warn("%s is running in DEBUG mode!", PROGRAM_NAME);
