@@ -10,7 +10,7 @@
 #define MOVE_FROM_SQ(move_id) ((move_id >> 4) & 0x7F)
 #define MOVE_TO_SQ(move_id) ((move_id >> 11) & 0x7F)
 #define MOVE_CAPTURED(move_id) ((move_id >> 18) & 0xF)
-#define MOVE_PROMOTED(move_id) ((move_id >> 23) & 0xF)
+#define MOVE_PROMOTED(move_id) ((move_id >> 22) & 0xF)
 
 #define MOVE_FLAG_PS 0x4000000
 #define MOVE_FLAG_EP 0x8000000

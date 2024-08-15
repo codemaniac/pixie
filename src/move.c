@@ -133,10 +133,10 @@ bool do_rook_move(Position* position, const Move move) {
 
     if (!is_position_in_check(position))
     {
-        // Remove castle permissions
+        // TODO: Remove castle permissions
         const uint8_t ca_perm_nullifier =
           (POS_ACTIVE_COLOR(position) == WHITE) ? 0xC : 0x3;
-        position->casteling_rights &= ca_perm_nullifier;
+        position->casteling_rights &= ca_perm_nullifier;  // Incorrect
         // Reset half move clock
         if (MOVE_CAPTURED(move.move_id))
         {

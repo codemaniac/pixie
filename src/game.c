@@ -11,13 +11,11 @@ Game* initialize_game(const char* fen) {
     Game* game = (Game*) malloc(sizeof(Game));
     if (game == NULL)
     {
-        // TODO: Raise exception - Memory Error!
-
         log_fatal("Memory allocation failed!");
         exit(1);
     }
 
-    log_trace("Initializing game with FEN: %s", fen);
+    log_info("Initializing game with FEN: %s", fen);
     game->position       = fen_to_position(fen);
     game->position->hash = hashkey_position(game->position);
     game->ply_count      = 0;
@@ -31,8 +29,6 @@ void static __do_move_prepare_handler(Game* game, const Move move) {
       (MoveHistoryEntry*) malloc(sizeof(MoveHistoryEntry));
     if (history_entry == NULL)
     {
-        // TODO: Raise exception - Memory Error!
-
         log_fatal("Memory allocation failed!");
         exit(1);
     }
@@ -44,14 +40,14 @@ void static __do_move_prepare_handler(Game* game, const Move move) {
     history_entry->prev_hash             = game->position->hash;
     game->history[game->ply_count]       = history_entry;
 
-    // Increment game ply count
-    game->ply_count++;
-
     // Start making the move
     POS_SET_PIECE(game->position, MOVE_FROM_SQ(move.move_id), SQUARE_EMPTY);
 }
 
 void static __do_move_success_handler(Game* game) {
+    // Increment game ply count
+    game->ply_count++;
+
     // Generate position hashkey
     game->position->hash = hashkey_position(game->position);
 
@@ -70,6 +66,9 @@ void static __do_move_failure_handler(Game* game, const Move move) {
 }
 
 void static __undo_move_complete_handler(Game* game) {
+    const MoveHistoryEntry* prev_history_entry = game->history[game->ply_count];
+    free((void*) prev_history_entry);
+
     // Decrement game ply count
     game->ply_count--;
 
@@ -95,10 +94,8 @@ void static __undo_move_complete_handler(Game* game) {
     else
     {
         game->position->hash = history_entry->prev_hash;
-        log_error(
-          "Found incorrect hash during move undo\nNEW HASH = %llu\nPREV HASH = %llu",
-          hash, history_entry->prev_hash);
-        // exit(1);
+        log_error("Hash mismatch during move undo!");
+        exit(1);
     }
 }
 

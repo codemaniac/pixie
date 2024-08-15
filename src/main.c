@@ -1,10 +1,5 @@
-#include "include/board.h"
 #include "include/game.h"
-#include "include/hashkey.h"
-#include "include/move.h"
-#include "include/movegen.h"
 #include "include/perft.h"
-#include "include/piece.h"
 #include "lib/argtable3/argtable3.h"
 #include "lib/logc/log.h"
 #include <stdbool.h>
@@ -82,17 +77,14 @@ int main(int argc, char* argv[]) {
     log_warn("%s is running in DEBUG mode!", PROGRAM_NAME);
 #endif
 
-    hashkey_init();
-
     const char* fen =
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     Game* game = initialize_game(fen);
 
-    printf("\nSTARTING PERFT\n");
-
+    log_info("Starting Perft");
     uint64_t nodes = perft(game, 2);
-    printf("PERFT NODES = %llu\n", nodes);
+    log_info("Perft nodes = %llu", nodes);
 
     return 0;
 
