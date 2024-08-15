@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define PROGRAM_NAME "pixie"
 #define VERSION "0.1.0-dev"
@@ -19,7 +20,7 @@ int main(int argc, char* argv[]) {
 
     struct arg_lit *verbose, *help, *version;
     struct arg_end* end;
-    int             exitcode = 0;
+    int             exitcode = EXIT_FAILURE;
     int             nerrors;
 
     void* argtable[] = {
@@ -37,14 +38,14 @@ int main(int argc, char* argv[]) {
         arg_print_syntax(stdout, argtable, "\n");
         printf("\n\n");
         arg_print_glossary(stdout, argtable, "  %-25s %s\n");
-        exitcode = 0;
+        exitcode = EXIT_SUCCESS;
         goto exit;
     }
 
     if (version->count > 0)
     {
         printf("%s version: %s\n", PROGRAM_NAME, VERSION);
-        exitcode = 0;
+        exitcode = EXIT_SUCCESS;
         goto exit;
     }
 
@@ -52,7 +53,7 @@ int main(int argc, char* argv[]) {
     {
         arg_print_errors(stdout, end, PROGRAM_NAME);
         printf("Try '%s --help' for more information.\n", PROGRAM_NAME);
-        exitcode = 1;
+        exitcode = EXIT_FAILURE;
         goto exit;
     }
 
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
     uint64_t nodes = perft(game, 2);
     log_info("Perft nodes = %llu", nodes);
 
-    return 0;
+    return EXIT_SUCCESS;
 
 exit:
     arg_freetable(argtable, sizeof(argtable) / sizeof(argtable[0]));

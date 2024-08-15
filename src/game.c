@@ -4,6 +4,7 @@
 #include "include/move.h"
 #include "include/piece.h"
 #include "lib/logc/log.h"
+#include <errno.h>
 #include <stdlib.h>
 
 Game* initialize_game(const char* fen) {
@@ -12,7 +13,7 @@ Game* initialize_game(const char* fen) {
     if (game == NULL)
     {
         log_fatal("Memory allocation failed!");
-        exit(1);
+        exit(ENOMEM);
     }
 
     log_info("Initializing game with FEN: %s", fen);
