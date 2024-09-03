@@ -1,8 +1,8 @@
-debug ?= 1
+debug ?= 0
 NAME := pixie
 
 CC := gcc
-CFLAGS := -std=gnu17 -Wall -Wextra -pedantic
+CFLAGS := -std=gnu18 -Wall -Wextra -pedantic
 FORMATTER := clang-format
 
 ifeq ($(debug), 1)
@@ -32,50 +32,33 @@ format:
 bear:
 	@bear -- make
 
-$(NAME): main.o board.o fen.o game.o hashkey.o move.o movegen.o perft.o piece.o position.o utils.o logc.o argtable3.o
+$(NAME): main.o bitscan.o chess.o fen.o hashkey.o perft.o utils.o logc.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME) $(BUILD_DIR)/main.o \
-		$(BUILD_DIR)/board.o \
+		$(BUILD_DIR)/bitscan.o \
+		$(BUILD_DIR)/chess.o \
 		$(BUILD_DIR)/fen.o \
-		$(BUILD_DIR)/game.o \
-		$(BUILD_DIR)/move.o \
 		$(BUILD_DIR)/hashkey.o \
-		$(BUILD_DIR)/movegen.o \
 		$(BUILD_DIR)/perft.o \
-		$(BUILD_DIR)/piece.o \
-		$(BUILD_DIR)/position.o \
 		$(BUILD_DIR)/utils.o \
 		$(BUILD_DIR)/logc.o \
-		$(BUILD_DIR)/argtable3.o
 
 main.o: $(SRC_DIR)/main.c
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/main.c -o $(BUILD_DIR)/main.o
 
-board.o: $(SRC_DIR)/board.c $(INCLUDE_DIR)/board.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/board.c -o $(BUILD_DIR)/board.o
+bitscan.o: $(SRC_DIR)/bitscan.c $(INCLUDE_DIR)/bitscan.h
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/bitscan.c -o $(BUILD_DIR)/bitscan.o
+
+chess.o: $(SRC_DIR)/chess.c $(INCLUDE_DIR)/chess.h
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/chess.c -o $(BUILD_DIR)/chess.o
 
 fen.o: $(SRC_DIR)/fen.c $(INCLUDE_DIR)/fen.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/fen.c -o $(BUILD_DIR)/fen.o
 
-game.o: $(SRC_DIR)/game.c $(INCLUDE_DIR)/game.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/game.c -o $(BUILD_DIR)/game.o
-
 hashkey.o: $(SRC_DIR)/hashkey.c $(INCLUDE_DIR)/hashkey.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/hashkey.c -o $(BUILD_DIR)/hashkey.o
 
-move.o: $(SRC_DIR)/move.c $(INCLUDE_DIR)/move.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/move.c -o $(BUILD_DIR)/move.o
-
-movegen.o: $(SRC_DIR)/movegen.c $(INCLUDE_DIR)/movegen.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/movegen.c -o $(BUILD_DIR)/movegen.o
-
 perft.o: $(SRC_DIR)/perft.c $(INCLUDE_DIR)/perft.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/perft.c -o $(BUILD_DIR)/perft.o
-
-piece.o: $(SRC_DIR)/piece.c $(INCLUDE_DIR)/piece.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/piece.c -o $(BUILD_DIR)/piece.o
-
-position.o: $(SRC_DIR)/position.c $(INCLUDE_DIR)/position.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/position.c -o $(BUILD_DIR)/position.o
 
 utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/utils.c -o $(BUILD_DIR)/utils.o
@@ -84,8 +67,5 @@ utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
 
 logc.o: $(LIB_DIR)/logc/log.c $(LIB_DIR)/logc/log.h
 	@$(CC) $(CFLAGS) -c -DLOG_USE_COLOR $(LIB_DIR)/logc/log.c -o $(BUILD_DIR)/logc.o
-
-argtable3.o: $(LIB_DIR)/argtable3/argtable3.c $(LIB_DIR)/argtable3/argtable3.h
-	@$(CC) $(CFLAGS) -c $(LIB_DIR)/argtable3/argtable3.c -o $(BUILD_DIR)/argtable3.o
 
 .PHONY: clean dir format bear

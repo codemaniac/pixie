@@ -1,9 +1,10 @@
 #ifndef PERFT_H
 #define PERFT_H
 
-#include "game.h"
+#include "chess.h"
 #include <stdint.h>
 
-uint64_t perft(Game* game, const uint8_t depth);
+uint64_t perft(Position* position, const uint8_t depth);
+void     divide(Position* position, const uint8_t depth);
 
 #endif

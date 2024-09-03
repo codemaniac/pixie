@@ -1,7 +1,8 @@
 #include "include/fen.h"
-#include "include/piece.h"
-#include "include/position.h"
+#include "include/chess.h"
+#include "include/hashkey.h"
 #include "include/utils.h"
+#include "lib/logc/log.h"
 #include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -25,15 +26,15 @@ Position* fen_to_position(const char* fen) {
 
     if (index != 6)
     {
-        // TODO: raise exception - Invalid FEN!
-        return NULL;
+        log_error("Invalid FEN!");
+        exit(EXIT_FAILURE);
     }
 
     // Validate the active color part
     if (strcmp(parts[1], "w") != 0 && strcmp(parts[1], "b") != 0)
     {
-        // TODO: raise exception - Invalid FEN!
-        return NULL;
+        log_error("Invalid FEN!");
+        exit(EXIT_FAILURE);
     }
 
     // Validate the castling availability part
@@ -43,8 +44,8 @@ Position* fen_to_position(const char* fen) {
         {
             if (!strchr("KQkq", parts[2][i]))
             {
-                // TODO: raise exception - Invalid FEN!
-                return NULL;
+                log_error("Invalid FEN!");
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -52,11 +53,10 @@ Position* fen_to_position(const char* fen) {
     // Validate the en passant target square part
     if (strcmp(parts[3], "-") != 0)
     {
-        if (strlen(parts[3]) != 2 || parts[3][0] < 'a' || parts[3][0] > 'h'
-            || parts[3][1] < '1' || parts[3][1] > '8')
+        if (strlen(parts[3]) != 2 || parts[3][0] < 'a' || parts[3][0] > 'h' || parts[3][1] < '1' || parts[3][1] > '8')
         {
-            // TODO: raise exception - Invalid FEN!
-            return NULL;
+            log_error("Invalid FEN!");
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -65,8 +65,8 @@ Position* fen_to_position(const char* fen) {
     {
         if (!isdigit(parts[4][i]))
         {
-            // TODO: raise exception - Invalid FEN!
-            return NULL;
+            log_error("Invalid FEN!");
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -75,13 +75,12 @@ Position* fen_to_position(const char* fen) {
     {
         if (!isdigit(parts[5][i]))
         {
-            // TODO: raise exception - Invalid FEN!
-            return NULL;
+            log_error("Invalid FEN!");
+            exit(EXIT_FAILURE);
         }
     }
 
-    Position* position = malloc(sizeof(Position));
-    position->board    = create_empty_board();
+    Position* position = position_create();
 
     char*              ch           = parts[0];
     static const char* white_pieces = ".PNBRQK";
@@ -94,19 +93,20 @@ Position* fen_to_position(const char* fen) {
         {
             rank--;
             file = 0;
+            ch++;
+            continue;
         }
         else if (isdigit(*ch))
         {
-            uint8_t npawns = *ch - '0';
-            if (npawns < 1 || npawns > 8)
+            uint8_t empty_squares = *ch - '0';
+            if (empty_squares < 1 || empty_squares > 8)
             {
-                // TODO: raise exception - Invalid FEN!
-                return NULL;
+                log_error("Invalid FEN!");
+                exit(EXIT_FAILURE);
             }
-            for (uint8_t i = 0; i < npawns; i++)
+            else
             {
-                POS_SET_PIECE(position, POS_RF_TO_SQ(rank, file++),
-                              SQUARE_EMPTY);
+                file += empty_squares;
             }
         }
         else if (isalpha(*ch))
@@ -114,37 +114,29 @@ Position* fen_to_position(const char* fen) {
             int8_t piece_id;
             if (islower(*ch))
             {
-                piece_id = str_indexof(black_pieces, *ch);
+                piece_id = utils_str_indexof(black_pieces, *ch);
                 if (piece_id == -1)
                 {
-                    // TODO: raise exception - Invalid FEN!
-                    return NULL;
+                    log_error("Invalid FEN!");
+                    exit(EXIT_FAILURE);
                 }
                 piece_id += 8;
             }
             else
             {
-                piece_id = str_indexof(white_pieces, *ch);
+                piece_id = utils_str_indexof(white_pieces, *ch);
                 if (piece_id == -1)
                 {
-                    // TODO: raise exception - Invalid FEN!
-                    return NULL;
+                    log_error("Invalid FEN!");
+                    exit(EXIT_FAILURE);
                 }
             }
-            POS_SET_PIECE(position, POS_RF_TO_SQ(rank, file++), piece_id);
-            if (piece_id == WHITE_KING)
-            {
-                position->board->wK_sq = POS_RF_TO_SQ(rank, file - 1);
-            }
-            else if (piece_id == BLACK_KING)
-            {
-                position->board->bK_sq = POS_RF_TO_SQ(rank, file - 1);
-            }
+            board_set_piece(position->board, piece_id, RF_TO_SQIDX(rank, file++));
         }
         else
         {
-            // TODO: raise exception - Invalid FEN!
-            return NULL;
+            log_error("Invalid FEN!");
+            exit(EXIT_FAILURE);
         }
 
         ch++;
@@ -191,17 +183,36 @@ Position* fen_to_position(const char* fen) {
     {
         uint8_t ep_target_rank = (parts[3][1] - '0') - 1;
         uint8_t ep_target_file = parts[3][0] - 'a';
-        position->enpassant_target =
-          POS_RF_TO_SQ(ep_target_rank, ep_target_file);
+
+        if (strcmp(parts[1], "w") == 0)
+        {
+            if (ep_target_rank != RANK_6)
+            {
+                log_error("Invalid FEN!");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            if (ep_target_rank != RANK_3)
+            {
+                log_error("Invalid FEN!");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        position->enpassant_target = RF_TO_SQIDX(ep_target_rank, ep_target_file);
     }
     else
     {
-        position->enpassant_target = SQUARE_INVALID;
+        position->enpassant_target = NO_EP_TARGET;
     }
 
     position->half_move_clock = atoi(parts[4]);
 
     position->full_move_number = atoi(parts[5]);
+
+    position->hash = hashkey_position(position);
 
     return position;
 }
