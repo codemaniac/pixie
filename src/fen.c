@@ -53,7 +53,8 @@ Position* fen_to_position(const char* fen) {
     // Validate the en passant target square part
     if (strcmp(parts[3], "-") != 0)
     {
-        if (strlen(parts[3]) != 2 || parts[3][0] < 'a' || parts[3][0] > 'h' || parts[3][1] < '1' || parts[3][1] > '8')
+        if (strlen(parts[3]) != 2 || parts[3][0] < 'a' || parts[3][0] > 'h' || parts[3][1] < '1'
+            || parts[3][1] > '8')
         {
             log_error("Invalid FEN!");
             exit(EXIT_FAILURE);
