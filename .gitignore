@@ -60,4 +60,5 @@ dkms.conf
 # Output folders
 bin/
 build/
+pypixie.egg-info/
 compile_commands.json
