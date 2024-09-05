@@ -21,6 +21,8 @@ all: clean dir $(NAME)
 
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
+	@rm -rf pypixie.egg-info
+	@rm -f *.so
 	@rm -f compile_commands.json
 
 dir:
@@ -41,6 +43,9 @@ $(NAME): main.o bitscan.o chess.o fen.o hashkey.o perft.o utils.o logc.o
 		$(BUILD_DIR)/perft.o \
 		$(BUILD_DIR)/utils.o \
 		$(BUILD_DIR)/logc.o \
+
+test:
+	python setup.py develop
 
 main.o: $(SRC_DIR)/main.c
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/main.c -o $(BUILD_DIR)/main.o

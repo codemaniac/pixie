@@ -195,6 +195,7 @@ Move           encode_move(const Piece    piece,
                            const bool     flag_ps,
                            const bool     flag_ep,
                            const uint32_t flag_ca);
+void           print_move(const Move m);
 void           print_moves_list(MovesListNode* head);
 MovesListNode* movegen_pseudo_legal(const Position* position);
 bool           move_do(Position* position, const Move move);
