@@ -1156,7 +1156,7 @@ bool move_do(Position* position, const Move move) {
         board_set_piece(position->board, BLACK_KING, C8);
         board_clear_piece(position->board, BLACK_ROOK, A8);
         board_set_piece(position->board, BLACK_ROOK, D8);
-        position->casteling_rights &= 0xC;
+        position->casteling_rights &= 0x3;
         is_legal_move          = !position_is_in_check(position);
         position->active_color = !position->active_color;
         return is_legal_move;
