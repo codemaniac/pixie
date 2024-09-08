@@ -145,6 +145,12 @@ typedef struct {
 } MovesListNode;
 
 typedef struct {
+    MovesListNode* head;
+    MovesListNode* tail;
+    uint32_t       size;
+} MoveList;
+
+typedef struct {
     Move     move;
     uint8_t  prev_casteling_rights;
     uint8_t  prev_enpassant_target;
@@ -193,22 +199,25 @@ Position* position_create(void);
 bool      position_is_valid(const Position* position);
 bool      position_is_in_check(const Position* position);
 bool      position_is_repeated(const Position* position);
+bool      position_has_legal_move(Position* position);
+bool      position_is_in_checkmate(Position* position);
+bool      position_is_in_stalemate(Position* position);
 
 // Move Functions
 
-Move           encode_move(const Piece    piece,
-                           const uint8_t  from_sq,
-                           const uint8_t  to_sq,
-                           const Piece    captured_piece,
-                           const Piece    promoted_piece,
-                           const bool     flag_ps,
-                           const bool     flag_ep,
-                           const uint32_t flag_ca);
-void           print_move(const Move m);
-void           print_moves_list(MovesListNode* head);
-MovesListNode* movegen_pseudo_legal(const Position* position);
-bool           move_do(Position* position, const Move move);
-void           move_undo(Position* position);
-void           print_move(const Move m);
+Move      encode_move(const Piece    piece,
+                      const uint8_t  from_sq,
+                      const uint8_t  to_sq,
+                      const Piece    captured_piece,
+                      const Piece    promoted_piece,
+                      const bool     flag_ps,
+                      const bool     flag_ep,
+                      const uint32_t flag_ca);
+void      print_move(const Move m);
+void      print_moves_list(MoveList* head);
+MoveList* movegen_pseudo_legal(const Position* position);
+bool      move_do(Position* position, const Move move);
+void      move_undo(Position* position);
+void      print_move(const Move m);
 
 #endif

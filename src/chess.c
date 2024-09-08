@@ -598,6 +598,39 @@ bool position_is_repeated(const Position* position) {
     return false;
 }
 
+bool position_has_legal_move(Position* position) {
+    const MoveList* moves = movegen_pseudo_legal(position);
+
+    MovesListNode *m, *t;
+    bool           is_valid_move = false;
+
+    m = (MovesListNode*) moves->head->next;
+
+    while (m != NULL)
+    {
+        is_valid_move = move_do(position, m->move);
+
+        if (is_valid_move && position_is_valid(position))
+            return true;
+
+        move_undo(position);
+
+        t = m;
+        m = (MovesListNode*) m->next;
+        free(t);
+    }
+
+    return false;
+}
+
+bool position_is_in_checkmate(Position* position) {
+    return position_is_in_check(position) && !position_has_legal_move(position);
+}
+
+bool position_is_in_stalemate(Position* position) {
+    return !position_is_in_check(position) && !position_has_legal_move(position);
+}
+
 Move encode_move(const Piece    piece,
                  const uint8_t  from_sq,
                  const uint8_t  to_sq,
@@ -687,19 +720,15 @@ static MovesListNode* create_move_list_node(const Move move) {
     return node;
 }
 
-static MovesListNode* insert_move_to_list(MovesListNode* moves_list_tail, const Move move) {
-    if (moves_list_tail == NULL)
-    {
-        // TODO: Raise exception - Invalid Move List!
-        exit(1);
-    }
+static void movegen_enqueue_move(MoveList* list, const Move move) {
     MovesListNode* new_tail_node = create_move_list_node(move);
-    moves_list_tail->next        = (struct MovesListNode*) new_tail_node;
-    return new_tail_node;
+    list->tail->next             = (struct MovesListNode*) new_tail_node;
+    list->tail                   = new_tail_node;
+    list->size++;
 }
 
-void print_moves_list(MovesListNode* head) {
-    MovesListNode* temp = (MovesListNode*) head->next;
+void print_moves_list(MoveList* list) {
+    MovesListNode* temp = (MovesListNode*) list->head->next;
     while (temp != NULL)
     {
         print_move(temp->move);
@@ -718,16 +747,18 @@ void print_move(const Move m) {
            pstr[PIECE_GET_TYPE(MOVE_PROMOTED(m.move_id))]);
 }
 
-MovesListNode* movegen_pseudo_legal(const Position* position) {
+MoveList* movegen_pseudo_legal(const Position* position) {
     const Color active_color = position->active_color;
     Piece       p;
     uint64_t    bb, attacks, occupancy;
     uint8_t     from_sq, to_sq;
     Move        m;
 
-    const Move     null_move       = {.move_id = 0};
-    MovesListNode* moves_list      = create_move_list_node(null_move);
-    MovesListNode* moves_list_tail = moves_list;
+    const Move null_move = {.move_id = 0};
+    MoveList*  moves     = (MoveList*) malloc(sizeof(MoveList));
+    moves->head          = create_move_list_node(null_move);
+    moves->tail          = moves->head;
+    moves->size          = 0;
 
     if (active_color == WHITE)
     {
@@ -748,22 +779,22 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                     // Pawn Promotion
                     m = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
                                                    WHITE_KNIGHT);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                     m = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
                                                    WHITE_BISHOP);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                     m =
                       encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE, WHITE_ROOK);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                     m =
                       encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE, WHITE_QUEEN);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                 }
                 else
                 {
                     // Pawn Push
-                    m               = encode_quite_move(WHITE_PAWN, from_sq, to_sq);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_quite_move(WHITE_PAWN, from_sq, to_sq);
+                    movegen_enqueue_move(moves, m);
                 }
             }
 
@@ -772,9 +803,9 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
             attacks = north_one(attacks) & occupancy & MASK_RANK_4;
             if (attacks)
             {
-                to_sq           = bitscan_forward(&attacks);
-                m               = encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                to_sq = bitscan_forward(&attacks);
+                m     = encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
 
             // Pawn Captures
@@ -787,25 +818,25 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                 if (SQIDX_TO_RANK(to_sq) == RANK_8)
                 {
                     // Pawn Captures + Promotion
-                    m               = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], WHITE_KNIGHT);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
-                    m               = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], WHITE_BISHOP);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
-                    m               = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], WHITE_ROOK);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
-                    m               = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], WHITE_QUEEN);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], WHITE_KNIGHT);
+                    movegen_enqueue_move(moves, m);
+                    m = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], WHITE_BISHOP);
+                    movegen_enqueue_move(moves, m);
+                    m = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], WHITE_ROOK);
+                    movegen_enqueue_move(moves, m);
+                    m = encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], WHITE_QUEEN);
+                    movegen_enqueue_move(moves, m);
                 }
                 else
                 {
                     // Pawn Captures
-                    m               = encode_capture_move(WHITE_PAWN, from_sq, to_sq,
-                                                          position->board->pieces[to_sq]);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_capture_move(WHITE_PAWN, from_sq, to_sq,
+                                            position->board->pieces[to_sq]);
+                    movegen_enqueue_move(moves, m);
                 }
             }
 
@@ -817,7 +848,7 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                 {
                     to_sq = bitscan_forward(&attacks);
                     m     = encode_pawn_enpassant_move(WHITE_PAWN, from_sq, to_sq, BLACK_PAWN);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                 }
             }
         }
@@ -839,21 +870,21 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                 {
                     m = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
                                                    BLACK_KNIGHT);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                     m = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
                                                    BLACK_BISHOP);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                     m =
                       encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE, BLACK_ROOK);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                     m =
                       encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE, BLACK_QUEEN);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                 }
                 else
                 {
-                    m               = encode_quite_move(BLACK_PAWN, from_sq, to_sq);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_quite_move(BLACK_PAWN, from_sq, to_sq);
+                    movegen_enqueue_move(moves, m);
                 }
             }
 
@@ -861,9 +892,9 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
             attacks = south_one(attacks) & occupancy & MASK_RANK_5;
             if (attacks)
             {
-                to_sq           = bitscan_forward(&attacks);
-                m               = encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                to_sq = bitscan_forward(&attacks);
+                m     = encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
 
             occupancy = position->board->bitboards[WHITE_PIECES_IDX];
@@ -874,24 +905,24 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
 
                 if (SQIDX_TO_RANK(to_sq) == RANK_1)
                 {
-                    m               = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], BLACK_KNIGHT);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
-                    m               = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], BLACK_BISHOP);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
-                    m               = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], BLACK_ROOK);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
-                    m               = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
-                                                                 position->board->pieces[to_sq], BLACK_QUEEN);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], BLACK_KNIGHT);
+                    movegen_enqueue_move(moves, m);
+                    m = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], BLACK_BISHOP);
+                    movegen_enqueue_move(moves, m);
+                    m = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], BLACK_ROOK);
+                    movegen_enqueue_move(moves, m);
+                    m = encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
+                                                   position->board->pieces[to_sq], BLACK_QUEEN);
+                    movegen_enqueue_move(moves, m);
                 }
                 else
                 {
-                    m               = encode_capture_move(BLACK_PAWN, from_sq, to_sq,
-                                                          position->board->pieces[to_sq]);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_capture_move(BLACK_PAWN, from_sq, to_sq,
+                                            position->board->pieces[to_sq]);
+                    movegen_enqueue_move(moves, m);
                 }
             }
 
@@ -903,7 +934,7 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                 {
                     to_sq = bitscan_forward(&attacks);
                     m     = encode_pawn_enpassant_move(BLACK_PAWN, from_sq, to_sq, WHITE_PAWN);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    movegen_enqueue_move(moves, m);
                 }
             }
         }
@@ -924,13 +955,13 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
-                m               = encode_quite_move(p, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                m = encode_quite_move(p, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                movegen_enqueue_move(moves, m);
             }
         }
     }
@@ -949,13 +980,13 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
-                m               = encode_quite_move(p, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                m = encode_quite_move(p, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                movegen_enqueue_move(moves, m);
             }
         }
     }
@@ -974,13 +1005,13 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
-                m               = encode_quite_move(p, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                m = encode_quite_move(p, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                movegen_enqueue_move(moves, m);
             }
         }
     }
@@ -999,13 +1030,13 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
-                m               = encode_quite_move(p, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                m = encode_quite_move(p, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                movegen_enqueue_move(moves, m);
             }
         }
     }
@@ -1025,13 +1056,13 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
-                m               = encode_quite_move(p, from_sq, to_sq);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                m = encode_quite_move(p, from_sq, to_sq);
+                movegen_enqueue_move(moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                movegen_enqueue_move(moves, m);
             }
         }
     }
@@ -1046,8 +1077,8 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                     && position->board->pieces[G1] == NO_PIECE
                     && !position_is_square_attacked(position, F1, BLACK))
                 {
-                    m               = encode_king_castle_move(WHITE_KING, E1, G1, MOVE_FLAG_WKCA);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_king_castle_move(WHITE_KING, E1, G1, MOVE_FLAG_WKCA);
+                    movegen_enqueue_move(moves, m);
                 }
             }
             if (position->casteling_rights & WQCA)
@@ -1057,8 +1088,8 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                     && position->board->pieces[B1] == NO_PIECE
                     && !position_is_square_attacked(position, D1, BLACK))
                 {
-                    m               = encode_king_castle_move(WHITE_KING, E1, C1, MOVE_FLAG_WQCA);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_king_castle_move(WHITE_KING, E1, C1, MOVE_FLAG_WQCA);
+                    movegen_enqueue_move(moves, m);
                 }
             }
         }
@@ -1070,8 +1101,8 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                     && position->board->pieces[G8] == NO_PIECE
                     && !position_is_square_attacked(position, F8, WHITE))
                 {
-                    m               = encode_king_castle_move(BLACK_KING, E8, G8, MOVE_FLAG_BKCA);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_king_castle_move(BLACK_KING, E8, G8, MOVE_FLAG_BKCA);
+                    movegen_enqueue_move(moves, m);
                 }
             }
             if (position->casteling_rights & BQCA)
@@ -1081,14 +1112,14 @@ MovesListNode* movegen_pseudo_legal(const Position* position) {
                     && position->board->pieces[B8] == NO_PIECE
                     && !position_is_square_attacked(position, D8, WHITE))
                 {
-                    m               = encode_king_castle_move(BLACK_KING, E8, C8, MOVE_FLAG_BQCA);
-                    moves_list_tail = insert_move_to_list(moves_list_tail, m);
+                    m = encode_king_castle_move(BLACK_KING, E8, C8, MOVE_FLAG_BQCA);
+                    movegen_enqueue_move(moves, m);
                 }
             }
         }
     }
 
-    return moves_list;
+    return moves;
 }
 
 bool position_history_is_full(Position* pos) {

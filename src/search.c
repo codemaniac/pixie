@@ -52,11 +52,11 @@ int32_t negamax(Position* position, uint8_t depth) {
     int32_t max = -9999;
     int32_t score;
 
-    MovesListNode* moves = movegen_pseudo_legal(position);
+    MoveList*      moves = movegen_pseudo_legal(position);
     MovesListNode *m, *t;
     bool           is_valid_move = false;
 
-    m = (MovesListNode*) moves->next;
+    m = (MovesListNode*) moves->head->next;
 
     while (m != NULL)
     {
@@ -91,11 +91,11 @@ int32_t quiesce(Position* position, int32_t alpha, int32_t beta) {
     if (alpha < score)
         alpha = score;
 
-    MovesListNode* moves = movegen_pseudo_legal(position);
+    MoveList*      moves = movegen_pseudo_legal(position);
     MovesListNode *m, *t;
     bool           is_valid_move = false;
 
-    m = (MovesListNode*) moves->next;
+    m = (MovesListNode*) moves->head->next;
 
     while (m != NULL)
     {
@@ -138,11 +138,11 @@ int32_t alphabeta(Position* position, uint8_t depth, int32_t alpha, int32_t beta
     int32_t best_value = -9999;
     int32_t score      = 0;
 
-    MovesListNode* moves = movegen_pseudo_legal(position);
+    MoveList*      moves = movegen_pseudo_legal(position);
     MovesListNode *m, *t;
     bool           is_valid_move = false;
 
-    m = (MovesListNode*) moves->next;
+    m = (MovesListNode*) moves->head->next;
 
     while (m != NULL)
     {
