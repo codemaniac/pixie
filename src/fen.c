@@ -132,7 +132,7 @@ Position* fen_to_position(const char* fen) {
                     exit(EXIT_FAILURE);
                 }
             }
-            board_set_piece(position, piece_id, RF_TO_SQIDX(rank, file++));
+            position_set_piece(position, piece_id, BOARD_RF_TO_SQ(rank, file++));
         }
         else
         {
@@ -202,7 +202,7 @@ Position* fen_to_position(const char* fen) {
             }
         }
 
-        position->enpassant_target = RF_TO_SQIDX(ep_target_rank, ep_target_file);
+        position->enpassant_target = BOARD_RF_TO_SQ(ep_target_rank, ep_target_file);
     }
     else
     {

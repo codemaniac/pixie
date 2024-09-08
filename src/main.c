@@ -50,17 +50,10 @@ int main(void) {
 
     const char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     Position*   pos = fen_to_position(fen);
-    board_display(pos->board);
-    printf("%d\n", pos->active_color);
-    printf("%d\n", pos->casteling_rights);
-    printf("%d\n", pos->enpassant_target);
-    printf("%d\n", pos->half_move_clock);
-    printf("%d\n", pos->full_move_number);
-    printf("%d\n", pos->ply_count);
-    printf("%llu\n\n", pos->hash);
+    position_display(pos);
 
     uint64_t start = utils_time_curr_time_ms();
-    divide(pos, 6);
+    divide(pos, 3);
     printf("Completed in %llums\n", utils_time_curr_time_ms() - start);
 
     uint32_t score = search(pos, 2);

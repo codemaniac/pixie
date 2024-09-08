@@ -75,7 +75,7 @@ uint64_t hashkey_position(Position* position) {
 
     for (uint8_t p = 1; p < 15; p++)
     {
-        if (p == WHITE_PIECES_IDX || p == BLACK_PIECES_IDX)
+        if (p == BOARD_WHITE_PIECES_IDX || p == BOARD_BLACK_PIECES_IDX)
         {
             continue;
         }

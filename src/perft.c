@@ -37,6 +37,7 @@ void divide(Position* position, const uint8_t depth) {
     uint64_t  nodes           = 0ULL;
     uint64_t  total_nodes     = 0ULL;
     bool      is_valid_move   = false;
+    char      move_str[10];
 
     MovesListNode* temp = (MovesListNode*) candidate_moves->head->next;
     MovesListNode* temp2;
@@ -48,9 +49,8 @@ void divide(Position* position, const uint8_t depth) {
         {
             nodes = perft(position, depth - 1);
             total_nodes += nodes;
-
-            print_move(temp->move);
-            printf(" %llu\n", nodes);
+            move_to_str(move_str, temp->move);
+            printf("%s %llu\n", move_str, nodes);
         }
         move_undo(position);
         temp2 = temp;

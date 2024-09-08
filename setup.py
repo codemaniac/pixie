@@ -4,7 +4,6 @@ module = Extension(
     "pypixie",
     sources=[
         "src/pypixie.c",
-        "src/bitscan.c",
         "src/chess.c",
         "src/eval.c",
         "src/fen.c",

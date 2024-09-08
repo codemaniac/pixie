@@ -27,14 +27,14 @@ PVTable* search_init_pv_table(void) {
     return table;
 }
 
-void search_add_pv_entry(PVTable* table, const Position* position, const Move move) {
+static void _search_add_pv_entry(PVTable* table, const Position* position, const Move move) {
     uint64_t index = position->hash % table->size;
     assert(index >= 0 && index < table->size);
     table->contents[index].hash = position->hash;
     table->contents[index].move = move;
 }
 
-Move search_probe_pv_for_position(PVTable* table, const Position* position) {
+static Move _search_probe_pv_for_position(PVTable* table, const Position* position) {
     uint64_t index = position->hash % table->size;
     assert(index >= 0 && index < table->size);
     if (table->contents[index].hash == position->hash)
@@ -45,9 +45,9 @@ Move search_probe_pv_for_position(PVTable* table, const Position* position) {
     return nomove;
 }
 
-int32_t negamax(Position* position, uint8_t depth) {
+static int32_t _search_negamax(Position* position, uint8_t depth) {
     if (depth == 0)
-        return evaluation_position_eval(position);
+        return eval_position(position);
 
     int32_t max = -9999;
     int32_t score;
@@ -69,7 +69,7 @@ int32_t negamax(Position* position, uint8_t depth) {
             free(t);
             continue;
         }
-        score = -negamax(position, depth - 1);
+        score = -_search_negamax(position, depth - 1);
         move_undo(position);
         if (score > max)
         {
@@ -83,8 +83,8 @@ int32_t negamax(Position* position, uint8_t depth) {
     return max;
 }
 
-int32_t quiesce(Position* position, int32_t alpha, int32_t beta) {
-    int32_t score = evaluation_position_eval(position);
+static int32_t _search_quiesce(Position* position, int32_t alpha, int32_t beta) {
+    int32_t score = eval_position(position);
 
     if (score >= beta)
         return beta;
@@ -116,7 +116,7 @@ int32_t quiesce(Position* position, int32_t alpha, int32_t beta) {
             free(t);
             continue;
         }
-        score = -quiesce(position, -beta, -alpha);
+        score = -_search_quiesce(position, -beta, -alpha);
         move_undo(position);
         if (score >= beta)
             return beta;
@@ -131,9 +131,9 @@ int32_t quiesce(Position* position, int32_t alpha, int32_t beta) {
     return alpha;
 }
 
-int32_t alphabeta(Position* position, uint8_t depth, int32_t alpha, int32_t beta) {
+static int32_t _search_alphabeta(Position* position, uint8_t depth, int32_t alpha, int32_t beta) {
     if (depth == 0)
-        return quiesce(position, alpha, beta);
+        return _search_quiesce(position, alpha, beta);
 
     int32_t best_value = -9999;
     int32_t score      = 0;
@@ -157,7 +157,7 @@ int32_t alphabeta(Position* position, uint8_t depth, int32_t alpha, int32_t beta
             continue;
         }
 
-        score = -alphabeta(position, depth - 1, -beta, -alpha);
+        score = -_search_alphabeta(position, depth - 1, -beta, -alpha);
 
         move_undo(position);
 
@@ -179,5 +179,5 @@ int32_t alphabeta(Position* position, uint8_t depth, int32_t alpha, int32_t beta
 }
 
 int32_t search(Position* position, uint8_t depth) {
-    return alphabeta(position, depth, -9999, 9999);
+    return _search_alphabeta(position, depth, -9999, 9999);
 }

@@ -1,7 +1,7 @@
 #include "include/eval.h"
 #include "include/chess.h"
 
-int32_t evaluation_position_eval(const Position* position) {
+int32_t eval_position(const Position* position) {
     uint8_t wK = position->board->piece_count[WHITE_KING];
     uint8_t bK = position->board->piece_count[BLACK_KING];
 

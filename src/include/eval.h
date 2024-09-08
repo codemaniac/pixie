@@ -4,6 +4,6 @@
 #include "chess.h"
 #include <stdint.h>
 
-int32_t evaluation_position_eval(const Position* position);
+int32_t eval_position(const Position* position);
 
 #endif
