@@ -132,7 +132,7 @@ Position* fen_to_position(const char* fen) {
                     exit(EXIT_FAILURE);
                 }
             }
-            board_set_piece(position->board, piece_id, RF_TO_SQIDX(rank, file++));
+            board_set_piece(position, piece_id, RF_TO_SQIDX(rank, file++));
         }
         else
         {

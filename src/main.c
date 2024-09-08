@@ -1,10 +1,10 @@
-#include "include/bitscan.h"
 #include "include/chess.h"
+#include "include/eval.h"
 #include "include/fen.h"
 #include "include/perft.h"
+#include "include/search.h"
 #include "include/utils.h"
 #include "lib/logc/log.h"
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,11 +56,15 @@ int main(void) {
     printf("%d\n", pos->enpassant_target);
     printf("%d\n", pos->half_move_clock);
     printf("%d\n", pos->full_move_number);
+    printf("%d\n", pos->ply_count);
     printf("%llu\n\n", pos->hash);
 
-    divide(pos, 6);
+    uint64_t start = utils_curr_time_ms();
+    divide(pos, 5);
+    printf("Completed in %llums\n", utils_curr_time_ms() - start);
 
-    board_display(pos->board);
+    uint32_t score = search(pos, 2);
+    printf("Score = %d\n", score);
 
     return EXIT_SUCCESS;
 }

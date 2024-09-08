@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
 
 uint8_t utils_str_indexof(const char* str, const char ch) {
     char* index;
@@ -64,4 +65,10 @@ uint64_t utils_bit_pop(const int64_t n, const uint8_t k) {
     }
 
     return 0;
+}
+
+uint64_t utils_curr_time_ms(void) {
+    struct timeval t;
+    gettimeofday(&t, NULL);
+    return (uint64_t) (t.tv_sec * 1000) + t.tv_usec / 1000;
 }

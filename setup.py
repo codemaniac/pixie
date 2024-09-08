@@ -6,11 +6,22 @@ module = Extension(
         "src/pypixie.c",
         "src/bitscan.c",
         "src/chess.c",
+        "src/eval.c",
         "src/fen.c",
         "src/hashkey.c",
         "src/perft.c",
+        "src/search.c",
         "src/utils.c",
         "src/lib/logc/log.c"
+    ],
+    extra_compile_args=[
+        "-std=gnu18",
+        "-Wall",
+        "-Wextra",
+        "-pedantic",
+        "-finline-functions",
+        "-funroll-loops",
+        "-DLOG_QUIET",
     ]
 )
 

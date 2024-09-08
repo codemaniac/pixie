@@ -78,6 +78,11 @@ enum {
     BQCA = 8
 };
 
+typedef enum {
+    MOVE_TYPE_QUITE,
+    MOVE_TYPE_NON_QUIET
+} MoveType;
+
 // Piece Macros
 
 #define PIECE_GET_TYPE(p) (p & 0x7)
@@ -131,7 +136,7 @@ enum {
 
 typedef struct {
     uint32_t move_id;
-    int16_t  evaluation;
+    MoveType type;
 } Move;
 
 typedef struct {
@@ -157,6 +162,7 @@ typedef struct {
 typedef struct {
     uint64_t bitboards[15];
     uint8_t  pieces[64];
+    uint8_t  piece_count[15];
 } Board;
 
 typedef struct {
@@ -166,6 +172,7 @@ typedef struct {
     uint8_t      enpassant_target;
     uint8_t      half_move_clock;
     uint8_t      full_move_number;
+    uint8_t      ply_count;
     uint64_t     hash;
     MoveHistory* move_history;
 } Position;
@@ -176,14 +183,16 @@ void initialize(void);
 // Board Functions
 
 Board* board_create(void);
-void   board_set_piece(Board* board, const Piece piece, const Square square);
-void   board_clear_piece(Board* board, const Piece piece, const Square square);
+void   board_set_piece(Position* position, const Piece piece, const Square square);
+void   board_clear_piece(Position* position, const Piece piece, const Square square);
 void   board_display(const Board* board);
 
 // Position Functions
 
 Position* position_create(void);
+bool      position_is_valid(const Position* position);
 bool      position_is_in_check(const Position* position);
+bool      position_is_repeated(const Position* position);
 
 // Move Functions
 

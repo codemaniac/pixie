@@ -1,6 +1,8 @@
 #include "include/chess.h"
 #include "include/bitscan.h"
+#include "include/hashkey.h"
 #include "include/utils.h"
+#include "lib/logc/log.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -67,22 +69,30 @@ Board* board_create(void) {
     return b;
 }
 
-void board_set_piece(Board* board, const Piece piece, const Square square) {
+void board_set_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);
-    board->bitboards[piece] |= bit;
-    board->bitboards[NO_PIECE] &= bit_inverted;
-    board->bitboards[WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] |= bit;
-    board->pieces[square] = piece;
+    position->board->bitboards[piece] |= bit;
+    position->board->bitboards[NO_PIECE] &= bit_inverted;
+    position->board->bitboards[WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] |= bit;
+    position->board->pieces[square] = piece;
+    position->board->piece_count[piece] += 1;
+    position->board->piece_count[NO_PIECE] -= 1;
+    position->board->piece_count[WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] += 1;
+    position->hash ^= HASHTABLE[HASH_IDX(piece)][square];
 }
 
-void board_clear_piece(Board* board, const Piece piece, const Square square) {
+void board_clear_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);
-    board->bitboards[piece] &= bit_inverted;
-    board->bitboards[NO_PIECE] |= bit;
-    board->bitboards[WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] &= bit_inverted;
-    board->pieces[square] = NO_PIECE;
+    position->board->bitboards[piece] &= bit_inverted;
+    position->board->bitboards[NO_PIECE] |= bit;
+    position->board->bitboards[WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] &= bit_inverted;
+    position->board->pieces[square] = NO_PIECE;
+    position->board->piece_count[piece] -= 1;
+    position->board->piece_count[NO_PIECE] += 1;
+    position->board->piece_count[WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] -= 1;
+    position->hash ^= HASHTABLE[HASH_IDX(piece)][square];
 }
 
 void board_display(const Board* board) {
@@ -560,6 +570,34 @@ bool position_is_in_check(const Position* position) {
     return position_is_square_attacked(position, king_pos, !position->active_color);
 }
 
+bool position_is_valid(const Position* position) {
+    if (position->board->piece_count[WHITE_KING] != 1)
+        return false;
+    if (position->board->piece_count[BLACK_KING] != 1)
+        return false;
+    if (position->board->bitboards[WHITE_PAWN] & MASK_RANK_1)
+        return false;
+    if (position->board->bitboards[WHITE_PAWN] & MASK_RANK_8)
+        return false;
+    if (position->board->bitboards[BLACK_PAWN] & MASK_RANK_1)
+        return false;
+    if (position->board->bitboards[BLACK_PAWN] & MASK_RANK_8)
+        return false;
+    return true;
+}
+
+bool position_is_repeated(const Position* position) {
+    for (uint16_t i = (position->ply_count - position->half_move_clock);
+         i < position->ply_count - 1; ++i)
+    {
+        if (position->hash == position->move_history->contents[i].prev_hash)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 Move encode_move(const Piece    piece,
                  const uint8_t  from_sq,
                  const uint8_t  to_sq,
@@ -583,7 +621,18 @@ Move encode_move(const Piece    piece,
         move_id |= flag_ca;
     }
 
-    const Move move = {.move_id = move_id};
+    MoveType type;
+
+    if (captured_piece != NO_PIECE || promoted_piece != NO_PIECE || flag_ep || flag_ca)
+    {
+        type = MOVE_TYPE_NON_QUIET;
+    }
+    else
+    {
+        type = MOVE_TYPE_QUITE;
+    }
+
+    const Move move = {.move_id = move_id, .type = type};
     return move;
 }
 
@@ -1083,8 +1132,9 @@ bool move_do(Position* position, const Move move) {
     {
         position->full_move_number++;
     }
+    position->ply_count++;
 
-    board_clear_piece(position->board, MOVE_PIECE(move.move_id), MOVE_FROM_SQ(move.move_id));
+    board_clear_piece(position, MOVE_PIECE(move.move_id), MOVE_FROM_SQ(move.move_id));
 
     if (move.move_id & MOVE_FLAG_PS)
     {
@@ -1092,7 +1142,7 @@ bool move_do(Position* position, const Move move) {
             position->enpassant_target = MOVE_FROM_SQ(move.move_id) + 8;
         else
             position->enpassant_target = MOVE_FROM_SQ(move.move_id) - 8;
-        board_set_piece(position->board, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
+        board_set_piece(position, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
         position->half_move_clock = 0;
         is_legal_move             = !position_is_in_check(position);
         position->active_color    = !position->active_color;
@@ -1102,12 +1152,10 @@ bool move_do(Position* position, const Move move) {
     if (move.move_id & MOVE_FLAG_EP)
     {
         if (position->active_color == WHITE)
-            board_clear_piece(position->board, MOVE_CAPTURED(move.move_id),
-                              MOVE_TO_SQ(move.move_id) - 8);
+            board_clear_piece(position, MOVE_CAPTURED(move.move_id), MOVE_TO_SQ(move.move_id) - 8);
         else
-            board_clear_piece(position->board, MOVE_CAPTURED(move.move_id),
-                              MOVE_TO_SQ(move.move_id) + 8);
-        board_set_piece(position->board, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
+            board_clear_piece(position, MOVE_CAPTURED(move.move_id), MOVE_TO_SQ(move.move_id) + 8);
+        board_set_piece(position, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
         position->half_move_clock = 0;
         is_legal_move             = !position_is_in_check(position);
         position->active_color    = !position->active_color;
@@ -1116,10 +1164,9 @@ bool move_do(Position* position, const Move move) {
 
     if (move.move_id & MOVE_FLAG_WKCA)
     {
-        board_clear_piece(position->board, WHITE_KING, E1);
-        board_set_piece(position->board, WHITE_KING, G1);
-        board_clear_piece(position->board, WHITE_ROOK, H1);
-        board_set_piece(position->board, WHITE_ROOK, F1);
+        board_set_piece(position, WHITE_KING, G1);
+        board_clear_piece(position, WHITE_ROOK, H1);
+        board_set_piece(position, WHITE_ROOK, F1);
         position->casteling_rights &= 0xC;
         is_legal_move          = !position_is_in_check(position);
         position->active_color = !position->active_color;
@@ -1128,10 +1175,9 @@ bool move_do(Position* position, const Move move) {
 
     if (move.move_id & MOVE_FLAG_WQCA)
     {
-        board_clear_piece(position->board, WHITE_KING, E1);
-        board_set_piece(position->board, WHITE_KING, C1);
-        board_clear_piece(position->board, WHITE_ROOK, A1);
-        board_set_piece(position->board, WHITE_ROOK, D1);
+        board_set_piece(position, WHITE_KING, C1);
+        board_clear_piece(position, WHITE_ROOK, A1);
+        board_set_piece(position, WHITE_ROOK, D1);
         position->casteling_rights &= 0xC;
         is_legal_move          = !position_is_in_check(position);
         position->active_color = !position->active_color;
@@ -1140,10 +1186,9 @@ bool move_do(Position* position, const Move move) {
 
     if (move.move_id & MOVE_FLAG_BKCA)
     {
-        board_clear_piece(position->board, BLACK_KING, E8);
-        board_set_piece(position->board, BLACK_KING, G8);
-        board_clear_piece(position->board, BLACK_ROOK, H8);
-        board_set_piece(position->board, BLACK_ROOK, F8);
+        board_set_piece(position, BLACK_KING, G8);
+        board_clear_piece(position, BLACK_ROOK, H8);
+        board_set_piece(position, BLACK_ROOK, F8);
         position->casteling_rights &= 0x3;
         is_legal_move          = !position_is_in_check(position);
         position->active_color = !position->active_color;
@@ -1152,10 +1197,9 @@ bool move_do(Position* position, const Move move) {
 
     if (move.move_id & MOVE_FLAG_BQCA)
     {
-        board_clear_piece(position->board, BLACK_KING, E8);
-        board_set_piece(position->board, BLACK_KING, C8);
-        board_clear_piece(position->board, BLACK_ROOK, A8);
-        board_set_piece(position->board, BLACK_ROOK, D8);
+        board_set_piece(position, BLACK_KING, C8);
+        board_clear_piece(position, BLACK_ROOK, A8);
+        board_set_piece(position, BLACK_ROOK, D8);
         position->casteling_rights &= 0x3;
         is_legal_move          = !position_is_in_check(position);
         position->active_color = !position->active_color;
@@ -1166,8 +1210,7 @@ bool move_do(Position* position, const Move move) {
     {
         if (MOVE_CAPTURED(move.move_id))
         {
-            board_clear_piece(position->board, MOVE_CAPTURED(move.move_id),
-                              MOVE_TO_SQ(move.move_id));
+            board_clear_piece(position, MOVE_CAPTURED(move.move_id), MOVE_TO_SQ(move.move_id));
 
             if (PIECE_GET_TYPE(MOVE_CAPTURED(move.move_id)) == ROOK)
             {
@@ -1196,7 +1239,7 @@ bool move_do(Position* position, const Move move) {
             }
         }
 
-        board_set_piece(position->board, MOVE_PROMOTED(move.move_id), MOVE_TO_SQ(move.move_id));
+        board_set_piece(position, MOVE_PROMOTED(move.move_id), MOVE_TO_SQ(move.move_id));
         position->half_move_clock = 0;
         is_legal_move             = !position_is_in_check(position);
         position->active_color    = !position->active_color;
@@ -1205,8 +1248,8 @@ bool move_do(Position* position, const Move move) {
 
     if (MOVE_CAPTURED(move.move_id))
     {
-        board_clear_piece(position->board, MOVE_CAPTURED(move.move_id), MOVE_TO_SQ(move.move_id));
-        board_set_piece(position->board, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
+        board_clear_piece(position, MOVE_CAPTURED(move.move_id), MOVE_TO_SQ(move.move_id));
+        board_set_piece(position, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
 
         if (PIECE_GET_TYPE(MOVE_CAPTURED(move.move_id)) == ROOK)
         {
@@ -1238,7 +1281,7 @@ bool move_do(Position* position, const Move move) {
     }
     else
     {
-        board_set_piece(position->board, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
+        board_set_piece(position, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
     }
 
     if (PIECE_GET_TYPE(MOVE_PIECE(move.move_id)) == PAWN)
@@ -1297,78 +1340,73 @@ void move_undo(Position* position) {
 
     if (prev_move.move_id & MOVE_FLAG_WKCA)
     {
-        board_clear_piece(position->board, WHITE_KING, G1);
-        board_set_piece(position->board, WHITE_KING, E1);
-        board_clear_piece(position->board, WHITE_ROOK, F1);
-        board_set_piece(position->board, WHITE_ROOK, H1);
+        board_clear_piece(position, WHITE_KING, G1);
+        board_set_piece(position, WHITE_KING, E1);
+        board_clear_piece(position, WHITE_ROOK, F1);
+        board_set_piece(position, WHITE_ROOK, H1);
     }
     else if (prev_move.move_id & MOVE_FLAG_WQCA)
     {
-        board_clear_piece(position->board, WHITE_KING, C1);
-        board_set_piece(position->board, WHITE_KING, E1);
-        board_clear_piece(position->board, WHITE_ROOK, D1);
-        board_set_piece(position->board, WHITE_ROOK, A1);
+        board_clear_piece(position, WHITE_KING, C1);
+        board_set_piece(position, WHITE_KING, E1);
+        board_clear_piece(position, WHITE_ROOK, D1);
+        board_set_piece(position, WHITE_ROOK, A1);
     }
     else if (prev_move.move_id & MOVE_FLAG_BKCA)
     {
-        board_clear_piece(position->board, BLACK_KING, G8);
-        board_set_piece(position->board, BLACK_KING, E8);
-        board_clear_piece(position->board, BLACK_ROOK, F8);
-        board_set_piece(position->board, BLACK_ROOK, H8);
+        board_clear_piece(position, BLACK_KING, G8);
+        board_set_piece(position, BLACK_KING, E8);
+        board_clear_piece(position, BLACK_ROOK, F8);
+        board_set_piece(position, BLACK_ROOK, H8);
     }
     else if (prev_move.move_id & MOVE_FLAG_BQCA)
     {
-        board_clear_piece(position->board, BLACK_KING, C8);
-        board_set_piece(position->board, BLACK_KING, E8);
-        board_clear_piece(position->board, BLACK_ROOK, D8);
-        board_set_piece(position->board, BLACK_ROOK, A8);
+        board_clear_piece(position, BLACK_KING, C8);
+        board_set_piece(position, BLACK_KING, E8);
+        board_clear_piece(position, BLACK_ROOK, D8);
+        board_set_piece(position, BLACK_ROOK, A8);
     }
     else if (prev_move.move_id & MOVE_FLAG_EP)
     {
-        board_clear_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                          MOVE_TO_SQ(prev_move.move_id));
-        board_set_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                        MOVE_FROM_SQ(prev_move.move_id));
+        board_clear_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_TO_SQ(prev_move.move_id));
+        board_set_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_FROM_SQ(prev_move.move_id));
         if (position->active_color == WHITE)
-            board_set_piece(position->board, MOVE_CAPTURED(prev_move.move_id),
+            board_set_piece(position, MOVE_CAPTURED(prev_move.move_id),
                             MOVE_TO_SQ(prev_move.move_id) + 8);
         else
-            board_set_piece(position->board, MOVE_CAPTURED(prev_move.move_id),
+            board_set_piece(position, MOVE_CAPTURED(prev_move.move_id),
                             MOVE_TO_SQ(prev_move.move_id) - 8);
     }
     else if (MOVE_PROMOTED(prev_move.move_id))
     {
-        board_clear_piece(position->board, MOVE_PROMOTED(prev_move.move_id),
+        board_clear_piece(position, MOVE_PROMOTED(prev_move.move_id),
                           MOVE_TO_SQ(prev_move.move_id));
-        board_set_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                        MOVE_FROM_SQ(prev_move.move_id));
+        board_set_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_FROM_SQ(prev_move.move_id));
 
         if (MOVE_CAPTURED(prev_move.move_id))
         {
-            board_set_piece(position->board, MOVE_CAPTURED(prev_move.move_id),
+            board_set_piece(position, MOVE_CAPTURED(prev_move.move_id),
                             MOVE_TO_SQ(prev_move.move_id));
         }
     }
     else if (MOVE_CAPTURED(prev_move.move_id))
     {
-        board_clear_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                          MOVE_TO_SQ(prev_move.move_id));
-        board_set_piece(position->board, MOVE_CAPTURED(prev_move.move_id),
-                        MOVE_TO_SQ(prev_move.move_id));
-        board_set_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                        MOVE_FROM_SQ(prev_move.move_id));
+        board_clear_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_TO_SQ(prev_move.move_id));
+        board_set_piece(position, MOVE_CAPTURED(prev_move.move_id), MOVE_TO_SQ(prev_move.move_id));
+        board_set_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_FROM_SQ(prev_move.move_id));
     }
     else
     {
-        board_clear_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                          MOVE_TO_SQ(prev_move.move_id));
-        board_set_piece(position->board, MOVE_PIECE(prev_move.move_id),
-                        MOVE_FROM_SQ(prev_move.move_id));
+        board_clear_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_TO_SQ(prev_move.move_id));
+        board_set_piece(position, MOVE_PIECE(prev_move.move_id), MOVE_FROM_SQ(prev_move.move_id));
     }
 
+    assert(position->hash == mhe.prev_hash);
+
+    position->active_color     = !position->active_color;
     position->casteling_rights = mhe.prev_casteling_rights;
     position->enpassant_target = mhe.prev_enpassant_target;
     position->half_move_clock  = mhe.prev_half_move_clock;
     position->full_move_number = mhe.prev_full_move_number;
-    position->active_color     = !position->active_color;
+    position->ply_count--;
 }
