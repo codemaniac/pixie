@@ -775,7 +775,7 @@ static MovesListNode* _movegen_create_move_list_node(const Move move) {
     MovesListNode* node = (MovesListNode*) malloc(sizeof(MovesListNode));
     if (node == NULL)
     {
-        log_fatal("Memory allocation failed1");
+        log_fatal("Memory allocation failed!");
         exit(EXIT_FAILURE);
     }
     node->move = move;
