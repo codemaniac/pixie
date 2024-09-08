@@ -1,11 +1,9 @@
 #include "include/chess.h"
-#include "include/eval.h"
 #include "include/fen.h"
 #include "include/perft.h"
 #include "include/search.h"
 #include "include/utils.h"
 #include "lib/logc/log.h"
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -53,7 +51,7 @@ int main(void) {
     position_display(pos);
 
     uint64_t start = utils_time_curr_time_ms();
-    divide(pos, 3);
+    divide(pos, 6);
     printf("Completed in %llums\n", utils_time_curr_time_ms() - start);
 
     uint32_t score = search(pos, 2);

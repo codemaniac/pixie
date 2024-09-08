@@ -66,20 +66,31 @@ static uint64_t ATTACK_TABLE_KING[64];
 * Bitboard utility functions
 */
 
-static uint64_t _bitboard_north_one(const uint64_t b) { return b << 8; }
-static uint64_t _bitboard_south_one(const uint64_t b) { return b >> 8; }
-static uint64_t _bitboard_east_one(const uint64_t b) { return (b & BOARD_MASK_NOT_H_FILE) << 1; }
-static uint64_t _bitboard_west_one(const uint64_t b) { return (b & BOARD_MASK_NOT_A_FILE) >> 1; }
-static uint64_t _bitboard_north_east_one(const uint64_t b) {
+static inline uint64_t _bitboard_north_one(const uint64_t b) { return b << 8; }
+
+static inline uint64_t _bitboard_south_one(const uint64_t b) { return b >> 8; }
+
+static inline uint64_t _bitboard_east_one(const uint64_t b) {
+    return (b & BOARD_MASK_NOT_H_FILE) << 1;
+}
+
+static inline uint64_t _bitboard_west_one(const uint64_t b) {
+    return (b & BOARD_MASK_NOT_A_FILE) >> 1;
+}
+
+static inline uint64_t _bitboard_north_east_one(const uint64_t b) {
     return (b & BOARD_MASK_NOT_H_FILE) << 9;
 }
-static uint64_t _bitboard_south_east_one(const uint64_t b) {
+
+static inline uint64_t _bitboard_south_east_one(const uint64_t b) {
     return (b & BOARD_MASK_NOT_H_FILE) >> 7;
 }
-static uint64_t _bitboard_south_west_one(const uint64_t b) {
+
+static inline uint64_t _bitboard_south_west_one(const uint64_t b) {
     return (b & BOARD_MASK_NOT_A_FILE) >> 9;
 }
-static uint64_t _bitboard_north_west_one(const uint64_t b) {
+
+static inline uint64_t _bitboard_north_west_one(const uint64_t b) {
     return (b & BOARD_MASK_NOT_A_FILE) << 7;
 }
 
@@ -416,34 +427,33 @@ void initialize(void) {
 * Movegen Magic Bitboard functions
 */
 
-
-static uint64_t _movegen_get_pawn_attacks(int sq, Color c, uint64_t occupancy) {
+static inline uint64_t _movegen_get_pawn_attacks(int sq, Color c, uint64_t occupancy) {
     return ATTACK_TABLE_PAWN[c][sq] & occupancy;
 }
 
-static uint64_t _movegen_get_knight_attacks(int sq, uint64_t occupancy) {
+static inline uint64_t _movegen_get_knight_attacks(int sq, uint64_t occupancy) {
     return ATTACK_TABLE_KNIGHT[sq] & occupancy;
 }
 
-static uint64_t _movegen_get_bishop_attacks(int sq, uint64_t occupancy) {
+static inline uint64_t _movegen_get_bishop_attacks(int sq, uint64_t occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
     int magic_index =
       _init_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
     return ATTACK_TABLE_BISHOP[sq][magic_index];
 }
 
-static uint64_t _movegen_get_rook_attacks(int sq, uint64_t occupancy) {
+static inline uint64_t _movegen_get_rook_attacks(int sq, uint64_t occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
     int magic_index =
       _init_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
     return ATTACK_TABLE_ROOK[sq][magic_index];
 }
 
-static uint64_t _movegen_get_queen_attacks(int sq, uint64_t occupancy) {
+static inline uint64_t _movegen_get_queen_attacks(int sq, uint64_t occupancy) {
     return _movegen_get_bishop_attacks(sq, occupancy) | _movegen_get_rook_attacks(sq, occupancy);
 }
 
-static uint64_t _movegen_get_king_attacks(int sq, uint64_t occupancy) {
+static inline uint64_t _movegen_get_king_attacks(int sq, uint64_t occupancy) {
     return ATTACK_TABLE_KING[sq] & occupancy;
 }
 
@@ -520,20 +530,22 @@ static void _board_display(const Board* board) {
     }
 }
 
-static bool _position_history_is_full(Position* pos) {
+static inline bool _position_history_is_full(Position* pos) {
     return (pos->move_history->top == pos->move_history->size - 1);
 }
 
-static bool _position_history_is_empty(Position* pos) { return (pos->move_history->top == -1); }
+static inline bool _position_history_is_empty(Position* pos) {
+    return (pos->move_history->top == -1);
+}
 
-static void _position_history_push(Position* pos, MoveHistoryEntry move_history_entry) {
+static inline void _position_history_push(Position* pos, MoveHistoryEntry move_history_entry) {
     if (_position_history_is_full(pos))
         return;
 
     pos->move_history->contents[++pos->move_history->top] = move_history_entry;
 }
 
-static MoveHistoryEntry _position_history_pop(Position* pos) {
+static inline MoveHistoryEntry _position_history_pop(Position* pos) {
     if (_position_history_is_empty(pos))
     {
         exit(EXIT_FAILURE);
@@ -683,11 +695,11 @@ bool position_has_legal_move(Position* position) {
     return false;
 }
 
-bool position_is_in_checkmate(Position* position) {
+inline bool position_is_in_checkmate(Position* position) {
     return position_is_in_check(position) && !position_has_legal_move(position);
 }
 
-bool position_is_in_stalemate(Position* position) {
+inline bool position_is_in_stalemate(Position* position) {
     return !position_is_in_check(position) && !position_has_legal_move(position);
 }
 
@@ -733,45 +745,46 @@ static Move _move_encode(const Piece    piece,
     return move;
 }
 
-static Move _move_encode_quite_move(const Piece piece, const uint8_t from_sq, const uint8_t to_sq) {
+static inline Move
+_move_encode_quite_move(const Piece piece, const uint8_t from_sq, const uint8_t to_sq) {
     return _move_encode(piece, from_sq, to_sq, NO_PIECE, NO_PIECE, false, false, 0);
 }
 
-static Move _move_encode_capture_move(const Piece   piece,
-                                      const uint8_t from_sq,
-                                      const uint8_t to_sq,
-                                      const Piece   captured_piece) {
+static inline Move _move_encode_capture_move(const Piece   piece,
+                                             const uint8_t from_sq,
+                                             const uint8_t to_sq,
+                                             const Piece   captured_piece) {
     return _move_encode(piece, from_sq, to_sq, captured_piece, NO_PIECE, false, false, 0);
 }
 
-static Move
+static inline Move
 _move_encode_pawn_start_move(const Piece pawn, const uint8_t from_sq, const uint8_t to_sq) {
     return _move_encode(pawn, from_sq, to_sq, NO_PIECE, NO_PIECE, true, false, 0);
 }
 
-static Move _move_encode_pawn_promotion_move(const Piece   pawn,
-                                             const uint8_t from_sq,
-                                             const uint8_t to_sq,
-                                             const Piece   captured_piece,
-                                             const Piece   promoted_piece) {
+static inline Move _move_encode_pawn_promotion_move(const Piece   pawn,
+                                                    const uint8_t from_sq,
+                                                    const uint8_t to_sq,
+                                                    const Piece   captured_piece,
+                                                    const Piece   promoted_piece) {
     return _move_encode(pawn, from_sq, to_sq, captured_piece, promoted_piece, false, false, 0);
 }
 
-static Move _move_encode_pawn_enpassant_move(const Piece   pawn,
-                                             const uint8_t from_sq,
-                                             const uint8_t to_sq,
-                                             const Piece   captured_pawn) {
+static inline Move _move_encode_pawn_enpassant_move(const Piece   pawn,
+                                                    const uint8_t from_sq,
+                                                    const uint8_t to_sq,
+                                                    const Piece   captured_pawn) {
     return _move_encode(pawn, from_sq, to_sq, captured_pawn, NO_PIECE, false, true, 0);
 }
 
-static Move _move_encode_king_castle_move(const Piece    king,
-                                          const uint8_t  from_sq,
-                                          const uint8_t  to_sq,
-                                          const uint32_t flag_ca) {
+static inline Move _move_encode_king_castle_move(const Piece    king,
+                                                 const uint8_t  from_sq,
+                                                 const uint8_t  to_sq,
+                                                 const uint32_t flag_ca) {
     return _move_encode(king, from_sq, to_sq, NO_PIECE, NO_PIECE, false, false, flag_ca);
 }
 
-static MovesListNode* _movegen_create_move_list_node(const Move move) {
+static inline MovesListNode* _movegen_create_move_list_node(const Move move) {
     MovesListNode* node = (MovesListNode*) malloc(sizeof(MovesListNode));
     if (node == NULL)
     {
@@ -784,7 +797,7 @@ static MovesListNode* _movegen_create_move_list_node(const Move move) {
     return node;
 }
 
-static void _movegen_enqueue_move(MoveList* list, const Move move) {
+static inline void _movegen_enqueue_move(MoveList* list, const Move move) {
     MovesListNode* new_tail_node = _movegen_create_move_list_node(move);
 
     list->tail->next = (struct MovesListNode*) new_tail_node;
@@ -819,7 +832,6 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 to_sq = utils_bit_bitscan_forward(&attacks);
 
                 if (BOARD_SQ_TO_RANK(to_sq) == RANK_8)
-
                 {
                     // Pawn Promotion
                     m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
