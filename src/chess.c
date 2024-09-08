@@ -558,6 +558,27 @@ Position* position_create(void) {
     return pos;
 }
 
+Position* position_clone(const Position* position) {
+    Position* position_copy = position_create();
+    for (uint8_t p = 0; p < 15; p++)
+    {
+        position_copy->board->bitboards[p]   = position->board->bitboards[p];
+        position_copy->board->piece_count[p] = position->board->piece_count[p];
+    }
+    for (uint8_t sq = 0; sq < 64; sq++)
+    {
+        position_copy->board->pieces[sq] = position->board->pieces[sq];
+    }
+    position_copy->active_color     = position->active_color;
+    position_copy->casteling_rights = position->casteling_rights;
+    position_copy->enpassant_target = position->enpassant_target;
+    position_copy->half_move_clock  = position->half_move_clock;
+    position_copy->full_move_number = position->full_move_number;
+    position_copy->ply_count        = position->ply_count;
+    position_copy->hash             = position->hash;
+    return position_copy;
+}
+
 void position_set_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);

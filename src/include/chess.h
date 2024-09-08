@@ -173,6 +173,7 @@ typedef struct {
 void initialize(void);
 
 Position* position_create(void);
+Position* position_clone(const Position* position);
 void      position_set_piece(Position* position, const Piece piece, const Square square);
 void      position_clear_piece(Position* position, const Piece piece, const Square square);
 bool      position_is_valid(const Position* position);
