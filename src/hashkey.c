@@ -1,6 +1,6 @@
 #include "include/hashkey.h"
-#include "include/bitscan.h"
 #include "include/chess.h"
+#include "include/utils.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,7 +85,7 @@ uint64_t hashkey_position(Position* position) {
 
         while (piece_bitmap)
         {
-            piece_pos = bitscan_forward(&piece_bitmap);
+            piece_pos = utils_bit_bitscan_forward(&piece_bitmap);
             hash ^= HASHTABLE[piece_hash_idx][piece_pos];
         }
     }

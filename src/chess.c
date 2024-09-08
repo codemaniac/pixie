@@ -1,5 +1,4 @@
 #include "include/chess.h"
-#include "include/bitscan.h"
 #include "include/hashkey.h"
 #include "include/utils.h"
 #include "lib/logc/log.h"
@@ -355,7 +354,7 @@ uint64_t index_to_uint64(int index, int bits, uint64_t m) {
     uint64_t result = 0ULL;
     for (i = 0; i < bits; i++)
     {
-        j = bitscan_forward(&m);
+        j = utils_bit_bitscan_forward(&m);
         if (index & (1 << i))
             result |= (1ULL << j);
     }
@@ -566,7 +565,7 @@ bool position_is_square_attacked(const Position* position,
 bool position_is_in_check(const Position* position) {
     const PieceType king     = PIECE_CREATE(KING, position->active_color);
     uint64_t        king_bb  = position->board->bitboards[king];
-    uint8_t         king_pos = bitscan_forward(&king_bb);
+    uint8_t         king_pos = utils_bit_bitscan_forward(&king_bb);
     return position_is_square_attacked(position, king_pos, !position->active_color);
 }
 
@@ -767,11 +766,11 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         while (bb)
         {
             occupancy = position->board->bitboards[NO_PIECE];
-            from_sq   = bitscan_forward(&bb);
+            from_sq   = utils_bit_bitscan_forward(&bb);
             attacks   = north_one((1ULL << from_sq)) & occupancy;
             if (attacks)
             {
-                to_sq = bitscan_forward(&attacks);
+                to_sq = utils_bit_bitscan_forward(&attacks);
 
                 if (SQIDX_TO_RANK(to_sq) == RANK_8)
 
@@ -803,7 +802,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             attacks = north_one(attacks) & occupancy & MASK_RANK_4;
             if (attacks)
             {
-                to_sq = bitscan_forward(&attacks);
+                to_sq = utils_bit_bitscan_forward(&attacks);
                 m     = encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
                 movegen_enqueue_move(moves, m);
             }
@@ -813,7 +812,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             attacks   = get_pawn_attacks(from_sq, active_color, occupancy);
             while (attacks)
             {
-                to_sq = bitscan_forward(&attacks);
+                to_sq = utils_bit_bitscan_forward(&attacks);
 
                 if (SQIDX_TO_RANK(to_sq) == RANK_8)
                 {
@@ -846,7 +845,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 attacks   = get_pawn_attacks(from_sq, active_color, occupancy);
                 if (attacks)
                 {
-                    to_sq = bitscan_forward(&attacks);
+                    to_sq = utils_bit_bitscan_forward(&attacks);
                     m     = encode_pawn_enpassant_move(WHITE_PAWN, from_sq, to_sq, BLACK_PAWN);
                     movegen_enqueue_move(moves, m);
                 }
@@ -860,11 +859,11 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         while (bb)
         {
             occupancy = position->board->bitboards[NO_PIECE];
-            from_sq   = bitscan_forward(&bb);
+            from_sq   = utils_bit_bitscan_forward(&bb);
             attacks   = south_one((1ULL << from_sq)) & occupancy;
             if (attacks)
             {
-                to_sq = bitscan_forward(&attacks);
+                to_sq = utils_bit_bitscan_forward(&attacks);
 
                 if (SQIDX_TO_RANK(to_sq) == RANK_1)
                 {
@@ -892,7 +891,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             attacks = south_one(attacks) & occupancy & MASK_RANK_5;
             if (attacks)
             {
-                to_sq = bitscan_forward(&attacks);
+                to_sq = utils_bit_bitscan_forward(&attacks);
                 m     = encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
                 movegen_enqueue_move(moves, m);
             }
@@ -901,7 +900,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             attacks   = get_pawn_attacks(from_sq, active_color, occupancy);
             while (attacks)
             {
-                to_sq = bitscan_forward(&attacks);
+                to_sq = utils_bit_bitscan_forward(&attacks);
 
                 if (SQIDX_TO_RANK(to_sq) == RANK_1)
                 {
@@ -932,7 +931,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 attacks   = get_pawn_attacks(from_sq, active_color, occupancy);
                 if (attacks)
                 {
-                    to_sq = bitscan_forward(&attacks);
+                    to_sq = utils_bit_bitscan_forward(&attacks);
                     m     = encode_pawn_enpassant_move(BLACK_PAWN, from_sq, to_sq, WHITE_PAWN);
                     movegen_enqueue_move(moves, m);
                 }
@@ -945,13 +944,13 @@ MoveList* movegen_pseudo_legal(const Position* position) {
 
     while (bb)
     {
-        from_sq   = bitscan_forward(&bb);
+        from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = position->board->bitboards[NO_PIECE]
                   | position->board->bitboards[WHITE_PIECES_IDX + (!active_color)];
         attacks = get_knight_attacks(from_sq, occupancy);
         while (attacks)
         {
-            to_sq = bitscan_forward(&attacks);
+            to_sq = utils_bit_bitscan_forward(&attacks);
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
@@ -971,12 +970,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
 
     while (bb)
     {
-        from_sq   = bitscan_forward(&bb);
+        from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = ~position->board->bitboards[NO_PIECE];
         attacks   = get_bishop_attacks(from_sq, occupancy);
         while (attacks)
         {
-            to_sq = bitscan_forward(&attacks);
+            to_sq = utils_bit_bitscan_forward(&attacks);
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
@@ -996,12 +995,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
 
     while (bb)
     {
-        from_sq   = bitscan_forward(&bb);
+        from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = ~position->board->bitboards[NO_PIECE];
         attacks   = get_rook_attacks(from_sq, occupancy);
         while (attacks)
         {
-            to_sq = bitscan_forward(&attacks);
+            to_sq = utils_bit_bitscan_forward(&attacks);
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
@@ -1021,12 +1020,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
 
     while (bb)
     {
-        from_sq   = bitscan_forward(&bb);
+        from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = ~position->board->bitboards[NO_PIECE];
         attacks   = get_queen_attacks(from_sq, occupancy);
         while (attacks)
         {
-            to_sq = bitscan_forward(&attacks);
+            to_sq = utils_bit_bitscan_forward(&attacks);
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
@@ -1046,13 +1045,13 @@ MoveList* movegen_pseudo_legal(const Position* position) {
 
     while (bb)
     {
-        from_sq   = bitscan_forward(&bb);
+        from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = position->board->bitboards[NO_PIECE]
                   | position->board->bitboards[WHITE_PIECES_IDX + (!active_color)];
         attacks = get_king_attacks(from_sq, occupancy);
         while (attacks)
         {
-            to_sq = bitscan_forward(&attacks);
+            to_sq = utils_bit_bitscan_forward(&attacks);
 
             if (position->board->pieces[to_sq] == NO_PIECE)
             {

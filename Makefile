@@ -34,9 +34,8 @@ format:
 bear:
 	@bear -- make
 
-$(NAME): main.o bitscan.o chess.o eval.o fen.o hashkey.o perft.o search.o utils.o logc.o
+$(NAME): main.o chess.o eval.o fen.o hashkey.o perft.o search.o utils.o logc.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME) $(BUILD_DIR)/main.o \
-		$(BUILD_DIR)/bitscan.o \
 		$(BUILD_DIR)/chess.o \
 		$(BUILD_DIR)/eval.o \
 		$(BUILD_DIR)/fen.o \
@@ -51,9 +50,6 @@ test:
 
 main.o: $(SRC_DIR)/main.c
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/main.c -o $(BUILD_DIR)/main.o
-
-bitscan.o: $(SRC_DIR)/bitscan.c $(INCLUDE_DIR)/bitscan.h
-	@$(CC) $(CFLAGS) -c $(SRC_DIR)/bitscan.c -o $(BUILD_DIR)/bitscan.o
 
 chess.o: $(SRC_DIR)/chess.c $(INCLUDE_DIR)/chess.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/chess.c -o $(BUILD_DIR)/chess.o

@@ -48,7 +48,7 @@ int main(void) {
 
     initialize();
 
-    const char* fen = "4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1";
+    const char* fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
     Position*   pos = fen_to_position(fen);
     board_display(pos->board);
     printf("%d\n", pos->active_color);
@@ -59,9 +59,9 @@ int main(void) {
     printf("%d\n", pos->ply_count);
     printf("%llu\n\n", pos->hash);
 
-    uint64_t start = utils_curr_time_ms();
+    uint64_t start = utils_time_curr_time_ms();
     divide(pos, 6);
-    printf("Completed in %llums\n", utils_curr_time_ms() - start);
+    printf("Completed in %llums\n", utils_time_curr_time_ms() - start);
 
     uint32_t score = search(pos, 2);
     printf("Score = %d\n", score);
