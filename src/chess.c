@@ -402,36 +402,6 @@ static void _init_attack_table_king(void) {
     }
 }
 
-static uint64_t _get_pawn_attacks(int sq, Color c, uint64_t occupancy) {
-    return ATTACK_TABLE_PAWN[c][sq] & occupancy;
-}
-
-static uint64_t _get_knight_attacks(int sq, uint64_t occupancy) {
-    return ATTACK_TABLE_KNIGHT[sq] & occupancy;
-}
-
-static uint64_t _get_bishop_attacks(int sq, uint64_t occupancy) {
-    occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
-    int magic_index =
-      _init_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
-    return ATTACK_TABLE_BISHOP[sq][magic_index];
-}
-
-static uint64_t _get_rook_attacks(int sq, uint64_t occupancy) {
-    occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
-    int magic_index =
-      _init_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
-    return ATTACK_TABLE_ROOK[sq][magic_index];
-}
-
-static uint64_t _get_queen_attacks(int sq, uint64_t occupancy) {
-    return _get_bishop_attacks(sq, occupancy) | _get_rook_attacks(sq, occupancy);
-}
-
-static uint64_t _get_king_attacks(int sq, uint64_t occupancy) {
-    return ATTACK_TABLE_KING[sq] & occupancy;
-}
-
 void initialize(void) {
     _init_attack_table_pawn();
     _init_attack_table_knight();
@@ -440,6 +410,41 @@ void initialize(void) {
     _init_attack_mask_table_rook();
     _init_attack_table_rook();
     _init_attack_table_king();
+}
+
+/*
+* Movegen Magic Bitboard functions
+*/
+
+
+static uint64_t _movegen_get_pawn_attacks(int sq, Color c, uint64_t occupancy) {
+    return ATTACK_TABLE_PAWN[c][sq] & occupancy;
+}
+
+static uint64_t _movegen_get_knight_attacks(int sq, uint64_t occupancy) {
+    return ATTACK_TABLE_KNIGHT[sq] & occupancy;
+}
+
+static uint64_t _movegen_get_bishop_attacks(int sq, uint64_t occupancy) {
+    occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
+    int magic_index =
+      _init_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
+    return ATTACK_TABLE_BISHOP[sq][magic_index];
+}
+
+static uint64_t _movegen_get_rook_attacks(int sq, uint64_t occupancy) {
+    occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
+    int magic_index =
+      _init_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
+    return ATTACK_TABLE_ROOK[sq][magic_index];
+}
+
+static uint64_t _movegen_get_queen_attacks(int sq, uint64_t occupancy) {
+    return _movegen_get_bishop_attacks(sq, occupancy) | _movegen_get_rook_attacks(sq, occupancy);
+}
+
+static uint64_t _movegen_get_king_attacks(int sq, uint64_t occupancy) {
+    return ATTACK_TABLE_KING[sq] & occupancy;
 }
 
 /*
@@ -597,17 +602,17 @@ bool position_is_square_attacked(const Position* position,
         return true;
 
     const PieceType bishop = PIECE_CREATE(BISHOP, attacked_by_color);
-    if (_get_bishop_attacks(sq, ~position->board->bitboards[NO_PIECE])
+    if (_movegen_get_bishop_attacks(sq, ~position->board->bitboards[NO_PIECE])
         & position->board->bitboards[bishop])
         return true;
 
     const PieceType rook = PIECE_CREATE(ROOK, attacked_by_color);
-    if (_get_rook_attacks(sq, ~position->board->bitboards[NO_PIECE])
+    if (_movegen_get_rook_attacks(sq, ~position->board->bitboards[NO_PIECE])
         & position->board->bitboards[rook])
         return true;
 
     const PieceType queen = PIECE_CREATE(QUEEN, attacked_by_color);
-    if (_get_queen_attacks(sq, ~position->board->bitboards[NO_PIECE])
+    if (_movegen_get_queen_attacks(sq, ~position->board->bitboards[NO_PIECE])
         & position->board->bitboards[queen])
         return true;
 
@@ -850,7 +855,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
 
             // Pawn Captures
             occupancy = position->board->bitboards[BOARD_BLACK_PIECES_IDX];
-            attacks   = _get_pawn_attacks(from_sq, active_color, occupancy);
+            attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
             while (attacks)
             {
                 to_sq = utils_bit_bitscan_forward(&attacks);
@@ -883,7 +888,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->enpassant_target != NO_EP_TARGET)
             {
                 occupancy = 1ULL << position->enpassant_target;
-                attacks   = _get_pawn_attacks(from_sq, active_color, occupancy);
+                attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
                 if (attacks)
                 {
                     to_sq = utils_bit_bitscan_forward(&attacks);
@@ -938,7 +943,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             }
 
             occupancy = position->board->bitboards[BOARD_WHITE_PIECES_IDX];
-            attacks   = _get_pawn_attacks(from_sq, active_color, occupancy);
+            attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
             while (attacks)
             {
                 to_sq = utils_bit_bitscan_forward(&attacks);
@@ -969,7 +974,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->enpassant_target != NO_EP_TARGET)
             {
                 occupancy = 1ULL << position->enpassant_target;
-                attacks   = _get_pawn_attacks(from_sq, active_color, occupancy);
+                attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
                 if (attacks)
                 {
                     to_sq = utils_bit_bitscan_forward(&attacks);
@@ -988,7 +993,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = position->board->bitboards[NO_PIECE]
                   | position->board->bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
-        attacks = _get_knight_attacks(from_sq, occupancy);
+        attacks = _movegen_get_knight_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
@@ -1013,7 +1018,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = ~position->board->bitboards[NO_PIECE];
-        attacks   = _get_bishop_attacks(from_sq, occupancy);
+        attacks   = _movegen_get_bishop_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
@@ -1038,7 +1043,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = ~position->board->bitboards[NO_PIECE];
-        attacks   = _get_rook_attacks(from_sq, occupancy);
+        attacks   = _movegen_get_rook_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
@@ -1063,7 +1068,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = ~position->board->bitboards[NO_PIECE];
-        attacks   = _get_queen_attacks(from_sq, occupancy);
+        attacks   = _movegen_get_queen_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
@@ -1089,7 +1094,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         from_sq   = utils_bit_bitscan_forward(&bb);
         occupancy = position->board->bitboards[NO_PIECE]
                   | position->board->bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
-        attacks = _get_king_attacks(from_sq, occupancy);
+        attacks = _movegen_get_king_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
