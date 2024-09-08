@@ -5,20 +5,16 @@
 #include <stdlib.h>
 
 uint64_t perft(Position* position, const uint8_t depth) {
-    MovesListNode* candidate_moves;
+    MoveList*      candidate_moves;
     MovesListNode *move_node, *temp_move_node;
     uint64_t       nodes         = 0ULL;
     bool           is_valid_move = false;
 
     if (depth == 0)
-    {
-        // board_display(position->board);
-        // getchar();
         return 1ULL;
-    }
 
     candidate_moves = movegen_pseudo_legal(position);
-    move_node       = (MovesListNode*) candidate_moves->next;
+    move_node       = (MovesListNode*) candidate_moves->head->next;
 
     while (move_node != NULL)
     {
@@ -37,12 +33,13 @@ uint64_t perft(Position* position, const uint8_t depth) {
 }
 
 void divide(Position* position, const uint8_t depth) {
-    MovesListNode* candidate_moves = movegen_pseudo_legal(position);
-    uint64_t       nodes           = 0ULL;
-    uint64_t       total_nodes     = 0ULL;
-    bool           is_valid_move   = false;
+    MoveList* candidate_moves = movegen_pseudo_legal(position);
+    uint64_t  nodes           = 0ULL;
+    uint64_t  total_nodes     = 0ULL;
+    bool      is_valid_move   = false;
+    char      move_str[10];
 
-    MovesListNode* temp = (MovesListNode*) candidate_moves->next;
+    MovesListNode* temp = (MovesListNode*) candidate_moves->head->next;
     MovesListNode* temp2;
 
     while (temp != NULL)
@@ -52,9 +49,8 @@ void divide(Position* position, const uint8_t depth) {
         {
             nodes = perft(position, depth - 1);
             total_nodes += nodes;
-
-            print_move(temp->move);
-            printf(" %llu\n", nodes);
+            move_to_str(move_str, temp->move);
+            printf("%s %llu\n", move_str, nodes);
         }
         move_undo(position);
         temp2 = temp;
