@@ -50,10 +50,6 @@ int main(void) {
     Position*   pos = fen_to_position(fen);
     position_display(pos);
 
-    uint64_t start = utils_time_curr_time_ms();
-    divide(pos, 6);
-    printf("Completed in %llums\n", utils_time_curr_time_ms() - start);
-
     uint32_t score = search(pos, 2);
     printf("Score = %d\n", score);
 
