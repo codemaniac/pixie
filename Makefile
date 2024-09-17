@@ -1,4 +1,4 @@
-debug ?= 0
+debug ?= 1
 NAME := pixie
 
 CC := gcc
@@ -8,7 +8,7 @@ FORMATTER := clang-format
 ifeq ($(debug), 1)
 	CFLAGS := $(CFLAGS) -DDEBUG -g -O0
 else
-	CFLAGS := $(CFLAGS) -DLOG_QUIET -O3 -funroll-loops -flto
+	CFLAGS := $(CFLAGS) -DLOG_QUIET -O1
 endif
 
 BIN_DIR := ./bin

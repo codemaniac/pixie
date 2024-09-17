@@ -698,7 +698,10 @@ bool position_has_legal_move(Position* position) {
         is_valid_move = move_do(position, m->move);
 
         if (is_valid_move && position_is_valid(position))
+        {
+            move_undo(position);
             return true;
+        }
 
         move_undo(position);
 

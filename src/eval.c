@@ -22,8 +22,8 @@ int32_t eval_position(const Position* position) {
 
     int8_t side_to_move = 1 - (2 * position->active_color);
 
-    int32_t eval = (200 * (wK - bK)) + (9 * (wQ - bQ)) + (5 * (wR - bR)) + (3 * (wB - bB))
-                 + (3 * (wN - bN)) + (wP - bP);
+    int32_t eval = (2000 * (wK - bK)) + (900 * (wQ - bQ)) + (500 * (wR - bR)) + (300 * (wB - bB))
+                 + (300 * (wN - bN)) + (100 * (wP - bP));
 
     eval *= side_to_move;
 
