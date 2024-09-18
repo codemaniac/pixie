@@ -8,7 +8,7 @@ FORMATTER := clang-format
 ifeq ($(debug), 1)
 	CFLAGS := $(CFLAGS) -DDEBUG -g -O0
 else
-	CFLAGS := $(CFLAGS) -DLOG_QUIET -O1
+	CFLAGS := $(CFLAGS) -DLOG_QUIET -O2 -finline-functions -funroll-loops -flto
 endif
 
 BIN_DIR := ./bin
