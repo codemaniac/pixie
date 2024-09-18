@@ -106,11 +106,13 @@ static void _uci_parse_go(char* uci_line, Position** position) {
     printf("time:%d start:%llu stop:%llu depth:%d timeset:%d\n", time, info->starttime,
            info->stoptime, info->depth, info->timeset);
 
-    Move best_move;
-    char best_move_str[10];
-    search(pos, info, &best_move);
+    Move    best_move;
+    char    best_move_str[10];
+    int32_t eval = search(pos, info, &best_move);
     move_to_str(best_move_str, best_move);
 
+    printf("info score cp %d nodes %llu time %llu\n", eval, info->nodes,
+           utils_time_curr_time_ms() - info->starttime);
     printf("bestmove %s\n", best_move_str);
 
     free(info);

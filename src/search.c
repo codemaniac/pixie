@@ -30,8 +30,8 @@ static int32_t _search_negamax(Position*   position,
     if (depth == 0)
         return eval_position(position);
 
-    if ((info->nodes & 2047) == 0)
-        _search_check_up(info);
+    // if ((info->nodes & 2047) == 0)
+    //     _search_check_up(info);
 
     info->nodes++;
 
@@ -64,8 +64,8 @@ static int32_t _search_negamax(Position*   position,
 
         move_undo(position);
 
-        if (info->stopped)
-            break;
+        // if (info->stopped)
+        //     break;
 
         if (score > alpha)
         {
