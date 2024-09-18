@@ -170,7 +170,7 @@ typedef struct {
     MoveHistory* move_history;
 } Position;
 
-void initialize(void);
+void chess_initialize(void);
 
 Position* position_create(void);
 Position* position_clone(const Position* position);
@@ -189,6 +189,7 @@ void      movegen_display_moves(MoveList* move_list);
 
 bool move_do(Position* position, const Move move);
 void move_undo(Position* position);
+Move move_from_str(const char* move_str, const Position* position);
 void move_to_str(char* move_str, const Move move);
 
 #endif

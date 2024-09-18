@@ -1,8 +1,4 @@
-#include "include/chess.h"
-#include "include/fen.h"
-#include "include/perft.h"
-#include "include/search.h"
-#include "include/utils.h"
+#include "include/uci.h"
 #include "lib/logc/log.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,19 +40,7 @@ int main(void) {
     log_warn("%s is running in DEBUG mode!", PROGRAM_NAME);
 #endif
 
-    initialize();
-
-    const char* fen = "k7/6R1/7R/8/8/r7/r7/4K3 w - - 0 1";
-    Position*   pos = fen_to_position(fen);
-    position_display(pos);
-
-    Move best_move;
-    char best_move_str[10];
-
-    int32_t score = search(pos, 5, &best_move);
-    move_to_str(best_move_str, best_move);
-
-    printf("Score = %d\nBest Move = %s\n", score, best_move_str);
+    uci_loop();
 
     return EXIT_SUCCESS;
 }
