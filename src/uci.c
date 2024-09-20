@@ -103,9 +103,6 @@ static void _uci_parse_go(char* uci_line, Position** position) {
     }
     info->nodes = 0ULL;
 
-    printf("time:%d start:%llu stop:%llu depth:%d timeset:%d\n", time, info->starttime,
-           info->stoptime, info->depth, info->timeset);
-
     Move    best_move;
     char    best_move_str[10];
     int32_t eval = search(pos, info, &best_move);
@@ -165,9 +162,6 @@ void uci_loop(void) {
 
     char line[INPUTBUFFER];
 
-    printf("id name %s-%s\n", PROGRAM_NAME, VERSION);
-    puts("uciok");
-
     while (true)
     {
         memset(&line[0], 0, sizeof(line));
@@ -176,15 +170,24 @@ void uci_loop(void) {
         if (!fgets(line, INPUTBUFFER, stdin))
             continue;
 
+        line[strcspn(line, "\n")] = 0;
+
         if (line[0] == '\n')
             continue;
 
-        if (!strncmp(line, "isready", 7))
+        if (!strcmp(line, "uci"))
         {
-            puts("readyok");
-            continue;
+            printf("id name %s %s\n", PROGRAM_NAME, VERSION);
+            // printf("id author Ashish\n");
+            printf("uciok\n");
+            fflush(stdout);
         }
-        else if (!strncmp(line, "ucinewgame", 10))
+        else if (!strcmp(line, "isready"))
+        {
+            printf("readyok\n");
+            fflush(stdout);
+        }
+        else if (!strcmp(line, "ucinewgame"))
         {
             _uci_parse_position("position startpos\n", &position);
             position->ply_count = 0;
@@ -198,16 +201,12 @@ void uci_loop(void) {
         {
             _uci_parse_go(line, &position);
         }
-        else if (!strncmp(line, "display", 7))
+        else if (!strcmp(line, "display"))
         {
             position_display(position);
+            fflush(stdout);
         }
-        else if (!strncmp(line, "uci", 3))
-        {
-            printf("id name %s-%s\n", PROGRAM_NAME, VERSION);
-            puts("uciok");
-        }
-        else if (!strncmp(line, "quit", 4))
+        else if (!strcmp(line, "quit"))
             break;
     }
 }
