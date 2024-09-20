@@ -12,6 +12,7 @@ class TestMate(unittest.TestCase):
             epddata = csv.reader(epdfile, delimiter=';')
             for row in epddata:
                 fen = row[0].split('bm')[0].strip() + " 0 1"
+                print(f"Mate in 1: FEN = {fen}")
                 with self.subTest(msg=f"Mate in 1: FEN = {fen}"):
                     eval = pypixie.search(fen, 1)
                     self.assertEqual(eval, 999998)
@@ -22,6 +23,7 @@ class TestMate(unittest.TestCase):
             epddata = csv.reader(epdfile, delimiter=';')
             for row in epddata:
                 fen = row[0].split('bm')[0].strip() + " 0 1"
+                print(f"Mate in 2: FEN = {fen}")
                 with self.subTest(msg=f"Mate in 2: FEN = {fen}"):
                     eval = pypixie.search(fen, 3)
                     self.assertEqual(eval, 999996)
