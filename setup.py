@@ -10,8 +10,8 @@ module = Extension(
         "src/hashkey.c",
         "src/perft.c",
         "src/search.c",
-        "src/utils.c",
-        "src/lib/logc/log.c"
+        "src/uci.c",
+        "src/utils.c"
     ],
     extra_compile_args=[
         "-std=gnu18",

@@ -57,6 +57,10 @@ dkms.conf
 # Editor
 .vscode
 
+# Build files
+Makefile
+*.make
+
 # Output folders
 bin/
 build/

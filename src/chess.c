@@ -1,7 +1,6 @@
 #include "include/chess.h"
 #include "include/hashkey.h"
 #include "include/utils.h"
-#include "lib/logc/log.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -806,7 +805,6 @@ static MovesListNode* _movegen_create_move_list_node(const Move move) {
     MovesListNode* node = (MovesListNode*) malloc(sizeof(MovesListNode));
     if (node == NULL)
     {
-        log_fatal("Memory allocation failed!");
         exit(EXIT_FAILURE);
     }
     node->move = move;

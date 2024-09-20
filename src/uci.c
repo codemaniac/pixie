@@ -178,7 +178,6 @@ void uci_loop(void) {
         if (!strcmp(line, "uci"))
         {
             printf("id name %s %s\n", PROGRAM_NAME, VERSION);
-            // printf("id author Ashish\n");
             printf("uciok\n");
             fflush(stdout);
         }
