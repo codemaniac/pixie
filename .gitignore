@@ -63,5 +63,6 @@ Makefile
 
 # Output folders
 bin/
+build/
 obj/
 pypixie.egg-info/
