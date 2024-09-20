@@ -1,4 +1,4 @@
-solution "pixie"
+workspace "pixie"
     configurations { "Debug", "Release" }
     platforms { "MacOS64", "Win64" }
 
