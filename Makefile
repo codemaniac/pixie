@@ -8,7 +8,7 @@ FORMATTER := clang-format
 ifeq ($(debug), 1)
 	CFLAGS := $(CFLAGS) -DDEBUG -g -O0
 else
-	CFLAGS := $(CFLAGS) -DLOG_QUIET -O1
+	CFLAGS := $(CFLAGS) -DLOG_QUIET -O2 -finline-functions -funroll-loops -flto
 endif
 
 BIN_DIR := ./bin
@@ -34,7 +34,7 @@ format:
 bear:
 	@bear -- make
 
-$(NAME): main.o chess.o eval.o fen.o hashkey.o perft.o search.o utils.o logc.o
+$(NAME): main.o chess.o eval.o fen.o hashkey.o perft.o search.o uci.o utils.o logc.o
 	@$(CC) $(CFLAGS) -o $(BIN_DIR)/$(NAME) $(BUILD_DIR)/main.o \
 		$(BUILD_DIR)/chess.o \
 		$(BUILD_DIR)/eval.o \
@@ -42,6 +42,7 @@ $(NAME): main.o chess.o eval.o fen.o hashkey.o perft.o search.o utils.o logc.o
 		$(BUILD_DIR)/hashkey.o \
 		$(BUILD_DIR)/perft.o \
 		$(BUILD_DIR)/search.o \
+		$(BUILD_DIR)/uci.o \
 		$(BUILD_DIR)/utils.o \
 		$(BUILD_DIR)/logc.o \
 
@@ -68,6 +69,9 @@ perft.o: $(SRC_DIR)/perft.c $(INCLUDE_DIR)/perft.h
 
 search.o: $(SRC_DIR)/search.c $(INCLUDE_DIR)/search.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/search.c -o $(BUILD_DIR)/search.o
+
+uci.o: $(SRC_DIR)/uci.c $(INCLUDE_DIR)/uci.h
+	@$(CC) $(CFLAGS) -c $(SRC_DIR)/uci.c -o $(BUILD_DIR)/uci.o
 
 utils.o: $(SRC_DIR)/utils.c $(INCLUDE_DIR)/utils.h
 	@$(CC) $(CFLAGS) -c $(SRC_DIR)/utils.c -o $(BUILD_DIR)/utils.o

@@ -21,6 +21,6 @@ static PyMethodDef PyPixieMethods[] = {{"perft", pypixie_perft, METH_VARARGS, "P
 static struct PyModuleDef pypixie = {PyModuleDef_HEAD_INIT, "pypixie", NULL, -1, PyPixieMethods};
 
 PyMODINIT_FUNC PyInit_pypixie(void) {
-    initialize();
+    chess_initialize();
     return PyModule_Create(&pypixie);
 }

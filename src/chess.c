@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define USE_32_BIT_MULTIPLICATIONS
 
@@ -409,7 +410,7 @@ static void _init_attack_table_king(void) {
     }
 }
 
-void initialize(void) {
+void chess_initialize(void) {
     _init_attack_table_pawn();
     _init_attack_table_knight();
     _init_attack_mask_table_bishop();
@@ -607,13 +608,13 @@ void position_clear_piece(Position* position, const Piece piece, const Square sq
 
 void position_display(const Position* position) {
     _board_display(position->board);
-    printf("%d\n", position->active_color);
-    printf("%d\n", position->casteling_rights);
-    printf("%d\n", position->enpassant_target);
-    printf("%d\n", position->half_move_clock);
-    printf("%d\n", position->full_move_number);
-    printf("%d\n", position->ply_count);
-    printf("%llu\n", position->hash);
+    printf("\nActive Color: %d\n", position->active_color);
+    printf("Casteling Rights: %d\n", position->casteling_rights);
+    printf("En Passant Target: %d\n", position->enpassant_target);
+    printf("Half Move Clock: %d\n", position->half_move_clock);
+    printf("Full Move Number: %d\n", position->full_move_number);
+    printf("Ply Count: %d\n", position->ply_count);
+    printf("Hash: %llu\n\n", position->hash);
 }
 
 bool position_is_square_attacked(const Position* position,
@@ -1514,6 +1515,90 @@ void move_undo(Position* position) {
     position->half_move_clock  = mhe.prev_half_move_clock;
     position->full_move_number = mhe.prev_full_move_number;
     position->ply_count--;
+}
+
+Move move_from_str(const char* move_str, const Position* position) {
+
+    if (strlen(move_str) < 4)
+    {
+        Move nomove = {.move_id = 0};
+        return nomove;
+    }
+
+    const uint8_t from_file = move_str[0] - 'a';
+    const uint8_t from_rank = (move_str[1] - '0') - 1;
+    const Square  from_sq   = BOARD_RF_TO_SQ(from_rank, from_file);
+
+    const uint8_t to_file = move_str[2] - 'a';
+    const uint8_t to_rank = (move_str[3] - '0') - 1;
+    const Square  to_sq   = BOARD_RF_TO_SQ(to_rank, to_file);
+
+    const Piece move_piece     = position->board->pieces[from_sq];
+    const Piece captured_piece = position->board->pieces[to_sq];
+
+    Piece promoted_piece = NO_PIECE;
+
+    if (strlen(move_str) == 5)
+    {
+        const char promotion_piece_ch = move_str[4];
+        switch (promotion_piece_ch)
+        {
+            case 'n':
+                promoted_piece = PIECE_CREATE(KNIGHT, position->active_color);
+                break;
+            case 'b':
+                promoted_piece = PIECE_CREATE(BISHOP, position->active_color);
+                break;
+            case 'r':
+                promoted_piece = PIECE_CREATE(ROOK, position->active_color);
+                break;
+            case 'q':
+                promoted_piece = PIECE_CREATE(QUEEN, position->active_color);
+                break;
+            default:
+                promoted_piece = NO_PIECE;
+                break;
+        }
+    }
+
+    bool     flag_ps = false;
+    bool     flag_ep = false;
+    uint32_t flag_ca = NOCA;
+
+    if (PIECE_GET_TYPE(move_piece) == PAWN)
+    {
+        if (captured_piece == NO_PIECE)
+        {
+            if (position->active_color == WHITE && from_rank == RANK_2 && to_rank == RANK_4)
+                flag_ps = true;
+            else if (position->active_color == BLACK && from_rank == RANK_7 && to_rank == RANK_5)
+                flag_ps = true;
+        }
+        else if (PIECE_GET_TYPE(captured_piece) == PAWN && to_sq == position->enpassant_target)
+            flag_ep = true;
+    }
+    else if (PIECE_GET_TYPE(move_piece) == KING)
+    {
+        if (position->active_color == WHITE)
+        {
+            if ((position->casteling_rights & WKCA) && from_sq == E1 && to_sq == G1)
+                flag_ca = MOVE_FLAG_WKCA;
+            else if ((position->casteling_rights & WQCA) && from_sq == E1 && to_sq == C1)
+                flag_ca = MOVE_FLAG_WQCA;
+        }
+        else
+        {
+            if ((position->casteling_rights & BKCA) && from_sq == E8 && to_sq == G8)
+                flag_ca = MOVE_FLAG_BKCA;
+            else if ((position->casteling_rights & BQCA) && from_sq == E8 && to_sq == C8)
+                flag_ca = MOVE_FLAG_BQCA;
+        }
+    }
+
+    const Move move = _move_encode(move_piece, from_sq, to_sq, captured_piece, promoted_piece,
+                                   flag_ps, flag_ep, flag_ca);
+
+    return move;
 }
 
 void move_to_str(char* move_str, const Move move) {

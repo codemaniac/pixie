@@ -31,6 +31,7 @@ Position* fen_to_position(const char* fen) {
     }
 
     // Validate the active color part
+    utils_str_trimwhitespace(parts[1]);
     if (strcmp(parts[1], "w") != 0 && strcmp(parts[1], "b") != 0)
     {
         log_error("Invalid FEN!");
@@ -38,6 +39,7 @@ Position* fen_to_position(const char* fen) {
     }
 
     // Validate the castling availability part
+    utils_str_trimwhitespace(parts[2]);
     if (strcmp(parts[2], "-") != 0)
     {
         for (uint8_t i = 0; i < strlen(parts[2]); i++)
@@ -51,6 +53,7 @@ Position* fen_to_position(const char* fen) {
     }
 
     // Validate the en passant target square part
+    utils_str_trimwhitespace(parts[3]);
     if (strcmp(parts[3], "-") != 0)
     {
         if (strlen(parts[3]) != 2 || parts[3][0] < 'a' || parts[3][0] > 'h' || parts[3][1] < '1'
@@ -62,6 +65,7 @@ Position* fen_to_position(const char* fen) {
     }
 
     // Validate the halfmove clock part
+    utils_str_trimwhitespace(parts[4]);
     for (uint8_t i = 0; i < strlen(parts[4]); i++)
     {
         if (!isdigit(parts[4][i]))
@@ -72,6 +76,7 @@ Position* fen_to_position(const char* fen) {
     }
 
     // Validate the fullmove number part
+    utils_str_trimwhitespace(parts[5]);
     for (uint8_t i = 0; i < strlen(parts[5]); i++)
     {
         if (!isdigit(parts[5][i]))
@@ -80,6 +85,8 @@ Position* fen_to_position(const char* fen) {
             exit(EXIT_FAILURE);
         }
     }
+
+    utils_str_trimwhitespace(parts[0]);
 
     Position* position = position_create();
 

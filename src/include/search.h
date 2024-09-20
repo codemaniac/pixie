@@ -2,8 +2,22 @@
 #define SEARCH_H
 
 #include "chess.h"
+#include <stdbool.h>
 #include <stdint.h>
 
-int32_t search(Position* position, const uint8_t depth, Move* best_move);
+#define SEARCH_MAX_DEPTH 64
+
+typedef struct {
+    uint8_t  depth;
+    uint64_t starttime;
+    uint64_t stoptime;
+    bool     timeset;
+    uint32_t movestogo;
+    uint64_t nodes;
+    bool     quit;
+    bool     stopped;
+} SearchInfo;
+
+int32_t search(Position* position, SearchInfo* info, Move* best_move);
 
 #endif

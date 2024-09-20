@@ -1,6 +1,7 @@
 #include "include/search.h"
 #include "include/chess.h"
 #include "include/eval.h"
+#include "include/utils.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,8 +9,17 @@
 
 #define INFINITY 999999
 
-static int32_t
-_search_negamax(Position* position, uint8_t depth, int32_t alpha, int32_t beta, Move* best_move) {
+static void _search_check_up(SearchInfo* info) {
+    if (info->timeset && (utils_time_curr_time_ms() >= info->stoptime))
+        info->stopped = true;
+}
+
+static int32_t _search_negamax(Position*   position,
+                               uint8_t     depth,
+                               int32_t     alpha,
+                               int32_t     beta,
+                               SearchInfo* info,
+                               Move*       best_move) {
 
     if (position_is_in_checkmate(position))
         return -INFINITY + position->ply_count;
@@ -19,6 +29,11 @@ _search_negamax(Position* position, uint8_t depth, int32_t alpha, int32_t beta, 
         return 0;
     if (depth == 0)
         return eval_position(position);
+
+    // if ((info->nodes & 2047) == 0)
+    //     _search_check_up(info);
+
+    info->nodes++;
 
     Move    best_move_so_far = {.move_id = 0};
     int32_t old_alpha        = alpha;
@@ -45,9 +60,12 @@ _search_negamax(Position* position, uint8_t depth, int32_t alpha, int32_t beta, 
             continue;
         }
 
-        score = -_search_negamax(position, depth - 1, -beta, -alpha, best_move);
+        score = -_search_negamax(position, depth - 1, -beta, -alpha, info, best_move);
 
         move_undo(position);
+
+        // if (info->stopped)
+        //     break;
 
         if (score > alpha)
         {
@@ -75,6 +93,9 @@ _search_negamax(Position* position, uint8_t depth, int32_t alpha, int32_t beta, 
         t = NULL;
     }
 
+    if (info->stopped)
+        return 0;
+
     if (is_beta_cutoff)
         return beta;
 
@@ -84,6 +105,6 @@ _search_negamax(Position* position, uint8_t depth, int32_t alpha, int32_t beta, 
     return alpha;
 }
 
-int32_t search(Position* position, const uint8_t depth, Move* best_move) {
-    return _search_negamax(position, depth, -INFINITY, INFINITY, best_move);
+int32_t search(Position* position, SearchInfo* info, Move* best_move) {
+    return _search_negamax(position, info->depth, -INFINITY, INFINITY, info, best_move);
 }
