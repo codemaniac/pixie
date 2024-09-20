@@ -19,8 +19,7 @@ module = Extension(
         "-Wextra",
         "-pedantic",
         "-finline-functions",
-        "-funroll-loops",
-        "-DLOG_QUIET",
+        "-funroll-loops"
     ]
 )
 
