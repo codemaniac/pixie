@@ -7,8 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define INFINITY 999999
-
 static void _search_check_up(SearchInfo* info) {
     if (info->timeset && (utils_time_curr_time_ms() >= info->stoptime))
         info->stopped = true;
@@ -22,7 +20,7 @@ static int32_t _search_negamax(Position*   position,
                                Move*       best_move) {
 
     if (position_is_in_checkmate(position))
-        return -INFINITY + position->ply_count;
+        return -SEARCH_SCORE_MAX + position->ply_count;
     if (position_is_in_stalemate(position))
         return 0;
     if (position_is_repeated(position) || position->half_move_clock >= 100)
@@ -37,7 +35,7 @@ static int32_t _search_negamax(Position*   position,
 
     Move    best_move_so_far = {.move_id = 0};
     int32_t old_alpha        = alpha;
-    int32_t score            = -INFINITY;
+    int32_t score            = -SEARCH_SCORE_MAX;
     bool    is_beta_cutoff   = false;
 
     MoveList*      moves = movegen_pseudo_legal(position);
@@ -106,5 +104,6 @@ static int32_t _search_negamax(Position*   position,
 }
 
 int32_t search(Position* position, SearchInfo* info, Move* best_move) {
-    return _search_negamax(position, info->depth, -INFINITY, INFINITY, info, best_move);
+    return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
+                           best_move);
 }

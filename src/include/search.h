@@ -5,7 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define SEARCH_MAX_DEPTH 64
+#define SEARCH_SCORE_MAX 999999
+#define SEARCH_DEPTH_MAX 64
 
 typedef struct {
     uint8_t  depth;

@@ -86,7 +86,7 @@ static void _uci_parse_go(char* uci_line, Position** position) {
     }
 
     if (depth == -1)
-        depth = SEARCH_MAX_DEPTH;
+        depth = SEARCH_DEPTH_MAX;
 
     SearchInfo* info = (SearchInfo*) malloc(sizeof(SearchInfo));
 
@@ -108,8 +108,17 @@ static void _uci_parse_go(char* uci_line, Position** position) {
     int32_t eval = search(pos, info, &best_move);
     move_to_str(best_move_str, best_move);
 
-    printf("info score cp %d nodes %llu time %llu\n", eval, info->nodes,
-           utils_time_curr_time_ms() - info->starttime);
+    if ((SEARCH_SCORE_MAX - eval) < SEARCH_DEPTH_MAX)
+    {
+        printf("info score mate %d nodes %llu time %llu\n", ((SEARCH_SCORE_MAX - eval) / 2 + 1),
+               info->nodes, utils_time_curr_time_ms() - info->starttime);
+    }
+    else
+    {
+        printf("info score cp %d nodes %llu time %llu\n", eval, info->nodes,
+               utils_time_curr_time_ms() - info->starttime);
+    }
+
     printf("bestmove %s\n", best_move_str);
 
     free(info);
@@ -178,6 +187,7 @@ void uci_loop(void) {
         if (!strcmp(line, "uci"))
         {
             printf("id name %s %s\n", PROGRAM_NAME, VERSION);
+            printf("id author the pixie developers (see AUTHORS file)");
             printf("uciok\n");
             fflush(stdout);
         }
