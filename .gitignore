@@ -63,6 +63,5 @@ Makefile
 
 # Output folders
 bin/
-build/
+obj/
 pypixie.egg-info/
-compile_commands.json
