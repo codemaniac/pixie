@@ -2,7 +2,6 @@
 #include "include/chess.h"
 #include "include/hashkey.h"
 #include "include/utils.h"
-#include "lib/logc/log.h"
 #include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -26,7 +25,6 @@ Position* fen_to_position(const char* fen) {
 
     if (index != 6)
     {
-        log_error("Invalid FEN!");
         exit(EXIT_FAILURE);
     }
 
@@ -34,7 +32,6 @@ Position* fen_to_position(const char* fen) {
     utils_str_trimwhitespace(parts[1]);
     if (strcmp(parts[1], "w") != 0 && strcmp(parts[1], "b") != 0)
     {
-        log_error("Invalid FEN!");
         exit(EXIT_FAILURE);
     }
 
@@ -46,7 +43,6 @@ Position* fen_to_position(const char* fen) {
         {
             if (!strchr("KQkq", parts[2][i]))
             {
-                log_error("Invalid FEN!");
                 exit(EXIT_FAILURE);
             }
         }
@@ -59,7 +55,6 @@ Position* fen_to_position(const char* fen) {
         if (strlen(parts[3]) != 2 || parts[3][0] < 'a' || parts[3][0] > 'h' || parts[3][1] < '1'
             || parts[3][1] > '8')
         {
-            log_error("Invalid FEN!");
             exit(EXIT_FAILURE);
         }
     }
@@ -70,7 +65,6 @@ Position* fen_to_position(const char* fen) {
     {
         if (!isdigit(parts[4][i]))
         {
-            log_error("Invalid FEN!");
             exit(EXIT_FAILURE);
         }
     }
@@ -81,7 +75,6 @@ Position* fen_to_position(const char* fen) {
     {
         if (!isdigit(parts[5][i]))
         {
-            log_error("Invalid FEN!");
             exit(EXIT_FAILURE);
         }
     }
@@ -109,7 +102,6 @@ Position* fen_to_position(const char* fen) {
             uint8_t empty_squares = *ch - '0';
             if (empty_squares < 1 || empty_squares > 8)
             {
-                log_error("Invalid FEN!");
                 exit(EXIT_FAILURE);
             }
             else
@@ -125,7 +117,6 @@ Position* fen_to_position(const char* fen) {
                 piece_id = utils_str_indexof(black_pieces, *ch);
                 if (piece_id == -1)
                 {
-                    log_error("Invalid FEN!");
                     exit(EXIT_FAILURE);
                 }
                 piece_id += 8;
@@ -135,7 +126,6 @@ Position* fen_to_position(const char* fen) {
                 piece_id = utils_str_indexof(white_pieces, *ch);
                 if (piece_id == -1)
                 {
-                    log_error("Invalid FEN!");
                     exit(EXIT_FAILURE);
                 }
             }
@@ -143,7 +133,6 @@ Position* fen_to_position(const char* fen) {
         }
         else
         {
-            log_error("Invalid FEN!");
             exit(EXIT_FAILURE);
         }
 
@@ -196,7 +185,6 @@ Position* fen_to_position(const char* fen) {
         {
             if (ep_target_rank != RANK_6)
             {
-                log_error("Invalid FEN!");
                 exit(EXIT_FAILURE);
             }
         }
@@ -204,7 +192,6 @@ Position* fen_to_position(const char* fen) {
         {
             if (ep_target_rank != RANK_3)
             {
-                log_error("Invalid FEN!");
                 exit(EXIT_FAILURE);
             }
         }
