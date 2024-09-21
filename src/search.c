@@ -37,30 +37,20 @@ static int32_t _search_negamax(Position*   position,
     bool     is_beta_cutoff   = false;
     uint32_t legal            = 0;
 
-    MoveList*      moves = movegen_pseudo_legal(position);
-    MovesListNode *m, *t;
-    bool           is_valid_move = false;
+    MoveList* moves         = movegen_pseudo_legal(position);
+    Move*     move          = (Move*) malloc(sizeof(Move));
+    bool      is_valid_move = false;
 
-    m = (MovesListNode*) moves->head->next;
-
-    while (m != NULL)
+    while (movegen_dequeue_move(moves, move))
     {
-        is_valid_move = move_do(position, m->move);
-
+        is_valid_move = move_do(position, *move);
         if (!is_valid_move || !position_is_valid(position))
         {
             move_undo(position);
-            t = m;
-            m = (MovesListNode*) m->next;
-            free(t);
-            t = NULL;
             continue;
         }
-
         legal++;
-
         score = -_search_negamax(position, depth - 1, -beta, -alpha, info, best_move);
-
         move_undo(position);
 
         // if (info->stopped)
@@ -69,14 +59,8 @@ static int32_t _search_negamax(Position*   position,
         if (score > alpha)
         {
             alpha            = score;
-            best_move_so_far = m->move;
+            best_move_so_far = *move;
         }
-
-        t = m;
-        m = (MovesListNode*) m->next;
-        free(t);
-        t = NULL;
-
         if (score >= beta)
         {
             is_beta_cutoff = true;
@@ -84,13 +68,14 @@ static int32_t _search_negamax(Position*   position,
         }
     }
 
-    while (m != NULL)
-    {
-        t = m;
-        m = (MovesListNode*) m->next;
-        free(t);
-        t = NULL;
-    }
+    while (movegen_dequeue_move(moves, move))
+        ;
+
+    free(move);
+    move = NULL;
+
+    free(moves);
+    moves = NULL;
 
     if (info->stopped)
         return 0;

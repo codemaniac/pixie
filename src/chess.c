@@ -833,22 +833,30 @@ static MovesListNode* _movegen_create_move_list_node(const Move move) {
 static void _movegen_enqueue_move(MoveList* list, const Move move) {
     MovesListNode* new_tail_node = _movegen_create_move_list_node(move);
 
-    list->tail->next = (struct MovesListNode*) new_tail_node;
-    list->tail       = new_tail_node;
+    if (list->tail == NULL)
+    {
+        list->head = new_tail_node;
+        list->tail = list->head;
+    }
+    else
+    {
+        list->tail->next = (struct MovesListNode*) new_tail_node;
+        list->tail       = new_tail_node;
+    }
     list->size++;
 }
 
 bool movegen_dequeue_move(MoveList* move_list, Move* move) {
-    MovesListNode* head = move_list->head;
     MovesListNode* temp;
 
-    if (head == NULL)
+    if (move_list->head == NULL)
         return false;
 
-    *move = head->move;
+    *move = move_list->head->move;
 
-    temp = head;
-    head = (MovesListNode*) head->next;
+    temp            = move_list->head;
+    move_list->head = (MovesListNode*) move_list->head->next;
+    move_list->size--;
 
     free(temp);
     temp = NULL;
@@ -863,16 +871,14 @@ MoveList* movegen_pseudo_legal(const Position* position) {
     uint8_t     from_sq, to_sq;
     Move        m;
 
-    const Move null_move = {.move_id = 0};
-
     MoveList* quiet_moves = (MoveList*) malloc(sizeof(MoveList));
-    quiet_moves->head     = _movegen_create_move_list_node(null_move);
-    quiet_moves->tail     = quiet_moves->head;
+    quiet_moves->head     = NULL;
+    quiet_moves->tail     = NULL;
     quiet_moves->size     = 0;
 
     MoveList* nonquiet_moves = (MoveList*) malloc(sizeof(MoveList));
-    nonquiet_moves->head     = _movegen_create_move_list_node(null_move);
-    nonquiet_moves->tail     = nonquiet_moves->head;
+    nonquiet_moves->head     = NULL;
+    nonquiet_moves->tail     = NULL;
     nonquiet_moves->size     = 0;
 
     if (active_color == WHITE)
@@ -1233,20 +1239,29 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         }
     }
 
-    nonquiet_moves->tail->next = quiet_moves->head->next;
-    nonquiet_moves->size += quiet_moves->size;
+    if (nonquiet_moves->tail != NULL)
+    {
+        nonquiet_moves->tail->next = (struct MovesListNode*) quiet_moves->head;
+        nonquiet_moves->size += quiet_moves->size;
 
-    return nonquiet_moves;
+        return nonquiet_moves;
+    }
+    else
+    {
+        return quiet_moves;
+    }
 }
 
 void movegen_display_moves(MoveList* move_list) {
-    MovesListNode* temp = (MovesListNode*) move_list->head->next;
+    MovesListNode* head = move_list->head;
+    Move           move;
     char           move_str[10];
-    while (temp != NULL)
+    while (head != NULL)
     {
-        move_to_str(move_str, temp->move);
+        move = head->move;
+        move_to_str(move_str, move);
         printf("%s\n", move_str);
-        temp = (MovesListNode*) temp->next;
+        head = (MovesListNode*) head->next;
     }
 }
 
