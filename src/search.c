@@ -19,12 +19,10 @@ static int32_t _search_negamax(Position*   position,
                                SearchInfo* info,
                                Move*       best_move) {
 
-    if (position_is_in_checkmate(position))
-        return -SEARCH_SCORE_MAX + position->ply_count;
-    if (position_is_in_stalemate(position))
-        return 0;
     if (position_is_repeated(position) || position->half_move_clock >= 100)
         return 0;
+    if (position_is_in_check(position))
+        depth++;
     if (depth == 0)
         return eval_position(position);
 
@@ -33,10 +31,11 @@ static int32_t _search_negamax(Position*   position,
 
     info->nodes++;
 
-    Move    best_move_so_far = {.move_id = 0};
-    int32_t old_alpha        = alpha;
-    int32_t score            = -SEARCH_SCORE_MAX;
-    bool    is_beta_cutoff   = false;
+    Move     best_move_so_far = {.move_id = 0};
+    int32_t  old_alpha        = alpha;
+    int32_t  score            = -SEARCH_SCORE_MAX;
+    bool     is_beta_cutoff   = false;
+    uint32_t legal            = 0;
 
     MoveList*      moves = movegen_pseudo_legal(position);
     MovesListNode *m, *t;
@@ -57,6 +56,8 @@ static int32_t _search_negamax(Position*   position,
             t = NULL;
             continue;
         }
+
+        legal++;
 
         score = -_search_negamax(position, depth - 1, -beta, -alpha, info, best_move);
 
@@ -96,6 +97,14 @@ static int32_t _search_negamax(Position*   position,
 
     if (is_beta_cutoff)
         return beta;
+
+    if (legal == 0)
+    {
+        if (position_is_in_check(position))
+            return -SEARCH_SCORE_MAX + position->ply_count;
+        else
+            return 0;
+    }
 
     if (old_alpha != alpha)
         *best_move = best_move_so_far;

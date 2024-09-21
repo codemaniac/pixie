@@ -14,6 +14,7 @@ static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
     }
     Position* pos    = fen_to_position(fen);
     uint64_t  result = perft(pos, depth);
+    position_destroy(pos);
     return PyLong_FromLong(result);
 }
 
@@ -32,6 +33,7 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     info->nodes      = 0ULL;
     Move    best_move;
     int32_t eval = search(pos, info, &best_move);
+    position_destroy(pos);
     return PyLong_FromLong(eval);
 }
 

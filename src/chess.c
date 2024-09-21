@@ -579,6 +579,19 @@ Position* position_clone(const Position* position) {
     return position_copy;
 }
 
+void position_destroy(Position* position) {
+    free(position->board);
+    position->board = NULL;
+
+    while (!_position_history_is_empty(position))
+    {
+        free(&position->move_history->contents[position->move_history->top--]);
+    }
+    free(position->move_history);
+
+    free(position);
+}
+
 void position_set_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);
@@ -620,17 +633,9 @@ bool position_is_square_attacked(const Position* position,
                                  const Square    sq,
                                  const Color     attacked_by_color) {
 
-    const PieceType pawn = PIECE_CREATE(PAWN, attacked_by_color);
-    if (ATTACK_TABLE_PAWN[!attacked_by_color][sq] & position->board->bitboards[pawn])
-        return true;
-
-    const PieceType knight = PIECE_CREATE(KNIGHT, attacked_by_color);
-    if (ATTACK_TABLE_KNIGHT[sq] & position->board->bitboards[knight])
-        return true;
-
-    const PieceType bishop = PIECE_CREATE(BISHOP, attacked_by_color);
-    if (_movegen_get_bishop_attacks(sq, ~position->board->bitboards[NO_PIECE])
-        & position->board->bitboards[bishop])
+    const PieceType queen = PIECE_CREATE(QUEEN, attacked_by_color);
+    if (_movegen_get_queen_attacks(sq, ~position->board->bitboards[NO_PIECE])
+        & position->board->bitboards[queen])
         return true;
 
     const PieceType rook = PIECE_CREATE(ROOK, attacked_by_color);
@@ -638,9 +643,17 @@ bool position_is_square_attacked(const Position* position,
         & position->board->bitboards[rook])
         return true;
 
-    const PieceType queen = PIECE_CREATE(QUEEN, attacked_by_color);
-    if (_movegen_get_queen_attacks(sq, ~position->board->bitboards[NO_PIECE])
-        & position->board->bitboards[queen])
+    const PieceType bishop = PIECE_CREATE(BISHOP, attacked_by_color);
+    if (_movegen_get_bishop_attacks(sq, ~position->board->bitboards[NO_PIECE])
+        & position->board->bitboards[bishop])
+        return true;
+
+    const PieceType knight = PIECE_CREATE(KNIGHT, attacked_by_color);
+    if (ATTACK_TABLE_KNIGHT[sq] & position->board->bitboards[knight])
+        return true;
+
+    const PieceType pawn = PIECE_CREATE(PAWN, attacked_by_color);
+    if (ATTACK_TABLE_PAWN[!attacked_by_color][sq] & position->board->bitboards[pawn])
         return true;
 
     const PieceType king = PIECE_CREATE(KING, attacked_by_color);
