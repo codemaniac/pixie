@@ -26,6 +26,7 @@ uint64_t perft(Position* position, const uint8_t depth) {
         move_undo(position);
     }
 
+    movegen_movelist_destroy(candidate_moves);
     free(candidate_moves);
     candidate_moves = NULL;
 
@@ -54,5 +55,7 @@ void divide(Position* position, const uint8_t depth) {
         }
         move_undo(position);
     }
+    movegen_movelist_destroy(candidate_moves);
+
     printf("\nPerft = %llu\n", total_nodes);
 }

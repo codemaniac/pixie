@@ -864,6 +864,20 @@ bool movegen_dequeue_move(MoveList* move_list, Move* move) {
     return true;
 }
 
+void movegen_movelist_destroy(MoveList* move_list) {
+    MovesListNode *head, *temp;
+
+    head = move_list->head;
+
+    while (head != NULL)
+    {
+        temp = head;
+        head = (MovesListNode*) head->next;
+        free(temp);
+        temp = NULL;
+    }
+}
+
 MoveList* movegen_pseudo_legal(const Position* position) {
     const Color active_color = position->active_color;
     Piece       p;

@@ -68,14 +68,13 @@ static int32_t _search_negamax(Position*   position,
         }
     }
 
-    while (movegen_dequeue_move(moves, move))
-        ;
-
-    free(move);
-    move = NULL;
+    movegen_movelist_destroy(moves);
 
     free(moves);
     moves = NULL;
+
+    free(move);
+    move = NULL;
 
     if (info->stopped)
         return 0;
