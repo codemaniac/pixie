@@ -64,17 +64,11 @@ static int32_t _search_negamax(Position*   position,
             best_move_so_far = move;
         }
         if (score >= beta)
-        {
-            is_beta_cutoff = true;
-            break;
-        }
+            return beta;
     }
 
     if (info->stopped)
         return 0;
-
-    if (is_beta_cutoff)
-        return beta;
 
     if (legal == 0)
     {
