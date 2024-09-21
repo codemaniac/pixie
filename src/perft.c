@@ -13,7 +13,7 @@ uint64_t perft(Position* position, const uint8_t depth) {
     if (depth == 0)
         return 1ULL;
 
-    movegen_pseudo_legal(position, &candidate_moves);
+    movegen_pseudo_legal_all(position, &candidate_moves);
 
     while (movegen_dequeue_move(&candidate_moves, &move))
     {
@@ -36,7 +36,7 @@ void divide(Position* position, const uint8_t depth) {
     uint64_t nodes       = 0ULL;
     uint64_t total_nodes = 0ULL;
 
-    movegen_pseudo_legal(position, &candidate_moves);
+    movegen_pseudo_legal_all(position, &candidate_moves);
 
     while (movegen_dequeue_move(&candidate_moves, &move))
     {

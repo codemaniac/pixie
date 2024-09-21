@@ -181,7 +181,9 @@ bool     position_is_in_checkmate(Position* position);
 bool     position_is_in_stalemate(Position* position);
 void     position_display(const Position* position);
 
-void movegen_pseudo_legal(const Position* position, MoveList* move_list);
+void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list);
+void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list);
+void movegen_pseudo_legal_all(const Position* position, MoveList* move_list);
 bool movegen_dequeue_move(MoveList* move_list, Move* move);
 void movegen_display_moves(MoveList* move_list);
 
