@@ -38,14 +38,14 @@ static int32_t _search_negamax(Position*   position,
     uint32_t legal            = 0;
 
     MoveList moves;
-    Move*    move          = (Move*) malloc(sizeof(Move));
+    Move     move;
     bool     is_valid_move = false;
 
     movegen_pseudo_legal(position, &moves);
 
-    while (movegen_dequeue_move(&moves, move))
+    while (movegen_dequeue_move(&moves, &move))
     {
-        is_valid_move = move_do(position, *move);
+        is_valid_move = move_do(position, move);
         if (!is_valid_move || !position_is_valid(position))
         {
             move_undo(position);
@@ -61,7 +61,7 @@ static int32_t _search_negamax(Position*   position,
         if (score > alpha)
         {
             alpha            = score;
-            best_move_so_far = *move;
+            best_move_so_far = move;
         }
         if (score >= beta)
         {
@@ -69,9 +69,6 @@ static int32_t _search_negamax(Position*   position,
             break;
         }
     }
-
-    free(move);
-    move = NULL;
 
     if (info->stopped)
         return 0;
