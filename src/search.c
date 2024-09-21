@@ -34,14 +34,13 @@ static int32_t _search_negamax(Position*   position,
     Move     best_move_so_far = {.move_id = 0};
     int32_t  old_alpha        = alpha;
     int32_t  score            = -SEARCH_SCORE_MAX;
-    bool     is_beta_cutoff   = false;
     uint32_t legal            = 0;
 
     MoveList moves;
     Move     move;
     bool     is_valid_move = false;
 
-    movegen_pseudo_legal(position, &moves);
+    movegen_pseudo_legal_all(position, &moves);
 
     while (movegen_dequeue_move(&moves, &move))
     {

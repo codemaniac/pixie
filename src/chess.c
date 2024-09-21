@@ -722,7 +722,7 @@ bool position_is_repeated(const Position* position) {
 bool position_has_legal_move(Position* position) {
     MoveList move_list;
 
-    movegen_pseudo_legal(position, &move_list);
+    movegen_pseudo_legal_all(position, &move_list);
 
     bool is_valid_move = false;
 
@@ -846,7 +846,223 @@ bool movegen_dequeue_move(MoveList* list, Move* move) {
     return true;
 }
 
-void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
+void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list) {
+    const Color active_color = position->active_color;
+    Piece       p;
+    uint64_t    bb, attacks, occupancy;
+    uint8_t     from_sq, to_sq;
+    Move        m;
+
+    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        move_list->moves[i] = nomove;
+    }
+    move_list->size = -1;
+
+    if (active_color == WHITE)
+    {
+        bb = position->board.bitboards[WHITE_PAWN];
+
+        while (bb)
+        {
+            from_sq = utils_bit_bitscan_forward(&bb);
+
+            // Pawn Captures
+            occupancy = position->board.bitboards[BOARD_BLACK_PIECES_IDX];
+            attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
+            while (attacks)
+            {
+                to_sq = utils_bit_bitscan_forward(&attacks);
+
+                if (BOARD_SQ_TO_RANK(to_sq) == RANK_8)
+                {
+                    // Pawn Captures + Promotion
+                    m = _move_encode_pawn_promotion_move(
+                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_KNIGHT);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(
+                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_BISHOP);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
+                                                         position->board.pieces[to_sq], WHITE_ROOK);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(
+                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_QUEEN);
+                    _movegen_enqueue_move(move_list, m);
+                }
+                else
+                {
+                    // Pawn Captures
+                    m = _move_encode_capture_move(WHITE_PAWN, from_sq, to_sq,
+                                                  position->board.pieces[to_sq]);
+                    _movegen_enqueue_move(move_list, m);
+                }
+            }
+
+            if (position->enpassant_target != NO_EP_TARGET)
+            {
+                occupancy = 1ULL << position->enpassant_target;
+                attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
+                if (attacks)
+                {
+                    to_sq = utils_bit_bitscan_forward(&attacks);
+                    m = _move_encode_pawn_enpassant_move(WHITE_PAWN, from_sq, to_sq, BLACK_PAWN);
+                    _movegen_enqueue_move(move_list, m);
+                }
+            }
+        }
+    }
+    else
+    {
+        bb = position->board.bitboards[BLACK_PAWN];
+
+        while (bb)
+        {
+            from_sq = utils_bit_bitscan_forward(&bb);
+
+            occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX];
+            attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
+            while (attacks)
+            {
+                to_sq = utils_bit_bitscan_forward(&attacks);
+
+                if (BOARD_SQ_TO_RANK(to_sq) == RANK_1)
+                {
+                    m = _move_encode_pawn_promotion_move(
+                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_KNIGHT);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(
+                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_BISHOP);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
+                                                         position->board.pieces[to_sq], BLACK_ROOK);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(
+                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_QUEEN);
+                    _movegen_enqueue_move(move_list, m);
+                }
+                else
+                {
+                    m = _move_encode_capture_move(BLACK_PAWN, from_sq, to_sq,
+                                                  position->board.pieces[to_sq]);
+                    _movegen_enqueue_move(move_list, m);
+                }
+            }
+
+            if (position->enpassant_target != NO_EP_TARGET)
+            {
+                occupancy = 1ULL << position->enpassant_target;
+                attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
+                if (attacks)
+                {
+                    to_sq = utils_bit_bitscan_forward(&attacks);
+                    m = _move_encode_pawn_enpassant_move(BLACK_PAWN, from_sq, to_sq, WHITE_PAWN);
+                    _movegen_enqueue_move(move_list, m);
+                }
+            }
+        }
+    }
+
+    p  = PIECE_CREATE(KNIGHT, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
+        attacks   = _movegen_get_knight_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+            _movegen_enqueue_move(move_list, m);
+        }
+    }
+
+    p  = PIECE_CREATE(BISHOP, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = ~position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_bishop_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            if (position->board.pieces[to_sq] != NO_PIECE
+                && PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
+            {
+                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+                _movegen_enqueue_move(move_list, m);
+            }
+        }
+    }
+
+    p  = PIECE_CREATE(ROOK, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = ~position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_rook_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            if (position->board.pieces[to_sq] != NO_PIECE
+                && PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
+            {
+                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+                _movegen_enqueue_move(move_list, m);
+            }
+        }
+    }
+
+    p  = PIECE_CREATE(QUEEN, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = ~position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_queen_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            if (position->board.pieces[to_sq] != NO_PIECE
+                && PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
+            {
+                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+                _movegen_enqueue_move(move_list, m);
+            }
+        }
+    }
+
+    p  = PIECE_CREATE(KING, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
+        attacks   = _movegen_get_king_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+            _movegen_enqueue_move(move_list, m);
+        }
+    }
+}
+
+void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
     const Color active_color = position->active_color;
     Piece       p;
     uint64_t    bb, attacks, occupancy;
@@ -906,50 +1122,6 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
                 m     = _move_encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
                 _movegen_enqueue_move(move_list, m);
             }
-
-            // Pawn Captures
-            occupancy = position->board.bitboards[BOARD_BLACK_PIECES_IDX];
-            attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
-            while (attacks)
-            {
-                to_sq = utils_bit_bitscan_forward(&attacks);
-
-                if (BOARD_SQ_TO_RANK(to_sq) == RANK_8)
-                {
-                    // Pawn Captures + Promotion
-                    m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_KNIGHT);
-                    _movegen_enqueue_move(move_list, m);
-                    m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_BISHOP);
-                    _movegen_enqueue_move(move_list, m);
-                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
-                                                         position->board.pieces[to_sq], WHITE_ROOK);
-                    _movegen_enqueue_move(move_list, m);
-                    m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_QUEEN);
-                    _movegen_enqueue_move(move_list, m);
-                }
-                else
-                {
-                    // Pawn Captures
-                    m = _move_encode_capture_move(WHITE_PAWN, from_sq, to_sq,
-                                                  position->board.pieces[to_sq]);
-                    _movegen_enqueue_move(move_list, m);
-                }
-            }
-
-            if (position->enpassant_target != NO_EP_TARGET)
-            {
-                occupancy = 1ULL << position->enpassant_target;
-                attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
-                if (attacks)
-                {
-                    to_sq = utils_bit_bitscan_forward(&attacks);
-                    m = _move_encode_pawn_enpassant_move(WHITE_PAWN, from_sq, to_sq, BLACK_PAWN);
-                    _movegen_enqueue_move(move_list, m);
-                }
-            }
         }
     }
     else
@@ -995,47 +1167,6 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
                 m     = _move_encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
                 _movegen_enqueue_move(move_list, m);
             }
-
-            occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX];
-            attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
-            while (attacks)
-            {
-                to_sq = utils_bit_bitscan_forward(&attacks);
-
-                if (BOARD_SQ_TO_RANK(to_sq) == RANK_1)
-                {
-                    m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_KNIGHT);
-                    _movegen_enqueue_move(move_list, m);
-                    m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_BISHOP);
-                    _movegen_enqueue_move(move_list, m);
-                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
-                                                         position->board.pieces[to_sq], BLACK_ROOK);
-                    _movegen_enqueue_move(move_list, m);
-                    m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_QUEEN);
-                    _movegen_enqueue_move(move_list, m);
-                }
-                else
-                {
-                    m = _move_encode_capture_move(BLACK_PAWN, from_sq, to_sq,
-                                                  position->board.pieces[to_sq]);
-                    _movegen_enqueue_move(move_list, m);
-                }
-            }
-
-            if (position->enpassant_target != NO_EP_TARGET)
-            {
-                occupancy = 1ULL << position->enpassant_target;
-                attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
-                if (attacks)
-                {
-                    to_sq = utils_bit_bitscan_forward(&attacks);
-                    m = _move_encode_pawn_enpassant_move(BLACK_PAWN, from_sq, to_sq, WHITE_PAWN);
-                    _movegen_enqueue_move(move_list, m);
-                }
-            }
         }
     }
 
@@ -1045,23 +1176,14 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = position->board.bitboards[NO_PIECE]
-                  | position->board.bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
-        attacks = _movegen_get_knight_attacks(from_sq, occupancy);
+        occupancy = position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_knight_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board.pieces[to_sq] == NO_PIECE)
-            {
-                m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(move_list, m);
-            }
-            else if (PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
-                _movegen_enqueue_move(move_list, m);
-            }
+            m = _move_encode_quite_move(p, from_sq, to_sq);
+            _movegen_enqueue_move(move_list, m);
         }
     }
 
@@ -1080,11 +1202,6 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
             if (position->board.pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(move_list, m);
-            }
-            else if (PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
                 _movegen_enqueue_move(move_list, m);
             }
         }
@@ -1107,11 +1224,6 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
                 _movegen_enqueue_move(move_list, m);
             }
-            else if (PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
-                _movegen_enqueue_move(move_list, m);
-            }
         }
     }
 
@@ -1132,11 +1244,6 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
                 _movegen_enqueue_move(move_list, m);
             }
-            else if (PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
-                _movegen_enqueue_move(move_list, m);
-            }
         }
     }
 
@@ -1146,23 +1253,14 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = position->board.bitboards[NO_PIECE]
-                  | position->board.bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
-        attacks = _movegen_get_king_attacks(from_sq, occupancy);
+        occupancy = position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_king_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board.pieces[to_sq] == NO_PIECE)
-            {
-                m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(move_list, m);
-            }
-            else if (PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
-                _movegen_enqueue_move(move_list, m);
-            }
+            m = _move_encode_quite_move(p, from_sq, to_sq);
+            _movegen_enqueue_move(move_list, m);
         }
     }
 
@@ -1213,6 +1311,29 @@ void movegen_pseudo_legal(const Position* position, MoveList* move_list) {
             }
         }
     }
+}
+
+void movegen_pseudo_legal_all(const Position* position, MoveList* move_list) {
+    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        move_list->moves[i] = nomove;
+    }
+    move_list->size = -1;
+
+    MoveList moves;
+    Move     move;
+
+    movegen_pseudo_legal_captures(position, &moves);
+
+    while (movegen_dequeue_move(&moves, &move))
+        _movegen_enqueue_move(move_list, move);
+
+    movegen_pseudo_legal_quite(position, &moves);
+
+    while (movegen_dequeue_move(&moves, &move))
+        _movegen_enqueue_move(move_list, move);
 }
 
 void movegen_display_moves(MoveList* move_list) {
