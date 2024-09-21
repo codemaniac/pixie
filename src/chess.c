@@ -587,9 +587,13 @@ void position_destroy(Position* position) {
     {
         free(&position->move_history->contents[position->move_history->top--]);
     }
+    free(position->move_history->contents);
+    position->move_history->contents = NULL;
     free(position->move_history);
+    position->move_history = NULL;
 
     free(position);
+    position = NULL;
 }
 
 void position_set_piece(Position* position, const Piece piece, const Square square) {
