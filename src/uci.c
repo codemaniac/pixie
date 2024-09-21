@@ -14,7 +14,7 @@
 
 #define INPUTBUFFER 400 * 6
 
-static void _uci_parse_go(char* uci_line, Position** position) {
+static void _uci_parse_go(char* uci_line, Position* position) {
     uci_line += 3;
 
     char*  uci_ch_ptr;
@@ -32,34 +32,33 @@ static void _uci_parse_go(char* uci_line, Position** position) {
         {
             depth = 6;
         }
-        divide(*position, depth);
+        divide(position, depth);
         return;
     }
 
-    int       movestogo = 30, movetime = -1, time = -1, inc = 0;
-    Position* pos = *position;
+    int movestogo = 30, movetime = -1, time = -1, inc = 0;
 
     if ((uci_ch_ptr = strstr(uci_line, "infinite")))
     {
         // Do nothing
     }
 
-    if ((uci_ch_ptr = strstr(uci_line, "wtime")) && pos->active_color == WHITE)
+    if ((uci_ch_ptr = strstr(uci_line, "wtime")) && position->active_color == WHITE)
     {
         time = atoi(uci_ch_ptr + 6);
     }
 
-    if ((uci_ch_ptr = strstr(uci_line, "btime")) && pos->active_color == BLACK)
+    if ((uci_ch_ptr = strstr(uci_line, "btime")) && position->active_color == BLACK)
     {
         time = atoi(uci_ch_ptr + 6);
     }
 
-    if ((uci_ch_ptr = strstr(uci_line, "winc")) && pos->active_color == WHITE)
+    if ((uci_ch_ptr = strstr(uci_line, "winc")) && position->active_color == WHITE)
     {
         inc = atoi(uci_ch_ptr + 5);
     }
 
-    if ((uci_ch_ptr = strstr(uci_line, "binc")) && pos->active_color == BLACK)
+    if ((uci_ch_ptr = strstr(uci_line, "binc")) && position->active_color == BLACK)
     {
         inc = atoi(uci_ch_ptr + 5);
     }
@@ -88,57 +87,55 @@ static void _uci_parse_go(char* uci_line, Position** position) {
     if (depth == -1)
         depth = SEARCH_DEPTH_MAX;
 
-    SearchInfo* info = (SearchInfo*) malloc(sizeof(SearchInfo));
+    SearchInfo info;
 
-    info->depth     = (uint8_t) depth;
-    info->timeset   = false;
-    info->starttime = utils_time_curr_time_ms();
+    info.depth     = (uint8_t) depth;
+    info.timeset   = false;
+    info.starttime = utils_time_curr_time_ms();
 
     if (time > 0)
     {
-        info->timeset = true;
+        info.timeset = true;
         time /= movestogo;
         time -= 50;
-        info->stoptime = info->starttime + time + inc;
+        info.stoptime = info.starttime + time + inc;
     }
-    info->nodes = 0ULL;
+    info.nodes = 0ULL;
 
-    Move    best_move;
-    char    best_move_str[10];
-    int32_t eval = search(pos, info, &best_move);
+    Move best_move;
+    char best_move_str[10];
+
+    int32_t eval = search(position, &info, &best_move);
     move_to_str(best_move_str, best_move);
 
     if ((SEARCH_SCORE_MAX - eval) < SEARCH_DEPTH_MAX)
     {
         printf("info score mate %d nodes %llu time %llu\n", ((SEARCH_SCORE_MAX - eval) / 2 + 1),
-               info->nodes, utils_time_curr_time_ms() - info->starttime);
+               info.nodes, utils_time_curr_time_ms() - info.starttime);
     }
     else
     {
-        printf("info score cp %d nodes %llu time %llu\n", eval, info->nodes,
-               utils_time_curr_time_ms() - info->starttime);
+        printf("info score cp %d nodes %llu time %llu\n", eval, info.nodes,
+               utils_time_curr_time_ms() - info.starttime);
     }
 
     printf("bestmove %s\n", best_move_str);
-
-    free(info);
-    info = NULL;
 }
 
-static void _uci_parse_position(char* uci_line, Position** position) {
+static void _uci_parse_position(char* uci_line, Position* position) {
     uci_line += 9;
 
     char* uci_ch_ptr;
 
     if (!strncmp(uci_line, "startpos", 8))
     {
-        *position = fen_to_position(STARTPOS);
+        fen_to_position(STARTPOS, position);
     }
     else if (!strncmp(uci_line, "fen", 3))
     {
         uci_ch_ptr = strstr(uci_line, "fen");
         uci_ch_ptr += 4;
-        *position = fen_to_position(uci_ch_ptr);
+        fen_to_position(uci_ch_ptr, position);
     }
 
     uci_ch_ptr = strstr(uci_line, "moves");
@@ -149,10 +146,10 @@ static void _uci_parse_position(char* uci_line, Position** position) {
         uci_ch_ptr += 6;
         while (*uci_ch_ptr)
         {
-            move = move_from_str(uci_ch_ptr, *position);
+            move = move_from_str(uci_ch_ptr, position);
             if (move.move_id == 0)
                 break;
-            move_do(*position, move);
+            move_do(position, move);
             while (*uci_ch_ptr && *uci_ch_ptr != ' ')
             {
                 uci_ch_ptr++;
@@ -164,7 +161,7 @@ static void _uci_parse_position(char* uci_line, Position** position) {
 
 void uci_loop(void) {
     chess_initialize();
-    Position* position;
+    Position position = position_create();
 
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
@@ -199,12 +196,12 @@ void uci_loop(void) {
         else if (!strcmp(line, "ucinewgame"))
         {
             _uci_parse_position("position startpos\n", &position);
-            position->ply_count = 0;
+            position.ply_count = 0;
         }
         else if (!strncmp(line, "position", 8))
         {
             _uci_parse_position(line, &position);
-            position->ply_count = 0;
+            position.ply_count = 0;
         }
         else if (!strncmp(line, "go", 2))
         {
@@ -212,7 +209,7 @@ void uci_loop(void) {
         }
         else if (!strcmp(line, "display"))
         {
-            position_display(position);
+            position_display(&position);
             fflush(stdout);
         }
         else if (!strcmp(line, "quit"))

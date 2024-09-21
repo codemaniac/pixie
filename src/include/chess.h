@@ -79,6 +79,7 @@ enum {
 };
 
 typedef enum {
+    MOVE_TYPE_NONE,
     MOVE_TYPE_QUITE,
     MOVE_TYPE_NON_QUIET
 } MoveType;
@@ -109,6 +110,8 @@ typedef enum {
 
 #define NO_EP_TARGET 99
 
+#define MAX_MOVES 256
+
 #define MOVE_PIECE(move_id) ((move_id) & 0xF)
 #define MOVE_FROM_SQ(move_id) ((move_id >> 4) & 0x7F)
 #define MOVE_TO_SQ(move_id) ((move_id >> 11) & 0x7F)
@@ -127,14 +130,8 @@ typedef struct {
 } Move;
 
 typedef struct {
-    Move                  move;
-    struct MovesListNode* next;
-} MovesListNode;
-
-typedef struct {
-    MovesListNode* head;
-    MovesListNode* tail;
-    uint32_t       size;
+    Move    moves[MAX_MOVES];
+    int32_t size;
 } MoveList;
 
 typedef struct {
@@ -147,9 +144,9 @@ typedef struct {
 } MoveHistoryEntry;
 
 typedef struct {
-    int8_t            top;
-    uint16_t          size;
-    MoveHistoryEntry* contents;
+    int8_t           top;
+    uint16_t         size;
+    MoveHistoryEntry contents[MAX_MOVES];
 } MoveHistory;
 
 typedef struct {
@@ -159,36 +156,34 @@ typedef struct {
 } Board;
 
 typedef struct {
-    Board*       board;
-    Color        active_color;
-    uint8_t      casteling_rights;
-    uint8_t      enpassant_target;
-    uint8_t      half_move_clock;
-    uint8_t      full_move_number;
-    uint8_t      ply_count;
-    uint64_t     hash;
-    MoveHistory* move_history;
+    Board       board;
+    Color       active_color;
+    uint8_t     casteling_rights;
+    uint8_t     enpassant_target;
+    uint8_t     half_move_clock;
+    uint8_t     full_move_number;
+    uint8_t     ply_count;
+    uint64_t    hash;
+    MoveHistory move_history;
 } Position;
 
 void chess_initialize(void);
 
-Position* position_create(void);
-Position* position_clone(const Position* position);
-void      position_destroy(Position* position);
-void      position_set_piece(Position* position, const Piece piece, const Square square);
-void      position_clear_piece(Position* position, const Piece piece, const Square square);
-bool      position_is_valid(const Position* position);
-bool      position_is_in_check(const Position* position);
-bool      position_is_repeated(const Position* position);
-bool      position_has_legal_move(Position* position);
-bool      position_is_in_checkmate(Position* position);
-bool      position_is_in_stalemate(Position* position);
-void      position_display(const Position* position);
+Position position_create(void);
+Position position_clone(const Position* position);
+void     position_set_piece(Position* position, const Piece piece, const Square square);
+void     position_clear_piece(Position* position, const Piece piece, const Square square);
+bool     position_is_valid(const Position* position);
+bool     position_is_in_check(const Position* position);
+bool     position_is_repeated(const Position* position);
+bool     position_has_legal_move(Position* position);
+bool     position_is_in_checkmate(Position* position);
+bool     position_is_in_stalemate(Position* position);
+void     position_display(const Position* position);
 
-MoveList* movegen_pseudo_legal(const Position* position);
-bool      movegen_dequeue_move(MoveList* move_list, Move* move);
-void      movegen_display_moves(MoveList* move_list);
-void      movegen_movelist_destroy(MoveList* move_list);
+void movegen_pseudo_legal(const Position* position, MoveList* move_list);
+bool movegen_dequeue_move(MoveList* move_list, Move* move);
+void movegen_display_moves(MoveList* move_list);
 
 bool move_do(Position* position, const Move move);
 void move_undo(Position* position);

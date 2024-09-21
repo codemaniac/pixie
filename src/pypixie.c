@@ -12,9 +12,12 @@ static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
     {
         return NULL;
     }
-    Position* pos    = fen_to_position(fen);
-    uint64_t  result = perft(pos, depth);
-    position_destroy(pos);
+
+    Position position = position_create();
+    fen_to_position(fen, &position);
+
+    uint64_t result = perft(&position, depth);
+
     return PyLong_FromLong(result);
 }
 
@@ -25,15 +28,19 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     {
         return NULL;
     }
-    Position*   pos  = fen_to_position(fen);
-    SearchInfo* info = (SearchInfo*) malloc(sizeof(SearchInfo));
-    info->depth      = (uint8_t) depth;
-    info->timeset    = false;
-    info->starttime  = utils_time_curr_time_ms();
-    info->nodes      = 0ULL;
+
+    Position position = position_create();
+    fen_to_position(fen, &position);
+
+    SearchInfo info;
+    info.depth     = (uint8_t) depth;
+    info.timeset   = false;
+    info.starttime = utils_time_curr_time_ms();
+    info.nodes     = 0ULL;
+
     Move    best_move;
-    int32_t eval = search(pos, info, &best_move);
-    position_destroy(pos);
+    int32_t eval = search(&position, &info, &best_move);
+
     return PyLong_FromLong(eval);
 }
 

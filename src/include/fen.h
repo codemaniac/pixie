@@ -5,6 +5,6 @@
 
 #define MAX_FEN_SIZE 100
 
-Position* fen_to_position(const char* fen);
+void fen_to_position(const char* fen, Position* position);
 
 #endif

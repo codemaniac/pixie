@@ -37,11 +37,13 @@ static int32_t _search_negamax(Position*   position,
     bool     is_beta_cutoff   = false;
     uint32_t legal            = 0;
 
-    MoveList* moves         = movegen_pseudo_legal(position);
-    Move*     move          = (Move*) malloc(sizeof(Move));
-    bool      is_valid_move = false;
+    MoveList moves;
+    Move*    move          = (Move*) malloc(sizeof(Move));
+    bool     is_valid_move = false;
 
-    while (movegen_dequeue_move(moves, move))
+    movegen_pseudo_legal(position, &moves);
+
+    while (movegen_dequeue_move(&moves, move))
     {
         is_valid_move = move_do(position, *move);
         if (!is_valid_move || !position_is_valid(position))
@@ -67,11 +69,6 @@ static int32_t _search_negamax(Position*   position,
             break;
         }
     }
-
-    movegen_movelist_destroy(moves);
-
-    free(moves);
-    moves = NULL;
 
     free(move);
     move = NULL;
