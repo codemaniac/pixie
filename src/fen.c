@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Position* fen_to_position(const char* fen) {
+void fen_to_position(const char* fen, Position* position) {
     char fen_copy[MAX_FEN_SIZE];
 
     strncpy(fen_copy, fen, sizeof(fen_copy));
@@ -80,8 +80,6 @@ Position* fen_to_position(const char* fen) {
     }
 
     utils_str_trimwhitespace(parts[0]);
-
-    Position* position = position_create();
 
     char*              ch           = parts[0];
     static const char* white_pieces = ".PNBRQK";
@@ -208,6 +206,4 @@ Position* fen_to_position(const char* fen) {
     position->full_move_number = atoi(parts[5]);
 
     position->hash = hashkey_position(position);
-
-    return position;
 }

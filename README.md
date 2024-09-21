@@ -9,6 +9,13 @@ premake5 gmake2
 make config=release_macos64
 ```
 
+# Debugging
+## Checking for memory leaks on MacOS
+```
+export MallocStackLogging=1
+leaks -atExit --list -- ./bin/Debug/pixie > leaks.txt
+```
+
 # Running Tests
 ## On Unix-like systems
 
