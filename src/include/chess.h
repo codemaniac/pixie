@@ -186,6 +186,7 @@ bool      position_is_in_stalemate(Position* position);
 void      position_display(const Position* position);
 
 MoveList* movegen_pseudo_legal(const Position* position);
+bool      movegen_dequeue_move(MoveList* move_list, Move* move);
 void      movegen_display_moves(MoveList* move_list);
 
 bool move_do(Position* position, const Move move);

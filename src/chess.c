@@ -838,6 +838,24 @@ static void _movegen_enqueue_move(MoveList* list, const Move move) {
     list->size++;
 }
 
+bool movegen_dequeue_move(MoveList* move_list, Move* move) {
+    MovesListNode* head = move_list->head;
+    MovesListNode* temp;
+
+    if (head == NULL)
+        return false;
+
+    *move = head->move;
+
+    temp = head;
+    head = (MovesListNode*) head->next;
+
+    free(temp);
+    temp = NULL;
+
+    return true;
+}
+
 MoveList* movegen_pseudo_legal(const Position* position) {
     const Color active_color = position->active_color;
     Piece       p;
@@ -846,10 +864,16 @@ MoveList* movegen_pseudo_legal(const Position* position) {
     Move        m;
 
     const Move null_move = {.move_id = 0};
-    MoveList*  moves     = (MoveList*) malloc(sizeof(MoveList));
-    moves->head          = _movegen_create_move_list_node(null_move);
-    moves->tail          = moves->head;
-    moves->size          = 0;
+
+    MoveList* quiet_moves = (MoveList*) malloc(sizeof(MoveList));
+    quiet_moves->head     = _movegen_create_move_list_node(null_move);
+    quiet_moves->tail     = quiet_moves->head;
+    quiet_moves->size     = 0;
+
+    MoveList* nonquiet_moves = (MoveList*) malloc(sizeof(MoveList));
+    nonquiet_moves->head     = _movegen_create_move_list_node(null_move);
+    nonquiet_moves->tail     = nonquiet_moves->head;
+    nonquiet_moves->size     = 0;
 
     if (active_color == WHITE)
     {
@@ -869,22 +893,22 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                     // Pawn Promotion
                     m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
                                                          WHITE_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
                                                          WHITE_BISHOP);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
                                                          WHITE_ROOK);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
                                                          WHITE_QUEEN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
                 else
                 {
                     // Pawn Push
                     m = _move_encode_quite_move(WHITE_PAWN, from_sq, to_sq);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(quiet_moves, m);
                 }
             }
 
@@ -895,7 +919,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             {
                 to_sq = utils_bit_bitscan_forward(&attacks);
                 m     = _move_encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
 
             // Pawn Captures
@@ -910,23 +934,23 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                     // Pawn Captures + Promotion
                     m = _move_encode_pawn_promotion_move(
                       WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(
                       WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_BISHOP);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(
                       WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_ROOK);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(
                       WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_QUEEN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
                 else
                 {
                     // Pawn Captures
                     m = _move_encode_capture_move(WHITE_PAWN, from_sq, to_sq,
                                                   position->board->pieces[to_sq]);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
             }
 
@@ -938,7 +962,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     to_sq = utils_bit_bitscan_forward(&attacks);
                     m = _move_encode_pawn_enpassant_move(WHITE_PAWN, from_sq, to_sq, BLACK_PAWN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
             }
         }
@@ -960,21 +984,21 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
                                                          BLACK_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
                                                          BLACK_BISHOP);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
                                                          BLACK_ROOK);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
                                                          BLACK_QUEEN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
                 else
                 {
                     m = _move_encode_quite_move(BLACK_PAWN, from_sq, to_sq);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(quiet_moves, m);
                 }
             }
 
@@ -984,7 +1008,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             {
                 to_sq = utils_bit_bitscan_forward(&attacks);
                 m     = _move_encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
 
             occupancy = position->board->bitboards[BOARD_WHITE_PIECES_IDX];
@@ -997,22 +1021,22 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     m = _move_encode_pawn_promotion_move(
                       BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(
                       BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_BISHOP);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(
                       BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_ROOK);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                     m = _move_encode_pawn_promotion_move(
                       BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_QUEEN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
                 else
                 {
                     m = _move_encode_capture_move(BLACK_PAWN, from_sq, to_sq,
                                                   position->board->pieces[to_sq]);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
             }
 
@@ -1024,7 +1048,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     to_sq = utils_bit_bitscan_forward(&attacks);
                     m = _move_encode_pawn_enpassant_move(BLACK_PAWN, from_sq, to_sq, WHITE_PAWN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(nonquiet_moves, m);
                 }
             }
         }
@@ -1046,12 +1070,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(nonquiet_moves, m);
             }
         }
     }
@@ -1071,12 +1095,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(nonquiet_moves, m);
             }
         }
     }
@@ -1096,12 +1120,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(nonquiet_moves, m);
             }
         }
     }
@@ -1121,12 +1145,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(nonquiet_moves, m);
             }
         }
     }
@@ -1147,12 +1171,12 @@ MoveList* movegen_pseudo_legal(const Position* position) {
             if (position->board->pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(quiet_moves, m);
             }
             else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
             {
                 m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(nonquiet_moves, m);
             }
         }
     }
@@ -1168,7 +1192,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                     && !position_is_square_attacked(position, F1, BLACK))
                 {
                     m = _move_encode_king_castle_move(WHITE_KING, E1, G1, MOVE_FLAG_WKCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(quiet_moves, m);
                 }
             }
             if (position->casteling_rights & WQCA)
@@ -1179,7 +1203,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                     && !position_is_square_attacked(position, D1, BLACK))
                 {
                     m = _move_encode_king_castle_move(WHITE_KING, E1, C1, MOVE_FLAG_WQCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(quiet_moves, m);
                 }
             }
         }
@@ -1192,7 +1216,7 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                     && !position_is_square_attacked(position, F8, WHITE))
                 {
                     m = _move_encode_king_castle_move(BLACK_KING, E8, G8, MOVE_FLAG_BKCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(quiet_moves, m);
                 }
             }
             if (position->casteling_rights & BQCA)
@@ -1203,13 +1227,16 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                     && !position_is_square_attacked(position, D8, WHITE))
                 {
                     m = _move_encode_king_castle_move(BLACK_KING, E8, C8, MOVE_FLAG_BQCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(quiet_moves, m);
                 }
             }
         }
     }
 
-    return moves;
+    nonquiet_moves->tail->next = quiet_moves->head->next;
+    nonquiet_moves->size += quiet_moves->size;
+
+    return nonquiet_moves;
 }
 
 void movegen_display_moves(MoveList* move_list) {
