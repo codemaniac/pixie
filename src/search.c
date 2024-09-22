@@ -68,7 +68,7 @@ static int32_t _search_negamax(Position*   position,
 
     info->nodes++;
 
-    Move     best_move_so_far = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    Move     best_move_so_far = {.move_id = 0, .score = -1};
     int32_t  old_alpha        = alpha;
     int32_t  score            = -SEARCH_SCORE_MAX;
     uint32_t legal            = 0;

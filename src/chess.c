@@ -9,6 +9,7 @@
 #include <string.h>
 
 #define USE_32_BIT_MULTIPLICATIONS
+#define MOVE_SCORE_MVV_LVA_IDX(a, v) (((a - 1) * 6) + (v - 1))
 
 static const uint64_t MAGIC_BISHOP[64] = {
   0x100420000431024ULL,  0x280800101073404ULL,  0x42000a00840802ULL,   0xca800c0410c2ULL,
@@ -47,6 +48,17 @@ static const uint64_t MAGIC_ROOK[64] = {
   0x1042a180880281ULL,   0x900802900c01040ULL,  0x8205104104120ULL,    0x9004220000440aULL,
   0x8029510200708ULL,    0x8008440100404241ULL, 0x2420001111000bdULL,  0x4000882304000041ULL,
 };
+
+// clang-format off
+static const uint16_t MOVE_SCORE_MVV_LVA[36] = {
+ 	105, 205, 305, 405, 505, 605,
+	104, 204, 304, 404, 504, 604,
+	103, 203, 303, 403, 503, 603,
+	102, 202, 302, 402, 502, 602,
+	101, 201, 301, 401, 501, 601,
+	100, 200, 300, 400, 500, 600
+};
+// clang-format on
 
 typedef struct {
     uint64_t mask;
@@ -574,7 +586,7 @@ Position position_create(void) {
     history.top  = -1;
     history.size = MAX_MOVES;
 
-    Move             nomove         = {.move_id = 0, MOVE_TYPE_NONE};
+    Move             nomove         = {.move_id = 0, .score = -1};
     MoveHistoryEntry nohistoryentry = {.move                  = nomove,
                                        .prev_casteling_rights = NOCA,
                                        .prev_enpassant_target = NO_EP_TARGET,
@@ -777,18 +789,17 @@ static Move _move_encode(const Piece    piece,
         move_id |= flag_ca;
     }
 
-    MoveType type;
+    uint16_t move_score = 0;
 
-    if (captured_piece != NO_PIECE || promoted_piece != NO_PIECE || flag_ep || flag_ca)
+    if (captured_piece != NO_PIECE)
     {
-        type = MOVE_TYPE_NON_QUIET;
-    }
-    else
-    {
-        type = MOVE_TYPE_QUITE;
+        const PieceType attacker = PIECE_GET_TYPE(piece);
+        const PieceType victim   = PIECE_GET_TYPE(captured_piece);
+
+        move_score = MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(attacker, victim)];
     }
 
-    const Move move = {.move_id = move_id, .type = type};
+    const Move move = {.move_id = move_id, .score = move_score};
     return move;
 }
 
@@ -853,7 +864,7 @@ void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list
     uint8_t     from_sq, to_sq;
     Move        m;
 
-    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    const Move nomove = {.move_id = 0, .score = -1};
     for (int i = 0; i < MAX_MOVES; i++)
     {
         move_list->moves[i] = nomove;
@@ -1069,7 +1080,7 @@ void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
     uint8_t     from_sq, to_sq;
     Move        m;
 
-    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    const Move nomove = {.move_id = 0, .score = -1};
     for (int i = 0; i < MAX_MOVES; i++)
     {
         move_list->moves[i] = nomove;
@@ -1314,7 +1325,7 @@ void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
 }
 
 void movegen_pseudo_legal_all(const Position* position, MoveList* move_list) {
-    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    const Move nomove = {.move_id = 0, .score = -1};
 
     for (int i = 0; i < MAX_MOVES; i++)
     {
@@ -1344,7 +1355,7 @@ void movegen_display_moves(MoveList* move_list) {
     {
         move = move_list->moves[i];
         move_to_str(move_str, move);
-        printf("%s\n", move_str);
+        printf("%s %d\n", move_str, move.score);
     }
 }
 
