@@ -1,6 +1,5 @@
 workspace "pixie"
     configurations { "Debug", "Release" }
-    platforms { "MacOS64", "Win64" }
 
 project "pixie"
     kind "ConsoleApp"
@@ -24,4 +23,4 @@ project "pixie"
         architecture "x86_64"
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
-        optimize "On"
+        optimize "speed"

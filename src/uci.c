@@ -103,9 +103,6 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     }
     info.nodes = 0ULL;
 
-    printf("time:%d start:%llu stop:%llu depth:%d timeset:%d\n", time, info.starttime,
-           info.stoptime, info.depth, info.timeset);
-
     Move best_move;
     char best_move_str[10];
 
