@@ -12,20 +12,16 @@ project "pixie"
     files { "src/**.h", "src/**.c" }
     removefiles { "src/pypixie.c" }
 
-    filter { "platforms:MacOS64" }
+    filter { "configurations:Debug" }
         system "macosx"
         architecture "x86_64"
-
-    filter { "platforms:Win64" }
-        system "Windows"
-        architecture "x86_64"
-
-    filter "configurations:Debug"
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
 
-    filter "configurations:Release"
+    filter { "configurations:Release" }
+        system "macosx"
+        architecture "x86_64"
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "On"
