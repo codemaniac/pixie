@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #define SEARCH_SCORE_MAX 999999
+#define SEARCH_MATE_SCORE 899999
 #define SEARCH_DEPTH_MAX 64
 
 typedef struct {

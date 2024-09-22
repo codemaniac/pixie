@@ -92,6 +92,7 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     info.depth     = (uint8_t) depth;
     info.timeset   = false;
     info.starttime = utils_time_curr_time_ms();
+    info.stoptime  = 0;
 
     if (time > 0)
     {
@@ -101,6 +102,9 @@ static void _uci_parse_go(char* uci_line, Position* position) {
         info.stoptime = info.starttime + time + inc;
     }
     info.nodes = 0ULL;
+
+    printf("time:%d start:%llu stop:%llu depth:%d timeset:%d\n", time, info.starttime,
+           info.stoptime, info.depth, info.timeset);
 
     Move best_move;
     char best_move_str[10];
@@ -115,7 +119,7 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     }
     else
     {
-        printf("info score cp %d nodes %llu time %llu\n", eval, info.nodes,
+        printf("info score cp %d depth %d nodes %llu time %llu\n", eval, info.depth, info.nodes,
                utils_time_curr_time_ms() - info.starttime);
     }
 
@@ -161,12 +165,17 @@ static void _uci_parse_position(char* uci_line, Position* position) {
 
 void uci_loop(void) {
     chess_initialize();
-    Position position = position_create();
+    Position position;
 
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
 
     char line[INPUTBUFFER];
+
+    printf("id name %s %s\n", PROGRAM_NAME, VERSION);
+    printf("id author the pixie developers (see AUTHORS file)\n");
+    printf("uciok\n");
+    fflush(stdout);
 
     while (true)
     {
@@ -177,6 +186,7 @@ void uci_loop(void) {
             continue;
 
         line[strcspn(line, "\n")] = 0;
+        utils_str_trimwhitespace(line);
 
         if (line[0] == '\n')
             continue;
@@ -187,32 +197,46 @@ void uci_loop(void) {
             printf("id author the pixie developers (see AUTHORS file)");
             printf("uciok\n");
             fflush(stdout);
+            continue;
         }
-        else if (!strcmp(line, "isready"))
+
+        if (!strcmp(line, "isready"))
         {
             printf("readyok\n");
             fflush(stdout);
+            continue;
         }
-        else if (!strcmp(line, "ucinewgame"))
+
+        if (!strcmp(line, "ucinewgame"))
         {
+            position = position_create();
             _uci_parse_position("position startpos\n", &position);
             position.ply_count = 0;
+            continue;
         }
-        else if (!strncmp(line, "position", 8))
+
+        if (!strncmp(line, "position", 8))
         {
+            position = position_create();
             _uci_parse_position(line, &position);
             position.ply_count = 0;
+            continue;
         }
-        else if (!strncmp(line, "go", 2))
+
+        if (!strncmp(line, "go", 2))
         {
             _uci_parse_go(line, &position);
+            continue;
         }
-        else if (!strcmp(line, "display"))
+
+        if (!strcmp(line, "display"))
         {
             position_display(&position);
             fflush(stdout);
+            continue;
         }
-        else if (!strcmp(line, "quit"))
+
+        if (!strcmp(line, "quit"))
             break;
     }
 }
