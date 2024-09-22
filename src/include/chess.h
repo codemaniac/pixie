@@ -78,12 +78,6 @@ enum {
     BQCA = 8
 };
 
-typedef enum {
-    MOVE_TYPE_NONE,
-    MOVE_TYPE_QUITE,
-    MOVE_TYPE_NON_QUIET
-} MoveType;
-
 #define PIECE_GET_TYPE(p) (p & 0x7)
 #define PIECE_GET_COLOR(p) ((p & 0x8) / 8)
 #define PIECE_CREATE(t, c) ((c << 3) | t)
@@ -126,7 +120,7 @@ typedef enum {
 
 typedef struct {
     uint32_t move_id;
-    MoveType type;
+    int16_t  score;
 } Move;
 
 typedef struct {
