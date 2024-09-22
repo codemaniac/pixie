@@ -1,12 +1,12 @@
 #include "include/chess.h"
 #include "include/hashkey.h"
 #include "include/utils.h"
-#include "lib/logc/log.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define USE_32_BIT_MULTIPLICATIONS
 
@@ -409,7 +409,7 @@ static void _init_attack_table_king(void) {
     }
 }
 
-void initialize(void) {
+void chess_initialize(void) {
     _init_attack_table_pawn();
     _init_attack_table_knight();
     _init_attack_mask_table_bishop();
@@ -457,13 +457,24 @@ static uint64_t _movegen_get_king_attacks(int sq, uint64_t occupancy) {
 * Position functions
 */
 
-static Board* _board_create(void) {
-    Board* b               = (Board*) malloc(sizeof(Board));
-    b->bitboards[NO_PIECE] = 0xFFFFFFFFFFFFFFFF;
+static Board _board_create(void) {
+    Board b;
+
+    for (uint8_t p = 0; p < 15; p++)
+    {
+        b.bitboards[p]   = 0ULL;
+        b.piece_count[p] = 0;
+    }
+
+    for (uint8_t sq = 0; sq < 64; sq++)
+        b.pieces[sq] = 0;
+
+    b.bitboards[NO_PIECE] = 0xFFFFFFFFFFFFFFFF;
+
     return b;
 }
 
-static void _board_display(const Board* board) {
+static void _board_display(const Board board) {
     uint8_t sq;
 
     putchar('\n');
@@ -473,7 +484,7 @@ static void _board_display(const Board* board) {
         for (int8_t file = FILE_A; file <= FILE_H; file++)
         {
             sq = BOARD_RF_TO_SQ(rank, file);
-            switch (board->pieces[sq])
+            switch (board.pieces[sq])
             {
                 case NO_PIECE:
                     printf(". ");
@@ -527,16 +538,16 @@ static void _board_display(const Board* board) {
 }
 
 static bool _position_history_is_full(Position* pos) {
-    return (pos->move_history->top == pos->move_history->size - 1);
+    return (pos->move_history.top == pos->move_history.size - 1);
 }
 
-static bool _position_history_is_empty(Position* pos) { return (pos->move_history->top == -1); }
+static bool _position_history_is_empty(Position* pos) { return (pos->move_history.top == -1); }
 
 static void _position_history_push(Position* pos, MoveHistoryEntry move_history_entry) {
     if (_position_history_is_full(pos))
         return;
 
-    pos->move_history->contents[++pos->move_history->top] = move_history_entry;
+    pos->move_history.contents[++pos->move_history.top] = move_history_entry;
 }
 
 static MoveHistoryEntry _position_history_pop(Position* pos) {
@@ -545,106 +556,129 @@ static MoveHistoryEntry _position_history_pop(Position* pos) {
         exit(EXIT_FAILURE);
     }
 
-    return pos->move_history->contents[pos->move_history->top--];
+    return pos->move_history.contents[pos->move_history.top--];
 }
 
-Position* position_create(void) {
-    Position* pos               = (Position*) malloc(sizeof(Position));
-    pos->board                  = _board_create();
-    pos->move_history           = (MoveHistory*) malloc(sizeof(MoveHistory));
-    pos->move_history->top      = -1;
-    pos->move_history->size     = 512;
-    pos->move_history->contents = (MoveHistoryEntry*) malloc(512 * sizeof(MoveHistoryEntry));
+Position position_create(void) {
+    Position pos;
+    pos.board            = _board_create();
+    pos.active_color     = WHITE;
+    pos.casteling_rights = NOCA;
+    pos.enpassant_target = NO_EP_TARGET;
+    pos.half_move_clock  = 0;
+    pos.full_move_number = 0;
+    pos.ply_count        = 0;
+    pos.hash             = 0ULL;
+
+    MoveHistory history;
+    history.top  = -1;
+    history.size = MAX_MOVES;
+
+    Move             nomove         = {.move_id = 0, MOVE_TYPE_NONE};
+    MoveHistoryEntry nohistoryentry = {.move                  = nomove,
+                                       .prev_casteling_rights = NOCA,
+                                       .prev_enpassant_target = NO_EP_TARGET,
+                                       .prev_half_move_clock  = 0,
+                                       .prev_full_move_number = 0,
+                                       .prev_hash             = 0ULL};
+
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        history.contents[i] = nohistoryentry;
+    }
+
+    pos.move_history = history;
+
     return pos;
 }
 
-Position* position_clone(const Position* position) {
-    Position* position_copy = position_create();
+Position position_clone(const Position* position) {
+    Position position_copy = position_create();
     for (uint8_t p = 0; p < 15; p++)
     {
-        position_copy->board->bitboards[p]   = position->board->bitboards[p];
-        position_copy->board->piece_count[p] = position->board->piece_count[p];
+        position_copy.board.bitboards[p]   = position->board.bitboards[p];
+        position_copy.board.piece_count[p] = position->board.piece_count[p];
     }
     for (uint8_t sq = 0; sq < 64; sq++)
     {
-        position_copy->board->pieces[sq] = position->board->pieces[sq];
+        position_copy.board.pieces[sq] = position->board.pieces[sq];
     }
-    position_copy->active_color     = position->active_color;
-    position_copy->casteling_rights = position->casteling_rights;
-    position_copy->enpassant_target = position->enpassant_target;
-    position_copy->half_move_clock  = position->half_move_clock;
-    position_copy->full_move_number = position->full_move_number;
-    position_copy->ply_count        = position->ply_count;
-    position_copy->hash             = position->hash;
+    position_copy.active_color     = position->active_color;
+    position_copy.casteling_rights = position->casteling_rights;
+    position_copy.enpassant_target = position->enpassant_target;
+    position_copy.half_move_clock  = position->half_move_clock;
+    position_copy.full_move_number = position->full_move_number;
+    position_copy.ply_count        = position->ply_count;
+    position_copy.hash             = position->hash;
     return position_copy;
 }
 
 void position_set_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);
-    position->board->bitboards[piece] |= bit;
-    position->board->bitboards[NO_PIECE] &= bit_inverted;
-    position->board->bitboards[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] |= bit;
-    position->board->pieces[square] = piece;
-    position->board->piece_count[piece] += 1;
-    position->board->piece_count[NO_PIECE] -= 1;
-    position->board->piece_count[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] += 1;
+    position->board.bitboards[piece] |= bit;
+    position->board.bitboards[NO_PIECE] &= bit_inverted;
+    position->board.bitboards[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] |= bit;
+    position->board.pieces[square] = piece;
+    position->board.piece_count[piece] += 1;
+    position->board.piece_count[NO_PIECE] -= 1;
+    position->board.piece_count[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] += 1;
     position->hash ^= HASHTABLE[HASH_IDX(piece)][square];
 }
 
 void position_clear_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);
-    position->board->bitboards[piece] &= bit_inverted;
-    position->board->bitboards[NO_PIECE] |= bit;
-    position->board->bitboards[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] &= bit_inverted;
-    position->board->pieces[square] = NO_PIECE;
-    position->board->piece_count[piece] -= 1;
-    position->board->piece_count[NO_PIECE] += 1;
-    position->board->piece_count[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] -= 1;
+    position->board.bitboards[piece] &= bit_inverted;
+    position->board.bitboards[NO_PIECE] |= bit;
+    position->board.bitboards[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] &= bit_inverted;
+    position->board.pieces[square] = NO_PIECE;
+    position->board.piece_count[piece] -= 1;
+    position->board.piece_count[NO_PIECE] += 1;
+    position->board.piece_count[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] -= 1;
     position->hash ^= HASHTABLE[HASH_IDX(piece)][square];
 }
 
 void position_display(const Position* position) {
     _board_display(position->board);
-    printf("%d\n", position->active_color);
-    printf("%d\n", position->casteling_rights);
-    printf("%d\n", position->enpassant_target);
-    printf("%d\n", position->half_move_clock);
-    printf("%d\n", position->full_move_number);
-    printf("%d\n", position->ply_count);
-    printf("%llu\n", position->hash);
+    printf("\nActive Color: %d\n", position->active_color);
+    printf("Casteling Rights: %d\n", position->casteling_rights);
+    printf("En Passant Target: %d\n", position->enpassant_target);
+    printf("Half Move Clock: %d\n", position->half_move_clock);
+    printf("Full Move Number: %d\n", position->full_move_number);
+    printf("Ply Count: %d\n", position->ply_count);
+    printf("Hash: %llu\n\n", position->hash);
 }
 
 bool position_is_square_attacked(const Position* position,
                                  const Square    sq,
                                  const Color     attacked_by_color) {
 
-    const PieceType pawn = PIECE_CREATE(PAWN, attacked_by_color);
-    if (ATTACK_TABLE_PAWN[!attacked_by_color][sq] & position->board->bitboards[pawn])
-        return true;
-
-    const PieceType knight = PIECE_CREATE(KNIGHT, attacked_by_color);
-    if (ATTACK_TABLE_KNIGHT[sq] & position->board->bitboards[knight])
-        return true;
-
-    const PieceType bishop = PIECE_CREATE(BISHOP, attacked_by_color);
-    if (_movegen_get_bishop_attacks(sq, ~position->board->bitboards[NO_PIECE])
-        & position->board->bitboards[bishop])
+    const PieceType queen = PIECE_CREATE(QUEEN, attacked_by_color);
+    if (_movegen_get_queen_attacks(sq, ~position->board.bitboards[NO_PIECE])
+        & position->board.bitboards[queen])
         return true;
 
     const PieceType rook = PIECE_CREATE(ROOK, attacked_by_color);
-    if (_movegen_get_rook_attacks(sq, ~position->board->bitboards[NO_PIECE])
-        & position->board->bitboards[rook])
+    if (_movegen_get_rook_attacks(sq, ~position->board.bitboards[NO_PIECE])
+        & position->board.bitboards[rook])
         return true;
 
-    const PieceType queen = PIECE_CREATE(QUEEN, attacked_by_color);
-    if (_movegen_get_queen_attacks(sq, ~position->board->bitboards[NO_PIECE])
-        & position->board->bitboards[queen])
+    const PieceType bishop = PIECE_CREATE(BISHOP, attacked_by_color);
+    if (_movegen_get_bishop_attacks(sq, ~position->board.bitboards[NO_PIECE])
+        & position->board.bitboards[bishop])
+        return true;
+
+    const PieceType knight = PIECE_CREATE(KNIGHT, attacked_by_color);
+    if (ATTACK_TABLE_KNIGHT[sq] & position->board.bitboards[knight])
+        return true;
+
+    const PieceType pawn = PIECE_CREATE(PAWN, attacked_by_color);
+    if (ATTACK_TABLE_PAWN[!attacked_by_color][sq] & position->board.bitboards[pawn])
         return true;
 
     const PieceType king = PIECE_CREATE(KING, attacked_by_color);
-    if (ATTACK_TABLE_KING[sq] & position->board->bitboards[king])
+    if (ATTACK_TABLE_KING[sq] & position->board.bitboards[king])
         return true;
 
     return false;
@@ -652,23 +686,23 @@ bool position_is_square_attacked(const Position* position,
 
 bool position_is_in_check(const Position* position) {
     const PieceType king     = PIECE_CREATE(KING, position->active_color);
-    uint64_t        king_bb  = position->board->bitboards[king];
+    uint64_t        king_bb  = position->board.bitboards[king];
     uint8_t         king_pos = utils_bit_bitscan_forward(&king_bb);
     return position_is_square_attacked(position, king_pos, !position->active_color);
 }
 
 bool position_is_valid(const Position* position) {
-    if (position->board->piece_count[WHITE_KING] != 1)
+    if (position->board.piece_count[WHITE_KING] != 1)
         return false;
-    if (position->board->piece_count[BLACK_KING] != 1)
+    if (position->board.piece_count[BLACK_KING] != 1)
         return false;
-    if (position->board->bitboards[WHITE_PAWN] & BOARD_MASK_RANK_1)
+    if (position->board.bitboards[WHITE_PAWN] & BOARD_MASK_RANK_1)
         return false;
-    if (position->board->bitboards[WHITE_PAWN] & BOARD_MASK_RANK_8)
+    if (position->board.bitboards[WHITE_PAWN] & BOARD_MASK_RANK_8)
         return false;
-    if (position->board->bitboards[BLACK_PAWN] & BOARD_MASK_RANK_1)
+    if (position->board.bitboards[BLACK_PAWN] & BOARD_MASK_RANK_1)
         return false;
-    if (position->board->bitboards[BLACK_PAWN] & BOARD_MASK_RANK_8)
+    if (position->board.bitboards[BLACK_PAWN] & BOARD_MASK_RANK_8)
         return false;
     return true;
 }
@@ -677,7 +711,7 @@ bool position_is_repeated(const Position* position) {
     for (uint16_t i = (position->ply_count - position->half_move_clock);
          i < position->ply_count - 1; ++i)
     {
-        if (position->hash == position->move_history->contents[i].prev_hash)
+        if (position->hash == position->move_history.contents[i].prev_hash)
         {
             return true;
         }
@@ -686,25 +720,23 @@ bool position_is_repeated(const Position* position) {
 }
 
 bool position_has_legal_move(Position* position) {
-    const MoveList* moves = movegen_pseudo_legal(position);
+    MoveList move_list;
 
-    MovesListNode *m, *t;
-    bool           is_valid_move = false;
+    movegen_pseudo_legal_all(position, &move_list);
 
-    m = (MovesListNode*) moves->head->next;
+    bool is_valid_move = false;
 
-    while (m != NULL)
+    for (int32_t i = 0; i < move_list.size; i++)
     {
-        is_valid_move = move_do(position, m->move);
+        is_valid_move = move_do(position, move_list.moves[i]);
 
         if (is_valid_move && position_is_valid(position))
+        {
+            move_undo(position);
             return true;
+        }
 
         move_undo(position);
-
-        t = m;
-        m = (MovesListNode*) m->next;
-        free(t);
     }
 
     return false;
@@ -798,89 +830,46 @@ static Move _move_encode_king_castle_move(const Piece    king,
     return _move_encode(king, from_sq, to_sq, NO_PIECE, NO_PIECE, false, false, flag_ca);
 }
 
-static MovesListNode* _movegen_create_move_list_node(const Move move) {
-    MovesListNode* node = (MovesListNode*) malloc(sizeof(MovesListNode));
-    if (node == NULL)
-    {
-        log_fatal("Memory allocation failed!");
-        exit(EXIT_FAILURE);
-    }
-    node->move = move;
-    node->next = NULL;
+static bool _movegen_enqueue_move(MoveList* list, const Move move) {
+    if (list->size == MAX_MOVES - 1)
+        return false;
 
-    return node;
+    list->moves[++list->size] = move;
+    return true;
 }
 
-static void _movegen_enqueue_move(MoveList* list, const Move move) {
-    MovesListNode* new_tail_node = _movegen_create_move_list_node(move);
+bool movegen_dequeue_move(MoveList* list, Move* move) {
+    if (list->size == -1)
+        return false;
 
-    list->tail->next = (struct MovesListNode*) new_tail_node;
-    list->tail       = new_tail_node;
-    list->size++;
+    *move = list->moves[list->size--];
+    return true;
 }
 
-MoveList* movegen_pseudo_legal(const Position* position) {
+void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list) {
     const Color active_color = position->active_color;
     Piece       p;
     uint64_t    bb, attacks, occupancy;
     uint8_t     from_sq, to_sq;
     Move        m;
 
-    const Move null_move = {.move_id = 0};
-    MoveList*  moves     = (MoveList*) malloc(sizeof(MoveList));
-    moves->head          = _movegen_create_move_list_node(null_move);
-    moves->tail          = moves->head;
-    moves->size          = 0;
+    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        move_list->moves[i] = nomove;
+    }
+    move_list->size = -1;
 
     if (active_color == WHITE)
     {
-        bb = position->board->bitboards[WHITE_PAWN];
+        bb = position->board.bitboards[WHITE_PAWN];
 
         while (bb)
         {
-            occupancy = position->board->bitboards[NO_PIECE];
-            from_sq   = utils_bit_bitscan_forward(&bb);
-            attacks   = _bitboard_north_one((1ULL << from_sq)) & occupancy;
-            if (attacks)
-            {
-                to_sq = utils_bit_bitscan_forward(&attacks);
-
-                if (BOARD_SQ_TO_RANK(to_sq) == RANK_8)
-                {
-                    // Pawn Promotion
-                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         WHITE_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         WHITE_BISHOP);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         WHITE_ROOK);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         WHITE_QUEEN);
-                    _movegen_enqueue_move(moves, m);
-                }
-                else
-                {
-                    // Pawn Push
-                    m = _move_encode_quite_move(WHITE_PAWN, from_sq, to_sq);
-                    _movegen_enqueue_move(moves, m);
-                }
-            }
-
-            // Pawn Start
-            attacks = _bitboard_north_one((1ULL << from_sq)) & occupancy;
-            attacks = _bitboard_north_one(attacks) & occupancy & BOARD_MASK_RANK_4;
-            if (attacks)
-            {
-                to_sq = utils_bit_bitscan_forward(&attacks);
-                m     = _move_encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
-            }
+            from_sq = utils_bit_bitscan_forward(&bb);
 
             // Pawn Captures
-            occupancy = position->board->bitboards[BOARD_BLACK_PIECES_IDX];
+            occupancy = position->board.bitboards[BOARD_BLACK_PIECES_IDX];
             attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
             while (attacks)
             {
@@ -890,24 +879,24 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     // Pawn Captures + Promotion
                     m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
+                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_KNIGHT);
+                    _movegen_enqueue_move(move_list, m);
                     m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_BISHOP);
-                    _movegen_enqueue_move(moves, m);
+                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_BISHOP);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq,
+                                                         position->board.pieces[to_sq], WHITE_ROOK);
+                    _movegen_enqueue_move(move_list, m);
                     m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_ROOK);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(
-                      WHITE_PAWN, from_sq, to_sq, position->board->pieces[to_sq], WHITE_QUEEN);
-                    _movegen_enqueue_move(moves, m);
+                      WHITE_PAWN, from_sq, to_sq, position->board.pieces[to_sq], WHITE_QUEEN);
+                    _movegen_enqueue_move(move_list, m);
                 }
                 else
                 {
                     // Pawn Captures
                     m = _move_encode_capture_move(WHITE_PAWN, from_sq, to_sq,
-                                                  position->board->pieces[to_sq]);
-                    _movegen_enqueue_move(moves, m);
+                                                  position->board.pieces[to_sq]);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
 
@@ -919,56 +908,20 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     to_sq = utils_bit_bitscan_forward(&attacks);
                     m = _move_encode_pawn_enpassant_move(WHITE_PAWN, from_sq, to_sq, BLACK_PAWN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
         }
     }
     else
     {
-        bb = position->board->bitboards[BLACK_PAWN];
+        bb = position->board.bitboards[BLACK_PAWN];
 
         while (bb)
         {
-            occupancy = position->board->bitboards[NO_PIECE];
-            from_sq   = utils_bit_bitscan_forward(&bb);
-            attacks   = _bitboard_south_one((1ULL << from_sq)) & occupancy;
-            if (attacks)
-            {
-                to_sq = utils_bit_bitscan_forward(&attacks);
+            from_sq = utils_bit_bitscan_forward(&bb);
 
-                if (BOARD_SQ_TO_RANK(to_sq) == RANK_1)
-                {
-                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         BLACK_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         BLACK_BISHOP);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         BLACK_ROOK);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
-                                                         BLACK_QUEEN);
-                    _movegen_enqueue_move(moves, m);
-                }
-                else
-                {
-                    m = _move_encode_quite_move(BLACK_PAWN, from_sq, to_sq);
-                    _movegen_enqueue_move(moves, m);
-                }
-            }
-
-            attacks = _bitboard_south_one((1ULL << from_sq)) & occupancy;
-            attacks = _bitboard_south_one(attacks) & occupancy & BOARD_MASK_RANK_5;
-            if (attacks)
-            {
-                to_sq = utils_bit_bitscan_forward(&attacks);
-                m     = _move_encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
-            }
-
-            occupancy = position->board->bitboards[BOARD_WHITE_PIECES_IDX];
+            occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX];
             attacks   = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
             while (attacks)
             {
@@ -977,23 +930,23 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 if (BOARD_SQ_TO_RANK(to_sq) == RANK_1)
                 {
                     m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_KNIGHT);
-                    _movegen_enqueue_move(moves, m);
+                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_KNIGHT);
+                    _movegen_enqueue_move(move_list, m);
                     m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_BISHOP);
-                    _movegen_enqueue_move(moves, m);
+                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_BISHOP);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq,
+                                                         position->board.pieces[to_sq], BLACK_ROOK);
+                    _movegen_enqueue_move(move_list, m);
                     m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_ROOK);
-                    _movegen_enqueue_move(moves, m);
-                    m = _move_encode_pawn_promotion_move(
-                      BLACK_PAWN, from_sq, to_sq, position->board->pieces[to_sq], BLACK_QUEEN);
-                    _movegen_enqueue_move(moves, m);
+                      BLACK_PAWN, from_sq, to_sq, position->board.pieces[to_sq], BLACK_QUEEN);
+                    _movegen_enqueue_move(move_list, m);
                 }
                 else
                 {
                     m = _move_encode_capture_move(BLACK_PAWN, from_sq, to_sq,
-                                                  position->board->pieces[to_sq]);
-                    _movegen_enqueue_move(moves, m);
+                                                  position->board.pieces[to_sq]);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
 
@@ -1005,136 +958,309 @@ MoveList* movegen_pseudo_legal(const Position* position) {
                 {
                     to_sq = utils_bit_bitscan_forward(&attacks);
                     m = _move_encode_pawn_enpassant_move(BLACK_PAWN, from_sq, to_sq, WHITE_PAWN);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
         }
     }
 
     p  = PIECE_CREATE(KNIGHT, active_color);
-    bb = position->board->bitboards[p];
+    bb = position->board.bitboards[p];
 
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = position->board->bitboards[NO_PIECE]
-                  | position->board->bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
-        attacks = _movegen_get_knight_attacks(from_sq, occupancy);
+        occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
+        attacks   = _movegen_get_knight_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board->pieces[to_sq] == NO_PIECE)
-            {
-                m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
-            }
-            else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
-            }
+            m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+            _movegen_enqueue_move(move_list, m);
         }
     }
 
     p  = PIECE_CREATE(BISHOP, active_color);
-    bb = position->board->bitboards[p];
+    bb = position->board.bitboards[p];
 
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = ~position->board->bitboards[NO_PIECE];
+        occupancy = ~position->board.bitboards[NO_PIECE];
         attacks   = _movegen_get_bishop_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board->pieces[to_sq] == NO_PIECE)
+            if (position->board.pieces[to_sq] != NO_PIECE
+                && PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
             {
-                m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
-            }
-            else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+                _movegen_enqueue_move(move_list, m);
             }
         }
     }
 
     p  = PIECE_CREATE(ROOK, active_color);
-    bb = position->board->bitboards[p];
+    bb = position->board.bitboards[p];
 
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = ~position->board->bitboards[NO_PIECE];
+        occupancy = ~position->board.bitboards[NO_PIECE];
         attacks   = _movegen_get_rook_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board->pieces[to_sq] == NO_PIECE)
+            if (position->board.pieces[to_sq] != NO_PIECE
+                && PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
             {
-                m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
-            }
-            else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+                _movegen_enqueue_move(move_list, m);
             }
         }
     }
 
     p  = PIECE_CREATE(QUEEN, active_color);
-    bb = position->board->bitboards[p];
+    bb = position->board.bitboards[p];
 
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = ~position->board->bitboards[NO_PIECE];
+        occupancy = ~position->board.bitboards[NO_PIECE];
         attacks   = _movegen_get_queen_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board->pieces[to_sq] == NO_PIECE)
+            if (position->board.pieces[to_sq] != NO_PIECE
+                && PIECE_GET_COLOR(position->board.pieces[to_sq]) != active_color)
             {
-                m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
-            }
-            else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
-            {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+                _movegen_enqueue_move(move_list, m);
             }
         }
     }
 
     p  = PIECE_CREATE(KING, active_color);
-    bb = position->board->bitboards[p];
+    bb = position->board.bitboards[p];
 
     while (bb)
     {
         from_sq   = utils_bit_bitscan_forward(&bb);
-        occupancy = position->board->bitboards[NO_PIECE]
-                  | position->board->bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
-        attacks = _movegen_get_king_attacks(from_sq, occupancy);
+        occupancy = position->board.bitboards[BOARD_WHITE_PIECES_IDX + (!active_color)];
+        attacks   = _movegen_get_king_attacks(from_sq, occupancy);
         while (attacks)
         {
             to_sq = utils_bit_bitscan_forward(&attacks);
 
-            if (position->board->pieces[to_sq] == NO_PIECE)
+            m = _move_encode_capture_move(p, from_sq, to_sq, position->board.pieces[to_sq]);
+            _movegen_enqueue_move(move_list, m);
+        }
+    }
+}
+
+void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
+    const Color active_color = position->active_color;
+    Piece       p;
+    uint64_t    bb, attacks, occupancy;
+    uint8_t     from_sq, to_sq;
+    Move        m;
+
+    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        move_list->moves[i] = nomove;
+    }
+    move_list->size = -1;
+
+    if (active_color == WHITE)
+    {
+        bb = position->board.bitboards[WHITE_PAWN];
+
+        while (bb)
+        {
+            occupancy = position->board.bitboards[NO_PIECE];
+            from_sq   = utils_bit_bitscan_forward(&bb);
+            attacks   = _bitboard_north_one((1ULL << from_sq)) & occupancy;
+            if (attacks)
+            {
+                to_sq = utils_bit_bitscan_forward(&attacks);
+
+                if (BOARD_SQ_TO_RANK(to_sq) == RANK_8)
+                {
+                    // Pawn Promotion
+                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         WHITE_KNIGHT);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         WHITE_BISHOP);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         WHITE_ROOK);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(WHITE_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         WHITE_QUEEN);
+                    _movegen_enqueue_move(move_list, m);
+                }
+                else
+                {
+                    // Pawn Push
+                    m = _move_encode_quite_move(WHITE_PAWN, from_sq, to_sq);
+                    _movegen_enqueue_move(move_list, m);
+                }
+            }
+
+            // Pawn Start
+            attacks = _bitboard_north_one((1ULL << from_sq)) & occupancy;
+            attacks = _bitboard_north_one(attacks) & occupancy & BOARD_MASK_RANK_4;
+            if (attacks)
+            {
+                to_sq = utils_bit_bitscan_forward(&attacks);
+                m     = _move_encode_pawn_start_move(WHITE_PAWN, from_sq, to_sq);
+                _movegen_enqueue_move(move_list, m);
+            }
+        }
+    }
+    else
+    {
+        bb = position->board.bitboards[BLACK_PAWN];
+
+        while (bb)
+        {
+            occupancy = position->board.bitboards[NO_PIECE];
+            from_sq   = utils_bit_bitscan_forward(&bb);
+            attacks   = _bitboard_south_one((1ULL << from_sq)) & occupancy;
+            if (attacks)
+            {
+                to_sq = utils_bit_bitscan_forward(&attacks);
+
+                if (BOARD_SQ_TO_RANK(to_sq) == RANK_1)
+                {
+                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         BLACK_KNIGHT);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         BLACK_BISHOP);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         BLACK_ROOK);
+                    _movegen_enqueue_move(move_list, m);
+                    m = _move_encode_pawn_promotion_move(BLACK_PAWN, from_sq, to_sq, NO_PIECE,
+                                                         BLACK_QUEEN);
+                    _movegen_enqueue_move(move_list, m);
+                }
+                else
+                {
+                    m = _move_encode_quite_move(BLACK_PAWN, from_sq, to_sq);
+                    _movegen_enqueue_move(move_list, m);
+                }
+            }
+
+            attacks = _bitboard_south_one((1ULL << from_sq)) & occupancy;
+            attacks = _bitboard_south_one(attacks) & occupancy & BOARD_MASK_RANK_5;
+            if (attacks)
+            {
+                to_sq = utils_bit_bitscan_forward(&attacks);
+                m     = _move_encode_pawn_start_move(BLACK_PAWN, from_sq, to_sq);
+                _movegen_enqueue_move(move_list, m);
+            }
+        }
+    }
+
+    p  = PIECE_CREATE(KNIGHT, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_knight_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            m = _move_encode_quite_move(p, from_sq, to_sq);
+            _movegen_enqueue_move(move_list, m);
+        }
+    }
+
+    p  = PIECE_CREATE(BISHOP, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = ~position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_bishop_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            if (position->board.pieces[to_sq] == NO_PIECE)
             {
                 m = _move_encode_quite_move(p, from_sq, to_sq);
-                _movegen_enqueue_move(moves, m);
+                _movegen_enqueue_move(move_list, m);
             }
-            else if (PIECE_GET_COLOR(position->board->pieces[to_sq]) != active_color)
+        }
+    }
+
+    p  = PIECE_CREATE(ROOK, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = ~position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_rook_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            if (position->board.pieces[to_sq] == NO_PIECE)
             {
-                m = _move_encode_capture_move(p, from_sq, to_sq, position->board->pieces[to_sq]);
-                _movegen_enqueue_move(moves, m);
+                m = _move_encode_quite_move(p, from_sq, to_sq);
+                _movegen_enqueue_move(move_list, m);
             }
+        }
+    }
+
+    p  = PIECE_CREATE(QUEEN, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = ~position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_queen_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            if (position->board.pieces[to_sq] == NO_PIECE)
+            {
+                m = _move_encode_quite_move(p, from_sq, to_sq);
+                _movegen_enqueue_move(move_list, m);
+            }
+        }
+    }
+
+    p  = PIECE_CREATE(KING, active_color);
+    bb = position->board.bitboards[p];
+
+    while (bb)
+    {
+        from_sq   = utils_bit_bitscan_forward(&bb);
+        occupancy = position->board.bitboards[NO_PIECE];
+        attacks   = _movegen_get_king_attacks(from_sq, occupancy);
+        while (attacks)
+        {
+            to_sq = utils_bit_bitscan_forward(&attacks);
+
+            m = _move_encode_quite_move(p, from_sq, to_sq);
+            _movegen_enqueue_move(move_list, m);
         }
     }
 
@@ -1144,23 +1270,21 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         {
             if (position->casteling_rights & WKCA)
             {
-                if (position->board->pieces[F1] == NO_PIECE
-                    && position->board->pieces[G1] == NO_PIECE
+                if (position->board.pieces[F1] == NO_PIECE && position->board.pieces[G1] == NO_PIECE
                     && !position_is_square_attacked(position, F1, BLACK))
                 {
                     m = _move_encode_king_castle_move(WHITE_KING, E1, G1, MOVE_FLAG_WKCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
             if (position->casteling_rights & WQCA)
             {
-                if (position->board->pieces[D1] == NO_PIECE
-                    && position->board->pieces[C1] == NO_PIECE
-                    && position->board->pieces[B1] == NO_PIECE
+                if (position->board.pieces[D1] == NO_PIECE && position->board.pieces[C1] == NO_PIECE
+                    && position->board.pieces[B1] == NO_PIECE
                     && !position_is_square_attacked(position, D1, BLACK))
                 {
                     m = _move_encode_king_castle_move(WHITE_KING, E1, C1, MOVE_FLAG_WQCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
         }
@@ -1168,39 +1292,59 @@ MoveList* movegen_pseudo_legal(const Position* position) {
         {
             if (position->casteling_rights & BKCA)
             {
-                if (position->board->pieces[F8] == NO_PIECE
-                    && position->board->pieces[G8] == NO_PIECE
+                if (position->board.pieces[F8] == NO_PIECE && position->board.pieces[G8] == NO_PIECE
                     && !position_is_square_attacked(position, F8, WHITE))
                 {
                     m = _move_encode_king_castle_move(BLACK_KING, E8, G8, MOVE_FLAG_BKCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
             if (position->casteling_rights & BQCA)
             {
-                if (position->board->pieces[D8] == NO_PIECE
-                    && position->board->pieces[C8] == NO_PIECE
-                    && position->board->pieces[B8] == NO_PIECE
+                if (position->board.pieces[D8] == NO_PIECE && position->board.pieces[C8] == NO_PIECE
+                    && position->board.pieces[B8] == NO_PIECE
                     && !position_is_square_attacked(position, D8, WHITE))
                 {
                     m = _move_encode_king_castle_move(BLACK_KING, E8, C8, MOVE_FLAG_BQCA);
-                    _movegen_enqueue_move(moves, m);
+                    _movegen_enqueue_move(move_list, m);
                 }
             }
         }
     }
+}
 
-    return moves;
+void movegen_pseudo_legal_all(const Position* position, MoveList* move_list) {
+    const Move nomove = {.move_id = 0, .type = MOVE_TYPE_NONE};
+
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        move_list->moves[i] = nomove;
+    }
+    move_list->size = -1;
+
+    MoveList moves;
+    Move     move;
+
+    movegen_pseudo_legal_captures(position, &moves);
+
+    while (movegen_dequeue_move(&moves, &move))
+        _movegen_enqueue_move(move_list, move);
+
+    movegen_pseudo_legal_quite(position, &moves);
+
+    while (movegen_dequeue_move(&moves, &move))
+        _movegen_enqueue_move(move_list, move);
 }
 
 void movegen_display_moves(MoveList* move_list) {
-    MovesListNode* temp = (MovesListNode*) move_list->head->next;
-    char           move_str[10];
-    while (temp != NULL)
+    uint16_t i;
+    Move     move;
+    char     move_str[10];
+    for (i = 0; i < move_list->size + 1; i++)
     {
-        move_to_str(move_str, temp->move);
+        move = move_list->moves[i];
+        move_to_str(move_str, move);
         printf("%s\n", move_str);
-        temp = (MovesListNode*) temp->next;
     }
 }
 
@@ -1511,6 +1655,90 @@ void move_undo(Position* position) {
     position->half_move_clock  = mhe.prev_half_move_clock;
     position->full_move_number = mhe.prev_full_move_number;
     position->ply_count--;
+}
+
+Move move_from_str(const char* move_str, const Position* position) {
+
+    if (strlen(move_str) < 4)
+    {
+        Move nomove = {.move_id = 0};
+        return nomove;
+    }
+
+    const uint8_t from_file = move_str[0] - 'a';
+    const uint8_t from_rank = (move_str[1] - '0') - 1;
+    const Square  from_sq   = BOARD_RF_TO_SQ(from_rank, from_file);
+
+    const uint8_t to_file = move_str[2] - 'a';
+    const uint8_t to_rank = (move_str[3] - '0') - 1;
+    const Square  to_sq   = BOARD_RF_TO_SQ(to_rank, to_file);
+
+    const Piece move_piece     = position->board.pieces[from_sq];
+    const Piece captured_piece = position->board.pieces[to_sq];
+
+    Piece promoted_piece = NO_PIECE;
+
+    if (strlen(move_str) == 5)
+    {
+        const char promotion_piece_ch = move_str[4];
+        switch (promotion_piece_ch)
+        {
+            case 'n':
+                promoted_piece = PIECE_CREATE(KNIGHT, position->active_color);
+                break;
+            case 'b':
+                promoted_piece = PIECE_CREATE(BISHOP, position->active_color);
+                break;
+            case 'r':
+                promoted_piece = PIECE_CREATE(ROOK, position->active_color);
+                break;
+            case 'q':
+                promoted_piece = PIECE_CREATE(QUEEN, position->active_color);
+                break;
+            default:
+                promoted_piece = NO_PIECE;
+                break;
+        }
+    }
+
+    bool     flag_ps = false;
+    bool     flag_ep = false;
+    uint32_t flag_ca = NOCA;
+
+    if (PIECE_GET_TYPE(move_piece) == PAWN)
+    {
+        if (captured_piece == NO_PIECE)
+        {
+            if (position->active_color == WHITE && from_rank == RANK_2 && to_rank == RANK_4)
+                flag_ps = true;
+            else if (position->active_color == BLACK && from_rank == RANK_7 && to_rank == RANK_5)
+                flag_ps = true;
+        }
+        else if (PIECE_GET_TYPE(captured_piece) == PAWN && to_sq == position->enpassant_target)
+            flag_ep = true;
+    }
+    else if (PIECE_GET_TYPE(move_piece) == KING)
+    {
+        if (position->active_color == WHITE)
+        {
+            if ((position->casteling_rights & WKCA) && from_sq == E1 && to_sq == G1)
+                flag_ca = MOVE_FLAG_WKCA;
+            else if ((position->casteling_rights & WQCA) && from_sq == E1 && to_sq == C1)
+                flag_ca = MOVE_FLAG_WQCA;
+        }
+        else
+        {
+            if ((position->casteling_rights & BKCA) && from_sq == E8 && to_sq == G8)
+                flag_ca = MOVE_FLAG_BKCA;
+            else if ((position->casteling_rights & BQCA) && from_sq == E8 && to_sq == C8)
+                flag_ca = MOVE_FLAG_BQCA;
+        }
+    }
+
+    const Move move = _move_encode(move_piece, from_sq, to_sq, captured_piece, promoted_piece,
+                                   flag_ps, flag_ep, flag_ca);
+
+    return move;
 }
 
 void move_to_str(char* move_str, const Move move) {

@@ -80,7 +80,7 @@ uint64_t hashkey_position(Position* position) {
             continue;
         }
 
-        piece_bitmap   = position->board->bitboards[p];
+        piece_bitmap   = position->board.bitboards[p];
         piece_hash_idx = HASH_IDX(p);
 
         while (piece_bitmap)

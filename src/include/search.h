@@ -2,19 +2,24 @@
 #define SEARCH_H
 
 #include "chess.h"
+#include <stdbool.h>
 #include <stdint.h>
 
-typedef struct {
-    uint64_t hash;
-    Move     move;
-} PVEntry;
+#define SEARCH_SCORE_MAX 999999
+#define SEARCH_MATE_SCORE 899999
+#define SEARCH_DEPTH_MAX 64
 
 typedef struct {
-    PVEntry* contents;
-    uint64_t size;
-} PVTable;
+    uint8_t  depth;
+    uint64_t starttime;
+    uint64_t stoptime;
+    bool     timeset;
+    uint32_t movestogo;
+    uint64_t nodes;
+    bool     quit;
+    bool     stopped;
+} SearchInfo;
 
-PVTable* search_init_pv_table(void);
-int32_t  search(Position* position, uint8_t depth);
+int32_t search(Position* position, SearchInfo* info, Move* best_move);
 
 #endif

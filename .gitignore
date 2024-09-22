@@ -57,8 +57,13 @@ dkms.conf
 # Editor
 .vscode
 
+# Build files
+Makefile
+*.make
+
 # Output folders
 bin/
 build/
+obj/
 pypixie.egg-info/
-compile_commands.json
+leaks.txt
