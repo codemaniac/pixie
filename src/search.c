@@ -73,10 +73,9 @@ static int32_t _search_negamax(Position*   position,
     info->nodes++;
 
     PVLine   line;
-    Move     best_move_so_far = {.move_id = 0, .score = -1};
-    int32_t  old_alpha        = alpha;
-    int32_t  score            = -SEARCH_SCORE_MAX;
-    uint32_t legal            = 0;
+    int32_t  score      = -SEARCH_SCORE_MAX;
+    uint32_t legal      = 0;
+    bool     first_move = true;
 
     MoveList moves;
     Move     move;
@@ -92,9 +91,23 @@ static int32_t _search_negamax(Position*   position,
             move_undo(position);
             continue;
         }
+
         legal++;
-        score = -_search_negamax(position, depth - 1, -beta, -alpha, info, &line);
+
+        if (first_move)
+        {
+            score = -_search_negamax(position, depth - 1, -beta, -alpha, info, &line);
+        }
+        else
+        {
+            score = -_search_negamax(position, depth - 1, -alpha - 1, -alpha, info, &line);
+            if (score > alpha && beta - alpha > 1)
+                score = -_search_negamax(position, depth - 1, -beta, -alpha, info, &line);
+        }
+
         move_undo(position);
+
+        first_move = false;
 
         if (score >= beta)
         {
