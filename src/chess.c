@@ -853,7 +853,10 @@ bool movegen_dequeue_move(MoveList* list, Move* move) {
     if (list->size == -1)
         return false;
 
-    *move = list->moves[list->size--];
+    if (list->head == list->size)
+        return false;
+
+    *move = list->moves[++list->head];
     return true;
 }
 
@@ -870,6 +873,7 @@ void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list
         move_list->moves[i] = nomove;
     }
     move_list->size = -1;
+    move_list->head = -1;
 
     if (active_color == WHITE)
     {
@@ -1086,6 +1090,7 @@ void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
         move_list->moves[i] = nomove;
     }
     move_list->size = -1;
+    move_list->head = -1;
 
     if (active_color == WHITE)
     {
@@ -1332,6 +1337,7 @@ void movegen_pseudo_legal_all(const Position* position, MoveList* move_list) {
         move_list->moves[i] = nomove;
     }
     move_list->size = -1;
+    move_list->head = -1;
 
     MoveList moves;
     Move     move;

@@ -126,6 +126,7 @@ typedef struct {
 typedef struct {
     Move    moves[MAX_MOVES];
     int32_t size;
+    int32_t head;
 } MoveList;
 
 typedef struct {
