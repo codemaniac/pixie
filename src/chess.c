@@ -633,6 +633,51 @@ Position position_clone(const Position* position) {
     return position_copy;
 }
 
+void position_set_startpos(Position* position) {
+    position_set_piece(position, WHITE_ROOK, A1);
+    position_set_piece(position, WHITE_KNIGHT, B1);
+    position_set_piece(position, WHITE_BISHOP, C1);
+    position_set_piece(position, WHITE_QUEEN, D1);
+    position_set_piece(position, WHITE_KING, E1);
+    position_set_piece(position, WHITE_BISHOP, F1);
+    position_set_piece(position, WHITE_KNIGHT, G1);
+    position_set_piece(position, WHITE_ROOK, H1);
+
+    position_set_piece(position, WHITE_PAWN, A2);
+    position_set_piece(position, WHITE_PAWN, B2);
+    position_set_piece(position, WHITE_PAWN, C2);
+    position_set_piece(position, WHITE_PAWN, D2);
+    position_set_piece(position, WHITE_PAWN, E2);
+    position_set_piece(position, WHITE_PAWN, F2);
+    position_set_piece(position, WHITE_PAWN, G2);
+    position_set_piece(position, WHITE_PAWN, H2);
+
+    position_set_piece(position, BLACK_ROOK, A8);
+    position_set_piece(position, BLACK_KNIGHT, B8);
+    position_set_piece(position, BLACK_BISHOP, C8);
+    position_set_piece(position, BLACK_QUEEN, D8);
+    position_set_piece(position, BLACK_KING, E8);
+    position_set_piece(position, BLACK_BISHOP, F8);
+    position_set_piece(position, BLACK_KNIGHT, G8);
+    position_set_piece(position, BLACK_ROOK, H8);
+
+    position_set_piece(position, BLACK_PAWN, A7);
+    position_set_piece(position, BLACK_PAWN, B7);
+    position_set_piece(position, BLACK_PAWN, C7);
+    position_set_piece(position, BLACK_PAWN, D7);
+    position_set_piece(position, BLACK_PAWN, E7);
+    position_set_piece(position, BLACK_PAWN, F7);
+    position_set_piece(position, BLACK_PAWN, G7);
+    position_set_piece(position, BLACK_PAWN, H7);
+
+    position->active_color     = WHITE;
+    position->casteling_rights = WKCA | WQCA | BKCA | BQCA;
+    position->enpassant_target = NO_EP_TARGET;
+    position->half_move_clock  = 0;
+    position->full_move_number = 1;
+    position->ply_count        = 0;
+}
+
 void position_set_piece(Position* position, const Piece piece, const Square square) {
     const uint64_t bit          = 1ULL << square;
     const uint64_t bit_inverted = ~(bit);

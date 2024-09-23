@@ -139,7 +139,7 @@ static void _uci_parse_position(char* uci_line, Position* position) {
 
     if (!strncmp(uci_line, "startpos", 8))
     {
-        fen_to_position(STARTPOS, position);
+        position_set_startpos(position);
     }
     else if (!strncmp(uci_line, "fen", 3))
     {
