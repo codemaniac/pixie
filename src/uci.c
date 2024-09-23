@@ -103,24 +103,33 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     }
     info.nodes = 0ULL;
 
-    Move best_move;
-    char best_move_str[10];
+    char   move_str[10];
+    PVLine pv_line;
 
-    int32_t eval = search(position, &info, &best_move);
-    move_to_str(best_move_str, best_move);
+    int32_t  eval       = search(position, &info, &pv_line);
+    uint64_t time_taken = utils_time_curr_time_ms() - info.starttime;
 
     if ((SEARCH_SCORE_MAX - eval) < SEARCH_DEPTH_MAX)
     {
-        printf("info score mate %d nodes %llu time %llu\n", ((SEARCH_SCORE_MAX - eval) / 2 + 1),
-               info.nodes, utils_time_curr_time_ms() - info.starttime);
+        printf("info score mate %d depth %d nodes %llu time %llu nps %llu pv ",
+               ((SEARCH_SCORE_MAX - eval) / 2 + 1), info.depth, info.nodes, time_taken,
+               info.nodes / time_taken);
     }
     else
     {
-        printf("info score cp %d depth %d nodes %llu time %llu\n", eval, info.depth, info.nodes,
-               utils_time_curr_time_ms() - info.starttime);
+        printf("info score cp %d depth %d nodes %llu time %llu nps %llu pv ", eval, info.depth,
+               info.nodes, time_taken, info.nodes / time_taken);
+    }
+    uint8_t max_pv_to_show = pv_line.count <= 5 ? pv_line.count : 5;
+
+    for (int i = 0; i < max_pv_to_show; i++)
+    {
+        move_to_str(move_str, pv_line.moves[i]);
+        printf("%s ", move_str);
     }
 
-    printf("bestmove %s\n", best_move_str);
+    move_to_str(move_str, pv_line.moves[0]);
+    printf("\nbestmove %s\n", move_str);
 }
 
 static void _uci_parse_position(char* uci_line, Position* position) {
