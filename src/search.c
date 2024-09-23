@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
 
@@ -57,17 +58,21 @@ static int32_t _search_negamax(Position*   position,
                                int32_t     alpha,
                                int32_t     beta,
                                SearchInfo* info,
-                               Move*       best_move) {
+                               PVLine*     pv_line) {
 
     if (position_is_repeated(position) || position->half_move_clock >= 100)
         return 0;
     if (position_is_in_check(position))
         depth++;
     if (depth == 0)
+    {
+        pv_line->count = 0;
         return _quiescence(position, alpha, beta, info);
+    }
 
     info->nodes++;
 
+    PVLine   line;
     Move     best_move_so_far = {.move_id = 0, .score = -1};
     int32_t  old_alpha        = alpha;
     int32_t  score            = -SEARCH_SCORE_MAX;
@@ -88,7 +93,7 @@ static int32_t _search_negamax(Position*   position,
             continue;
         }
         legal++;
-        score = -_search_negamax(position, depth - 1, -beta, -alpha, info, best_move);
+        score = -_search_negamax(position, depth - 1, -beta, -alpha, info, &line);
         move_undo(position);
 
         if (score >= beta)
@@ -101,13 +106,10 @@ static int32_t _search_negamax(Position*   position,
         if (score > alpha)
         {
             // PV node
-            alpha = score;
-
-            if (position->ply_count == 0)
-            {
-                // Root node
-                best_move_so_far = move;
-            }
+            alpha             = score;
+            pv_line->moves[0] = move;
+            memcpy(pv_line->moves + 1, line.moves, line.count * sizeof(Move));
+            pv_line->count = line.count + 1;
         }
     }
 
@@ -119,14 +121,11 @@ static int32_t _search_negamax(Position*   position,
             return 0;
     }
 
-    if (old_alpha != alpha)
-        *best_move = best_move_so_far;
-
     // node fails low
     return alpha;
 }
 
-int32_t search(Position* position, SearchInfo* info, Move* best_move) {
+int32_t search(Position* position, SearchInfo* info, PVLine* pv_line) {
     return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
-                           best_move);
+                           pv_line);
 }

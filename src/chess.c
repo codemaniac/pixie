@@ -1791,6 +1791,9 @@ void move_to_str(char* move_str, const Move move) {
     char    to_file = 'a' + BOARD_SQ_TO_FILE(MOVE_TO_SQ(move_id));
     uint8_t to_rank = BOARD_SQ_TO_RANK(MOVE_TO_SQ(move_id)) + 1;
 
-    sprintf(move_str, "%c%d%c%d%c", from_file, from_rank, to_file, to_rank,
-            pstr[PIECE_GET_TYPE(MOVE_PROMOTED(move_id))]);
+    if (MOVE_PROMOTED(move_id) != NO_PIECE)
+        sprintf(move_str, "%c%d%c%d%c", from_file, from_rank, to_file, to_rank,
+                pstr[PIECE_GET_TYPE(MOVE_PROMOTED(move_id))]);
+    else
+        sprintf(move_str, "%c%d%c%d", from_file, from_rank, to_file, to_rank);
 }
