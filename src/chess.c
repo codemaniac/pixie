@@ -2,6 +2,7 @@
 #include "include/hashkey.h"
 #include "include/utils.h"
 #include <assert.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -9,6 +10,8 @@
 #include <string.h>
 
 #define USE_32_BIT_MULTIPLICATIONS
+#define MOVEGEN_SINGLE_THREADED
+
 #define MOVE_SCORE_MVV_LVA_IDX(a, v) (((a - 1) * 6) + (v - 1))
 
 static const uint64_t MAGIC_BISHOP[64] = {
@@ -59,6 +62,11 @@ static const uint16_t MOVE_SCORE_MVV_LVA[36] = {
 	100, 200, 300, 400, 500, 600
 };
 // clang-format on
+
+typedef struct {
+    Position pos;
+    MoveList moves;
+} MovegenThreadData;
 
 typedef struct {
     uint64_t mask;
@@ -1351,7 +1359,29 @@ void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
     }
 }
 
+void* _movegen_pseudo_legal_captures_async(void* arg) {
+
+    MovegenThreadData* data      = (MovegenThreadData*) arg;
+    Position*          position  = &data->pos;
+    MoveList*          move_list = &data->moves;
+
+    movegen_pseudo_legal_captures(position, move_list);
+    pthread_exit(NULL);
+}
+
+void* _movegen_pseudo_legal_quiet_async(void* arg) {
+
+    MovegenThreadData* data      = (MovegenThreadData*) arg;
+    Position*          position  = &data->pos;
+    MoveList*          move_list = &data->moves;
+
+    movegen_pseudo_legal_quite(position, move_list);
+    pthread_exit(NULL);
+}
+
 void movegen_pseudo_legal_all(const Position* position, MoveList* move_list) {
+#ifdef MOVEGEN_SINGLE_THREADED
+
     const Move nomove = {.move_id = 0, .score = -1};
 
     for (int i = 0; i < MAX_MOVES; i++)
@@ -1373,6 +1403,50 @@ void movegen_pseudo_legal_all(const Position* position, MoveList* move_list) {
 
     while (movegen_dequeue_move(&moves, &move))
         _movegen_enqueue_move(move_list, move, false);
+
+#else
+
+    pthread_t movegen_pseudo_legal_captures_thread_id;
+    pthread_t movegen_pseudo_legal_quiet_thread_id;
+
+    MovegenThreadData movegen_pseudo_legal_captures_thread_data;
+    MovegenThreadData movegen_pseudo_legal_quiet_thread_data;
+
+    MoveList capture_moves;
+    MoveList quite_moves;
+
+    movegen_pseudo_legal_captures_thread_data.pos   = position_clone(position);
+    movegen_pseudo_legal_captures_thread_data.moves = capture_moves;
+
+    movegen_pseudo_legal_quiet_thread_data.pos   = position_clone(position);
+    movegen_pseudo_legal_quiet_thread_data.moves = quite_moves;
+
+    pthread_create(&movegen_pseudo_legal_captures_thread_id, NULL,
+                   _movegen_pseudo_legal_captures_async,
+                   (void*) &movegen_pseudo_legal_captures_thread_data);
+    pthread_create(&movegen_pseudo_legal_quiet_thread_id, NULL, _movegen_pseudo_legal_quiet_async,
+                   (void*) &movegen_pseudo_legal_quiet_thread_data);
+
+    const Move nomove = {.move_id = 0, .score = -1};
+    Move       move;
+
+    for (int i = 0; i < MAX_MOVES; i++)
+    {
+        move_list->moves[i] = nomove;
+    }
+    move_list->size = -1;
+    move_list->head = -1;
+
+    pthread_join(movegen_pseudo_legal_captures_thread_id, NULL);
+    pthread_join(movegen_pseudo_legal_quiet_thread_id, NULL);
+
+    while (movegen_dequeue_move(&movegen_pseudo_legal_captures_thread_data.moves, &move))
+        _movegen_enqueue_move(move_list, move, false);
+
+    while (movegen_dequeue_move(&movegen_pseudo_legal_quiet_thread_data.moves, &move))
+        _movegen_enqueue_move(move_list, move, false);
+
+#endif
 }
 
 void movegen_display_moves(MoveList* move_list) {
