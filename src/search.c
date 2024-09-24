@@ -8,6 +8,42 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void _hashtable_store(
+  HashTable* table, Position* position, uint8_t depth, NodeType flag, int32_t value) {
+
+    uint64_t index = position->hash % table->size;
+    assert(index >= 0 && index <= table->size);
+
+    if (value > IS_MATE)
+        value += position->ply_count;
+    else if (value < -IS_MATE)
+        value -= position->ply_count;
+
+    HashTableEntry entry = {.hash = position->hash, .depth = depth, .flag = flag, .value = value};
+
+    table->contents[index] = entry;
+}
+
+static int32_t
+_hashtable_probe(HashTable* table, Position* position, uint8_t depth, int32_t alpha, int32_t beta) {
+    uint64_t index = position->hash % table->size;
+    assert(index >= 0 && index <= table->size);
+
+    if (table->contents[index].hash == position->hash)
+    {
+        if (table->contents[index].depth >= depth)
+        {
+            if (table->contents[index].flag == HASHFEXACT)
+                return table->contents[index].value;
+            if (table->contents[index].flag == HASHFALPHA && table->contents[index].value <= alpha)
+                return alpha;
+            if (table->contents[index].flag == HASHFBETA && table->contents[index].value >= beta)
+                return beta;
+        }
+    }
+    return HASHVALUNKNOWN;
+}
+
 static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
 
     info->nodes++;
@@ -58,28 +94,29 @@ static int32_t _search_negamax(Position*   position,
                                int32_t     alpha,
                                int32_t     beta,
                                SearchInfo* info,
-                               PVLine*     pv_line) {
-
-    if (position_is_repeated(position) || position->half_move_clock >= 100)
-        return 0;
-    if (position_is_in_check(position))
-        depth++;
-    if (depth == 0)
-    {
-        pv_line->count = 0;
-        return _quiescence(position, alpha, beta, info);
-    }
+                               HashTable*  table,
+                               Move*       best_move) {
 
     info->nodes++;
 
-    PVLine   line;
-    int32_t  score      = -SEARCH_SCORE_MAX;
-    uint32_t legal      = 0;
-    bool     first_move = true;
+    NodeType flag  = HASHFALPHA;
+    int32_t  value = -SEARCH_SCORE_MAX;
+
+    if ((value = _hashtable_probe(table, position, depth, alpha, beta)) != HASHVALUNKNOWN)
+        return value;
+
+    if (position_is_in_check(position))
+        depth++;
+    if (depth == 0)
+        return _quiescence(position, alpha, beta, info);
+
+    Move    best_move_so_far = {.move_id = 0, .score = -1};
+    int32_t old_alpha        = alpha;
 
     MoveList moves;
     Move     move;
-    bool     is_valid_move = false;
+    uint32_t legal_moves_count = 0;
+    bool     is_valid_move     = false;
 
     movegen_pseudo_legal_all(position, &moves);
 
@@ -91,54 +128,58 @@ static int32_t _search_negamax(Position*   position,
             move_undo(position);
             continue;
         }
-
-        legal++;
-
-        if (first_move)
-        {
-            score = -_search_negamax(position, depth - 1, -beta, -alpha, info, &line);
-        }
-        else
-        {
-            score = -_search_negamax(position, depth - 1, -alpha - 1, -alpha, info, &line);
-            if (score > alpha && beta - alpha > 1)
-                score = -_search_negamax(position, depth - 1, -beta, -alpha, info, &line);
-        }
-
+        legal_moves_count++;
+        value = -_search_negamax(position, depth - 1, -beta, -alpha, info, table, best_move);
         move_undo(position);
-
-        first_move = false;
-
-        if (score >= beta)
+        if (value >= beta)
         {
-            // Node fails high
+            _hashtable_store(table, position, depth, HASHFBETA, value);
             return beta;
         }
-
-        // Better move found
-        if (score > alpha)
+        if (value > alpha)
         {
-            // PV node
-            alpha             = score;
-            pv_line->moves[0] = move;
-            memcpy(pv_line->moves + 1, line.moves, line.count * sizeof(Move));
-            pv_line->count = line.count + 1;
+            _hashtable_store(table, position, depth, HASHFEXACT, value);
+            alpha = value;
+            if (position->ply_count == 0)
+            {
+                // Root node
+                best_move_so_far = move;
+            }
         }
     }
 
-    if (legal == 0)
+    if (legal_moves_count == 0)
     {
         if (position_is_in_check(position))
-            return -SEARCH_MATE_SCORE + position->ply_count;
+            return -SEARCH_SCORE_MAX + position->ply_count;
         else
             return 0;
     }
 
-    // node fails low
+    if (old_alpha != alpha)
+        *best_move = best_move_so_far;
+
+    _hashtable_store(table, position, depth, HASHFALPHA, alpha);
+
     return alpha;
 }
 
-int32_t search(Position* position, SearchInfo* info, PVLine* pv_line) {
-    return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
-                           pv_line);
+void hashtable_init(HashTable* table) {
+    table->size = 0x500000 / sizeof(HashTableEntry);
+    table->size -= 2;
+
+    HashTableEntry entries[table->size];
+    HashTableEntry empty_entry = {
+      .hash = 0ULL, .depth = 0, .flag = HASHFINVALID, .value = -SEARCH_SCORE_MAX};
+    for (uint64_t i = 0; i < table->size; i++)
+        entries[i] = empty_entry;
+    table->contents = entries;
+}
+
+int32_t search(Position* position, SearchInfo* info, Move* best_move) {
+    HashTable table;
+    hashtable_init(&table);
+
+    return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table,
+                           best_move);
 }
