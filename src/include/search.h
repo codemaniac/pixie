@@ -6,13 +6,26 @@
 #include <stdint.h>
 
 #define SEARCH_SCORE_MAX 999999
-#define SEARCH_MATE_SCORE 899999
 #define SEARCH_DEPTH_MAX 64
 
+typedef enum {
+    LOWERBOUND,
+    UPPERBOUND,
+    EXACT,
+} NodeType;
+
 typedef struct {
-    int  count;
-    Move moves[SEARCH_DEPTH_MAX];
-} PVLine;
+    uint64_t hash;
+    uint8_t  depth;
+    NodeType flag;
+    int32_t  value;
+    bool     is_valid;
+} HashTableEntry;
+
+typedef struct {
+    HashTableEntry* contents;
+    uint64_t        size;
+} HashTable;
 
 typedef struct {
     uint8_t  depth;
@@ -25,6 +38,7 @@ typedef struct {
     bool     stopped;
 } SearchInfo;
 
-int32_t search(Position* position, SearchInfo* info, PVLine* pv_line);
+void    hashtable_init(HashTable* table);
+int32_t search(Position* position, SearchInfo* info, Move* best_move);
 
 #endif

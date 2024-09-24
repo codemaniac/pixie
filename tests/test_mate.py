@@ -15,7 +15,7 @@ class TestMate(unittest.TestCase):
                 print(f"Mate in 1: FEN = {fen}")
                 with self.subTest(msg=f"Mate in 1: FEN = {fen}"):
                     eval = pypixie.search(fen, 1)
-                    self.assertEqual(eval, 899998)
+                    self.assertEqual(eval, 999998)
 
     def test_mate_in_2(self):
         epdfilepath = os.path.join("data", "mate_in_2.epd")
@@ -26,7 +26,7 @@ class TestMate(unittest.TestCase):
                 print(f"Mate in 2: FEN = {fen}")
                 with self.subTest(msg=f"Mate in 2: FEN = {fen}"):
                     eval = pypixie.search(fen, 3)
-                    self.assertEqual(eval, 899996)
+                    self.assertEqual(eval, 999996)
 
     def test_mate_in_3(self):
         epdfilepath = os.path.join("data", "mate_in_3.epd")
@@ -37,7 +37,7 @@ class TestMate(unittest.TestCase):
                 print(f"Mate in 3: FEN = {fen}")
                 with self.subTest(msg=f"Mate in 3: FEN = {fen}"):
                     eval = pypixie.search(fen, 6)
-                    self.assertEqual(eval, 899994)
+                    self.assertEqual(eval, 999994)
 
 if __name__ == '__main__':
     unittest.main()
