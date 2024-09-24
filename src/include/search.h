@@ -12,12 +12,12 @@ typedef enum {
     LOWERBOUND,
     UPPERBOUND,
     EXACT,
-} NodeType;
+} HashFlag;
 
 typedef struct {
     uint64_t hash;
     uint8_t  depth;
-    NodeType flag;
+    HashFlag flag;
     int32_t  value;
     bool     is_valid;
 } HashTableEntry;

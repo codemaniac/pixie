@@ -9,7 +9,7 @@
 #include <string.h>
 
 static void _hashtable_store(
-  HashTable* table, Position* position, uint8_t depth, NodeType flag, int32_t value) {
+  HashTable* table, Position* position, uint8_t depth, HashFlag flag, int32_t value) {
 
     uint64_t index = position->hash % table->size;
     assert(index >= 0 && index <= table->size);
@@ -152,7 +152,7 @@ static int32_t _search_negamax(Position*   position,
     if (alpha != alpha_orig)
         *best_move = best_move_so_far;
 
-    NodeType flag;
+    HashFlag flag;
     if (value <= alpha_orig)
         flag = UPPERBOUND;
     else if (value >= beta)
