@@ -30,11 +30,6 @@ typedef struct {
 } HashTable;
 
 typedef struct {
-    int  count;
-    Move moves[SEARCH_DEPTH_MAX];
-} PVLine;
-
-typedef struct {
     uint8_t  depth;
     uint64_t starttime;
     uint64_t stoptime;
@@ -46,6 +41,6 @@ typedef struct {
 } SearchInfo;
 
 void    hashtable_init(HashTable* table);
-int32_t search(Position* position, SearchInfo* info, PVLine* pv_line);
+int32_t search(Position* position, SearchInfo* info, Move* best_move);
 
 #endif

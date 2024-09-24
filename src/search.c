@@ -95,7 +95,7 @@ static int32_t _search_negamax(Position*   position,
                                int32_t     beta,
                                SearchInfo* info,
                                HashTable*  table,
-                               PVLine*     pv_line) {
+                               Move*       best_move) {
 
     info->nodes++;
 
@@ -110,11 +110,11 @@ static int32_t _search_negamax(Position*   position,
         depth++;
     if (depth == 0)
     {
-        pv_line->count = 0;
         return _quiescence(position, alpha, beta, info);
     }
 
-    PVLine line;
+    Move    best_move_so_far = {.move_id = 0, .score = -1};
+    int32_t old_alpha        = alpha;
 
     MoveList moves;
     Move     move;
@@ -132,7 +132,7 @@ static int32_t _search_negamax(Position*   position,
             continue;
         }
         legal_moves_count++;
-        value = -_search_negamax(position, depth - 1, -beta, -alpha, info, table, &line);
+        value = -_search_negamax(position, depth - 1, -beta, -alpha, info, table, best_move);
         move_undo(position);
         if (value >= beta)
         {
@@ -143,9 +143,7 @@ static int32_t _search_negamax(Position*   position,
         {
             alpha = value;
             _hashtable_store(table, position, depth, HASHFEXACT, value);
-            pv_line->moves[0] = move;
-            memcpy(pv_line->moves + 1, line.moves, line.count * sizeof(Move));
-            pv_line->count = line.count + 1;
+            best_move_so_far = move;
         }
     }
 
@@ -156,6 +154,9 @@ static int32_t _search_negamax(Position*   position,
         else
             return 0;
     }
+
+    if (old_alpha != alpha)
+        *best_move = best_move_so_far;
 
     _hashtable_store(table, position, depth, HASHFALPHA, alpha);
     return alpha;
@@ -173,10 +174,10 @@ void hashtable_init(HashTable* table) {
     table->contents = entries;
 }
 
-int32_t search(Position* position, SearchInfo* info, PVLine* pv_line) {
+int32_t search(Position* position, SearchInfo* info, Move* best_move) {
     HashTable table;
     hashtable_init(&table);
 
     return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table,
-                           pv_line);
+                           best_move);
 }
