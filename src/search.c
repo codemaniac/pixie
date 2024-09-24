@@ -105,6 +105,8 @@ static int32_t _search_negamax(Position*   position,
     if ((value = _hashtable_probe(table, position, depth, alpha, beta)) != HASHVALUNKNOWN)
         return value;
 
+    if (position_is_repeated(position) || position->half_move_clock >= 100)
+        return 0;
     if (position_is_in_check(position))
         depth++;
     if (depth == 0)
