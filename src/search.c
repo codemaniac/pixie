@@ -95,12 +95,11 @@ static int32_t _search_negamax(Position*   position,
                                int32_t     beta,
                                SearchInfo* info,
                                HashTable*  table,
-                               Move*       best_move) {
+                               PVLine*     pv_line) {
 
     info->nodes++;
 
-    NodeType flag  = HASHFALPHA;
-    int32_t  value = -SEARCH_SCORE_MAX;
+    int32_t value = -SEARCH_SCORE_MAX;
 
     if ((value = _hashtable_probe(table, position, depth, alpha, beta)) != HASHVALUNKNOWN)
         return value;
@@ -110,10 +109,12 @@ static int32_t _search_negamax(Position*   position,
     if (position_is_in_check(position))
         depth++;
     if (depth == 0)
+    {
+        pv_line->count = 0;
         return _quiescence(position, alpha, beta, info);
+    }
 
-    Move    best_move_so_far = {.move_id = 0, .score = -1};
-    int32_t old_alpha        = alpha;
+    PVLine line;
 
     MoveList moves;
     Move     move;
@@ -131,7 +132,7 @@ static int32_t _search_negamax(Position*   position,
             continue;
         }
         legal_moves_count++;
-        value = -_search_negamax(position, depth - 1, -beta, -alpha, info, table, best_move);
+        value = -_search_negamax(position, depth - 1, -beta, -alpha, info, table, &line);
         move_undo(position);
         if (value >= beta)
         {
@@ -140,13 +141,11 @@ static int32_t _search_negamax(Position*   position,
         }
         if (value > alpha)
         {
-            _hashtable_store(table, position, depth, HASHFEXACT, value);
             alpha = value;
-            if (position->ply_count == 0)
-            {
-                // Root node
-                best_move_so_far = move;
-            }
+            _hashtable_store(table, position, depth, HASHFEXACT, value);
+            pv_line->moves[0] = move;
+            memcpy(pv_line->moves + 1, line.moves, line.count * sizeof(Move));
+            pv_line->count = line.count + 1;
         }
     }
 
@@ -158,11 +157,7 @@ static int32_t _search_negamax(Position*   position,
             return 0;
     }
 
-    if (old_alpha != alpha)
-        *best_move = best_move_so_far;
-
     _hashtable_store(table, position, depth, HASHFALPHA, alpha);
-
     return alpha;
 }
 
@@ -178,10 +173,10 @@ void hashtable_init(HashTable* table) {
     table->contents = entries;
 }
 
-int32_t search(Position* position, SearchInfo* info, Move* best_move) {
+int32_t search(Position* position, SearchInfo* info, PVLine* pv_line) {
     HashTable table;
     hashtable_init(&table);
 
     return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table,
-                           best_move);
+                           pv_line);
 }
