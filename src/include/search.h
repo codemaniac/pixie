@@ -11,10 +11,9 @@
 #define IS_MATE (SEARCH_SCORE_MAX - SEARCH_DEPTH_MAX)
 
 typedef enum {
-    HASHFINVALID,
-    HASHFEXACT,
-    HASHFALPHA,
-    HASHFBETA,
+    LOWERBOUND,
+    UPPERBOUND,
+    EXACT,
 } NodeType;
 
 typedef struct {
@@ -22,6 +21,7 @@ typedef struct {
     uint8_t  depth;
     NodeType flag;
     int32_t  value;
+    bool     is_valid;
 } HashTableEntry;
 
 typedef struct {

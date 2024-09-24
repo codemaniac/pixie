@@ -14,34 +14,22 @@ static void _hashtable_store(
     uint64_t index = position->hash % table->size;
     assert(index >= 0 && index <= table->size);
 
-    if (value > IS_MATE)
-        value += position->ply_count;
-    else if (value < -IS_MATE)
-        value -= position->ply_count;
-
-    HashTableEntry entry = {.hash = position->hash, .depth = depth, .flag = flag, .value = value};
+    HashTableEntry entry = {
+      .hash = position->hash, .depth = depth, .flag = flag, .value = value, .is_valid = true};
 
     table->contents[index] = entry;
 }
 
-static int32_t
-_hashtable_probe(HashTable* table, Position* position, uint8_t depth, int32_t alpha, int32_t beta) {
+static HashTableEntry _hashtable_probe(HashTable* table, Position* position) {
     uint64_t index = position->hash % table->size;
     assert(index >= 0 && index <= table->size);
 
     if (table->contents[index].hash == position->hash)
-    {
-        if (table->contents[index].depth >= depth)
-        {
-            if (table->contents[index].flag == HASHFEXACT)
-                return table->contents[index].value;
-            if (table->contents[index].flag == HASHFALPHA && table->contents[index].value <= alpha)
-                return alpha;
-            if (table->contents[index].flag == HASHFBETA && table->contents[index].value >= beta)
-                return beta;
-        }
-    }
-    return HASHVALUNKNOWN;
+        return table->contents[index];
+
+    HashTableEntry empty_entry = {
+      .hash = 0ULL, .depth = 0, .value = -SEARCH_SCORE_MAX, .is_valid = false};
+    return empty_entry;
 }
 
 static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
@@ -84,8 +72,6 @@ static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, Sear
         if (score > alpha)
             alpha = score;
     }
-
-    // node fails low
     return alpha;
 }
 
@@ -99,22 +85,31 @@ static int32_t _search_negamax(Position*   position,
 
     info->nodes++;
 
-    int32_t value = -SEARCH_SCORE_MAX;
+    int32_t alpha_orig = alpha;
 
-    if ((value = _hashtable_probe(table, position, depth, alpha, beta)) != HASHVALUNKNOWN)
-        return value;
+    HashTableEntry entry = _hashtable_probe(table, position);
+    if (entry.is_valid && entry.depth >= depth)
+    {
+        if (entry.flag == EXACT)
+            return entry.value;
+        else if (entry.flag == LOWERBOUND)
+            alpha = alpha > entry.value ? alpha : entry.value;
+        else if (entry.flag == UPPERBOUND)
+            beta = beta < entry.value ? beta : entry.value;
+
+        if (alpha >= beta)
+            return entry.value;
+    }
 
     if (position_is_repeated(position) || position->half_move_clock >= 100)
         return 0;
     if (position_is_in_check(position))
         depth++;
     if (depth == 0)
-    {
         return _quiescence(position, alpha, beta, info);
-    }
 
     Move    best_move_so_far = {.move_id = 0, .score = -1};
-    int32_t old_alpha        = alpha;
+    int32_t value            = -SEARCH_SCORE_MAX;
 
     MoveList moves;
     Move     move;
@@ -132,19 +127,18 @@ static int32_t _search_negamax(Position*   position,
             continue;
         }
         legal_moves_count++;
-        value = -_search_negamax(position, depth - 1, -beta, -alpha, info, table, best_move);
+        int32_t score =
+          -_search_negamax(position, depth - 1, -beta, -alpha, info, table, best_move);
         move_undo(position);
-        if (value >= beta)
-        {
-            _hashtable_store(table, position, depth, HASHFBETA, value);
-            return beta;
-        }
+        value = score > value ? score : value;
         if (value > alpha)
         {
             alpha = value;
-            _hashtable_store(table, position, depth, HASHFEXACT, value);
-            best_move_so_far = move;
+            if (position->ply_count == 0)
+                best_move_so_far = move;
         }
+        if (alpha >= beta)
+            break;
     }
 
     if (legal_moves_count == 0)
@@ -155,11 +149,19 @@ static int32_t _search_negamax(Position*   position,
             return 0;
     }
 
-    if (old_alpha != alpha)
+    if (alpha != alpha_orig)
         *best_move = best_move_so_far;
 
-    _hashtable_store(table, position, depth, HASHFALPHA, alpha);
-    return alpha;
+    NodeType flag;
+    if (value <= alpha_orig)
+        flag = UPPERBOUND;
+    else if (value >= beta)
+        flag = LOWERBOUND;
+    else
+        flag = EXACT;
+    _hashtable_store(table, position, depth, flag, value);
+
+    return value;
 }
 
 void hashtable_init(HashTable* table) {
@@ -168,7 +170,7 @@ void hashtable_init(HashTable* table) {
 
     HashTableEntry entries[table->size];
     HashTableEntry empty_entry = {
-      .hash = 0ULL, .depth = 0, .flag = HASHFINVALID, .value = -SEARCH_SCORE_MAX};
+      .hash = 0ULL, .depth = 0, .value = -SEARCH_SCORE_MAX, .is_valid = false};
     for (uint64_t i = 0; i < table->size; i++)
         entries[i] = empty_entry;
     table->contents = entries;
