@@ -50,3 +50,20 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# OS
+.DS_Store
+
+# Editor
+.vscode
+
+# Build files
+Makefile
+*.make
+
+# Output folders
+bin/
+build/
+obj/
+pypixie.egg-info/
+leaks.txt
