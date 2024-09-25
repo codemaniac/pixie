@@ -10,6 +10,7 @@ module = Extension(
         "src/hashkey.c",
         "src/perft.c",
         "src/search.c",
+        "src/transpositiontable.c",
         "src/uci.c",
         "src/utils.c"
     ],
