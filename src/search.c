@@ -177,10 +177,11 @@ static int32_t _search_negamax(Position*           position,
     return value;
 }
 
-int32_t search(Position* position, SearchInfo* info, const bool iterative, const bool is_uci) {
-    TranspositionTable table;
-    hashtable_init(&table);
-
+int32_t search(Position*           position,
+               TranspositionTable* table,
+               SearchInfo*         info,
+               const bool          iterative,
+               const bool          is_uci) {
     memset(pv_length, 0, sizeof(pv_length));
     memset(pv_table, 0, sizeof(pv_table));
 
@@ -198,7 +199,7 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
                 break;
 
             score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
-                                    &table);
+                                    table);
             if (!info->stopped)
             {
                 bestmove.move_id = pv_table[0][0];
@@ -224,7 +225,7 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
     else
     {
         score =
-          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table);
+          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, table);
         bestmove.move_id = pv_table[0][0];
     }
 
@@ -233,9 +234,6 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
         move_to_str(move_str, bestmove);
         printf("bestmove %s\n", move_str);
     }
-
-    free(table.contents);
-    table.contents = NULL;
 
     return score;
 }

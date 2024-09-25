@@ -2,6 +2,7 @@
 #define SEARCH_H
 
 #include "chess.h"
+#include "transpositiontable.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -19,6 +20,10 @@ typedef struct {
     bool     stopped;
 } SearchInfo;
 
-int32_t search(Position* position, SearchInfo* info, const bool iterative, const bool is_uci);
+int32_t search(Position*           position,
+               TranspositionTable* table,
+               SearchInfo*         info,
+               const bool          iterative,
+               const bool          is_uci);
 
 #endif
