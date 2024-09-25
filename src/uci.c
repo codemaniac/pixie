@@ -150,6 +150,7 @@ void uci_loop(void) {
     Position position;
 
     TranspositionTable table;
+    hashtable_init(&table);
 
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
