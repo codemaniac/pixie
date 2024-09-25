@@ -19,6 +19,6 @@ typedef struct {
     bool     stopped;
 } SearchInfo;
 
-int32_t search(Position* position, SearchInfo* info, Move* best_move);
+int32_t search(Position* position, SearchInfo* info, const bool is_uci);
 
 #endif

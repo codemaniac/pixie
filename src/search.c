@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+int32_t pv_length[SEARCH_DEPTH_MAX];
+int32_t pv_table[SEARCH_DEPTH_MAX][SEARCH_DEPTH_MAX];
+
 static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
 
     info->nodes++;
@@ -57,8 +60,7 @@ static int32_t _search_negamax(Position*           position,
                                int32_t             alpha,
                                int32_t             beta,
                                SearchInfo*         info,
-                               TranspositionTable* table,
-                               Move*               best_move) {
+                               TranspositionTable* table) {
 
     info->nodes++;
 
@@ -87,8 +89,9 @@ static int32_t _search_negamax(Position*           position,
     if (depth == 0)
         return _quiescence(position, alpha, beta, info);
 
-    Move    best_move_so_far = {.move_id = 0, .score = -1};
-    int32_t value            = -SEARCH_SCORE_MAX;
+    pv_length[position->ply_count] = position->ply_count;
+
+    int32_t value = -SEARCH_SCORE_MAX;
 
     MoveList moves;
     Move     move;
@@ -106,15 +109,18 @@ static int32_t _search_negamax(Position*           position,
             continue;
         }
         legal_moves_count++;
-        int32_t score =
-          -_search_negamax(position, depth - 1, -beta, -alpha, info, table, best_move);
+        int32_t score = -_search_negamax(position, depth - 1, -beta, -alpha, info, table);
         move_undo(position);
         value = score > value ? score : value;
         if (value > alpha)
         {
             alpha = value;
-            if (position->ply_count == 0)
-                best_move_so_far = move;
+            // Set PV
+            const uint8_t ply  = position->ply_count;
+            pv_table[ply][ply] = move.move_id;
+            for (int next_ply = ply + 1; next_ply < pv_length[ply + 1]; next_ply++)
+                pv_table[ply][next_ply] = pv_table[ply + 1][next_ply];
+            pv_length[ply] = pv_length[ply + 1];
         }
         if (alpha >= beta)
             break;
@@ -128,9 +134,6 @@ static int32_t _search_negamax(Position*           position,
             return 0;
     }
 
-    if (alpha != alpha_orig)
-        *best_move = best_move_so_far;
-
     TTFlag flag;
     if (value <= alpha_orig)
         flag = UPPERBOUND;
@@ -143,14 +146,37 @@ static int32_t _search_negamax(Position*           position,
     return value;
 }
 
-int32_t search(Position* position, SearchInfo* info, Move* best_move) {
+int32_t search(Position* position, SearchInfo* info, const bool is_uci) {
     TranspositionTable table;
     hashtable_init(&table);
 
-    int32_t score = _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX,
-                                    info, &table, best_move);
+    int32_t score =
+      _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table);
+
     free(table.contents);
     table.contents = NULL;
+
+    if (is_uci)
+    {
+
+        Move pv_move;
+        char move_str[10];
+
+        printf("info score cp %d depth %d nodes %llu pv ", score, info->depth, info->nodes);
+
+        uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
+
+        for (uint8_t count = 0; count < pv_length_to_show; count++)
+        {
+            pv_move.move_id = pv_table[0][count];
+            move_to_str(move_str, pv_move);
+            printf("%s ", move_str);
+        }
+
+        pv_move.move_id = pv_table[0][0];
+        move_to_str(move_str, pv_move);
+        printf("\nbestmove %s\n", move_str);
+    }
 
     return score;
 }

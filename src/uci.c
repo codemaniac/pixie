@@ -103,14 +103,7 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     }
     info.nodes = 0ULL;
 
-    Move best_move;
-    char best_move_str[10];
-
-    int32_t eval = search(position, &info, &best_move);
-
-    printf("info score cp %d depth %d nodes %llu\n", eval, info.depth, info.nodes);
-    move_to_str(best_move_str, best_move);
-    printf("bestmove %s\n", best_move_str);
+    (void) search(position, &info, true);
 }
 
 static void _uci_parse_position(char* uci_line, Position* position) {
