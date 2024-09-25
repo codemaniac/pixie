@@ -4,6 +4,7 @@
 #include "chess.h"
 
 typedef enum {
+    NONE,
     LOWERBOUND,
     UPPERBOUND,
     EXACT,
@@ -23,8 +24,12 @@ typedef struct {
 } TranspositionTable;
 
 void hashtable_init(TranspositionTable* table);
-void hashtable_store(
-  TranspositionTable* table, Position* position, uint8_t depth, TTFlag flag, int32_t value);
-TTEntry hashtable_probe(TranspositionTable* table, Position* position);
+void hashtable_clear(TranspositionTable* table);
+void hashtable_store(TranspositionTable* table,
+                     const Position*     position,
+                     const uint8_t       depth,
+                     const TTFlag        flag,
+                     const int32_t       value);
+bool hashtable_probe(TranspositionTable* table, const Position* position, TTEntry* entry);
 
 #endif

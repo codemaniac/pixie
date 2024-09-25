@@ -64,8 +64,10 @@ static int32_t _search_negamax(Position*           position,
 
     int32_t alpha_orig = alpha;
 
-    TTEntry entry = hashtable_probe(table, position);
-    if (entry.is_valid && entry.depth >= depth)
+    TTEntry entry;
+    bool    hashtable_probe_status = hashtable_probe(table, position, &entry);
+
+    if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
     {
         if (entry.flag == EXACT)
             return entry.value;
@@ -145,6 +147,9 @@ int32_t search(Position* position, SearchInfo* info, Move* best_move) {
     TranspositionTable table;
     hashtable_init(&table);
 
-    return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table,
-                           best_move);
+    int32_t score = _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX,
+                                    info, &table, best_move);
+    free(table.contents);
+
+    return score;
 }

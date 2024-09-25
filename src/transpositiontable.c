@@ -1,37 +1,64 @@
 #include "include/transpositiontable.h"
 #include "include/chess.h"
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 void hashtable_init(TranspositionTable* table) {
     table->size = 0x500000 / sizeof(TTEntry);
-    table->size -= 2;
+    table->size -= sizeof(TTEntry);
 
-    TTEntry entries[table->size];
-    TTEntry empty_entry = {.hash = 0ULL, .depth = 0, .value = -INT32_MAX, .is_valid = false};
-    for (uint64_t i = 0; i < table->size; i++)
-        entries[i] = empty_entry;
-    table->contents = entries;
+    table->contents = (TTEntry*) malloc(table->size * sizeof(TTEntry));
+    if (table->contents == NULL)
+    {
+        printf("HASHTABLE MEMORY ALLOCATION FAILED!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    hashtable_clear(table);
 }
 
-void hashtable_store(
-  TranspositionTable* table, Position* position, uint8_t depth, TTFlag flag, int32_t value) {
-
-    uint64_t index = position->hash % table->size;
-    assert(index >= 0 && index <= table->size);
-
-    TTEntry entry = {
-      .hash = position->hash, .depth = depth, .flag = flag, .value = value, .is_valid = true};
-
-    table->contents[index] = entry;
+void hashtable_clear(TranspositionTable* table) {
+    TTEntry* entry;
+    for (entry = table->contents; entry < table->contents + table->size; entry++)
+    {
+        entry->hash     = 0ULL;
+        entry->depth    = 0;
+        entry->flag     = NONE;
+        entry->value    = -INT32_MAX;
+        entry->is_valid = false;
+    }
 }
 
-TTEntry hashtable_probe(TranspositionTable* table, Position* position) {
+void hashtable_store(TranspositionTable* table,
+                     const Position*     position,
+                     const uint8_t       depth,
+                     const TTFlag        flag,
+                     const int32_t       value) {
+
+    const uint64_t index = position->hash % table->size;
+    assert(index >= 0 && index < table->size);
+
+    table->contents[index].hash     = position->hash;
+    table->contents[index].depth    = depth;
+    table->contents[index].flag     = flag;
+    table->contents[index].value    = value;
+    table->contents[index].is_valid = true;
+}
+
+bool hashtable_probe(TranspositionTable* table, const Position* position, TTEntry* entry) {
     uint64_t index = position->hash % table->size;
     assert(index >= 0 && index <= table->size);
 
     if (table->contents[index].hash == position->hash)
-        return table->contents[index];
+    {
+        entry->hash     = table->contents[index].hash;
+        entry->depth    = table->contents[index].depth;
+        entry->flag     = table->contents[index].flag;
+        entry->value    = table->contents[index].value;
+        entry->is_valid = table->contents[index].is_valid;
+        return true;
+    }
 
-    TTEntry empty_entry = {.hash = 0ULL, .depth = 0, .value = -INT32_MAX, .is_valid = false};
-    return empty_entry;
+    return false;
 }
