@@ -8,13 +8,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int32_t pv_length[SEARCH_DEPTH_MAX];
 int32_t pv_table[SEARCH_DEPTH_MAX][SEARCH_DEPTH_MAX];
 
+// http://home.arcor.de/dreamlike/chess/
+int InputWaiting() {
+    fd_set         readfds;
+    struct timeval tv;
+    FD_ZERO(&readfds);
+    FD_SET(fileno(stdin), &readfds);
+    tv.tv_sec  = 0;
+    tv.tv_usec = 0;
+    select(16, &readfds, 0, 0, &tv);
+
+    return (FD_ISSET(fileno(stdin), &readfds));
+}
+
+void ReadInput(SearchInfo* info) {
+    int  bytes;
+    char input[256] = "", *endc;
+
+    if (InputWaiting())
+    {
+        info->stopped = true;
+        do
+        {
+            bytes = read(fileno(stdin), input, 256);
+        } while (bytes < 0);
+        endc = strchr(input, '\n');
+        if (endc)
+            *endc = 0;
+
+        if (strlen(input) > 0)
+        {
+            if (!strncmp(input, "quit", 4))
+            {
+                info->quit = true;
+                exit(EXIT_SUCCESS);
+            }
+        }
+        return;
+    }
+}
+
 static void _search_check_up(SearchInfo* info) {
     if (info->timeset && utils_time_curr_time_ms() >= info->stoptime)
         info->stopped = true;
+
+    ReadInput(info);
 }
 
 static int32_t
