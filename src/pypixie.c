@@ -2,6 +2,7 @@
 #include "include/fen.h"
 #include "include/perft.h"
 #include "include/search.h"
+#include "include/transpositiontable.h"
 #include "include/utils.h"
 #include <Python.h>
 
@@ -32,13 +33,19 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     Position position = position_create();
     fen_to_position(fen, &position);
 
+    TranspositionTable table;
+    hashtable_init(&table);
+
     SearchInfo info;
     info.depth     = (uint8_t) depth;
     info.timeset   = false;
     info.starttime = utils_time_curr_time_ms();
     info.nodes     = 0ULL;
 
-    int32_t eval = search(&position, &info, false, false);
+    int32_t eval = search(&position, &table, &info, false, false);
+
+    free(table.contents);
+    table.contents = NULL;
 
     return PyLong_FromLong(eval);
 }

@@ -8,13 +8,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 int32_t pv_length[SEARCH_DEPTH_MAX];
 int32_t pv_table[SEARCH_DEPTH_MAX][SEARCH_DEPTH_MAX];
 
+// http://home.arcor.de/dreamlike/chess/
+int InputWaiting() {
+    fd_set         readfds;
+    struct timeval tv;
+    FD_ZERO(&readfds);
+    FD_SET(fileno(stdin), &readfds);
+    tv.tv_sec  = 0;
+    tv.tv_usec = 0;
+    select(16, &readfds, 0, 0, &tv);
+
+    return (FD_ISSET(fileno(stdin), &readfds));
+}
+
+void ReadInput(SearchInfo* info) {
+    int  bytes;
+    char input[256] = "", *endc;
+
+    if (InputWaiting())
+    {
+        info->stopped = true;
+        do
+        {
+            bytes = read(fileno(stdin), input, 256);
+        } while (bytes < 0);
+        endc = strchr(input, '\n');
+        if (endc)
+            *endc = 0;
+
+        if (strlen(input) > 0)
+        {
+            if (!strncmp(input, "quit", 4))
+            {
+                info->quit = true;
+                exit(EXIT_SUCCESS);
+            }
+        }
+        return;
+    }
+}
+
 static void _search_check_up(SearchInfo* info) {
     if (info->timeset && utils_time_curr_time_ms() >= info->stoptime)
         info->stopped = true;
+
+    ReadInput(info);
 }
 
 static int32_t
@@ -79,28 +122,35 @@ static int32_t _search_negamax(Position*           position,
     if ((info->nodes & 2047) == 0)
         _search_check_up(info);
 
-    info->nodes++;
     pv_length[position->ply_count] = position->ply_count;
 
     int32_t alpha_orig = alpha;
 
-    if (position->ply_count > 0)
-    {
+    const bool is_pv_node = ((beta - alpha) > 1);
 
+    if ((position->ply_count) > 0 && !is_pv_node)
+    {
         TTEntry entry;
         bool    hashtable_probe_status = hashtable_probe(table, position, &entry);
 
         if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
         {
+            int32_t value = entry.value;
+
+            if (value > SEARCH_IS_MATE)
+                value -= position->ply_count;
+            else if (value < -SEARCH_IS_MATE)
+                value += position->ply_count;
+
             if (entry.flag == EXACT)
-                return entry.value;
+                return value;
             else if (entry.flag == LOWERBOUND)
-                alpha = alpha > entry.value ? alpha : entry.value;
+                alpha = alpha > value ? alpha : value;
             else if (entry.flag == UPPERBOUND)
-                beta = beta < entry.value ? beta : entry.value;
+                beta = beta < value ? beta : value;
 
             if (alpha >= beta)
-                return entry.value;
+                return value;
         }
     }
 
@@ -112,6 +162,8 @@ static int32_t _search_negamax(Position*           position,
         depth++;
     if (depth == 0)
         return _search_quiescence(position, alpha, beta, info);
+
+    info->nodes++;
 
     int32_t value = -SEARCH_SCORE_MAX;
 
@@ -177,10 +229,11 @@ static int32_t _search_negamax(Position*           position,
     return value;
 }
 
-int32_t search(Position* position, SearchInfo* info, const bool iterative, const bool is_uci) {
-    TranspositionTable table;
-    hashtable_init(&table);
-
+int32_t search(Position*           position,
+               TranspositionTable* table,
+               SearchInfo*         info,
+               const bool          iterative,
+               const bool          is_uci) {
     memset(pv_length, 0, sizeof(pv_length));
     memset(pv_table, 0, sizeof(pv_table));
 
@@ -198,15 +251,22 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
                 break;
 
             score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
-                                    &table);
+                                    table);
             if (!info->stopped)
             {
                 bestmove.move_id = pv_table[0][0];
 
                 if (is_uci)
                 {
-                    printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
-                           info->nodes);
+                    if (score < -SEARCH_IS_MATE)
+                        printf("info score mate %d depth %d nodes %llu pv ",
+                               -(((score + SEARCH_SCORE_MAX) / 2) - 1), currdepth, info->nodes);
+                    else if (score > SEARCH_IS_MATE)
+                        printf("info score mate %d depth %d nodes %llu pv ",
+                               ((SEARCH_SCORE_MAX - score) / 2) + 1, currdepth, info->nodes);
+                    else
+                        printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
+                               info->nodes);
 
                     uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
 
@@ -224,7 +284,7 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
     else
     {
         score =
-          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table);
+          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, table);
         bestmove.move_id = pv_table[0][0];
     }
 
@@ -233,9 +293,6 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
         move_to_str(move_str, bestmove);
         printf("bestmove %s\n", move_str);
     }
-
-    free(table.contents);
-    table.contents = NULL;
 
     return score;
 }

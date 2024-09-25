@@ -29,7 +29,7 @@ void hashtable_store(TranspositionTable* table,
                      const Position*     position,
                      const uint8_t       depth,
                      const TTFlag        flag,
-                     const int32_t       value);
+                     int32_t             value);
 bool hashtable_probe(TranspositionTable* table, const Position* position, TTEntry* entry);
 
 #endif

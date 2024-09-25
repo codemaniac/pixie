@@ -2,11 +2,13 @@
 #define SEARCH_H
 
 #include "chess.h"
+#include "transpositiontable.h"
 #include <stdbool.h>
 #include <stdint.h>
 
 #define SEARCH_SCORE_MAX 999999
 #define SEARCH_DEPTH_MAX 64
+#define SEARCH_IS_MATE (SEARCH_SCORE_MAX - SEARCH_DEPTH_MAX)
 
 typedef struct {
     uint8_t  depth;
@@ -19,6 +21,10 @@ typedef struct {
     bool     stopped;
 } SearchInfo;
 
-int32_t search(Position* position, SearchInfo* info, const bool iterative, const bool is_uci);
+int32_t search(Position*           position,
+               TranspositionTable* table,
+               SearchInfo*         info,
+               const bool          iterative,
+               const bool          is_uci);
 
 #endif

@@ -3,6 +3,7 @@
 #include "include/fen.h"
 #include "include/perft.h"
 #include "include/search.h"
+#include "include/transpositiontable.h"
 #include "include/utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@
 
 #define INPUTBUFFER 400 * 6
 
-static void _uci_parse_go(char* uci_line, Position* position) {
+static void _uci_parse_go(char* uci_line, Position* position, TranspositionTable* table) {
     uci_line += 3;
 
     char*  uci_ch_ptr;
@@ -104,7 +105,7 @@ static void _uci_parse_go(char* uci_line, Position* position) {
         info.stoptime = info.starttime + time + inc;
     }
 
-    (void) search(position, &info, true, true);
+    (void) search(position, table, &info, true, true);
 }
 
 static void _uci_parse_position(char* uci_line, Position* position) {
@@ -147,6 +148,9 @@ static void _uci_parse_position(char* uci_line, Position* position) {
 void uci_loop(void) {
     chess_initialize();
     Position position;
+
+    TranspositionTable table;
+    hashtable_init(&table);
 
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
@@ -191,6 +195,7 @@ void uci_loop(void) {
         if (!strcmp(line, "ucinewgame"))
         {
             position = position_create();
+            hashtable_init(&table);
             _uci_parse_position("position startpos\n", &position);
             position.ply_count = 0;
             continue;
@@ -206,7 +211,7 @@ void uci_loop(void) {
 
         if (!strncmp(line, "go", 2))
         {
-            _uci_parse_go(line, &position);
+            _uci_parse_go(line, &position, &table);
             continue;
         }
 
@@ -220,4 +225,7 @@ void uci_loop(void) {
         if (!strcmp(line, "quit"))
             break;
     }
+
+    free(table.contents);
+    table.contents = NULL;
 }
