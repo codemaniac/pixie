@@ -38,7 +38,7 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     info.starttime = utils_time_curr_time_ms();
     info.nodes     = 0ULL;
 
-    int32_t eval = search(&position, &info, false);
+    int32_t eval = search(&position, &info, false, false);
 
     return PyLong_FromLong(eval);
 }
