@@ -215,8 +215,15 @@ int32_t search(Position*           position,
 
                 if (is_uci)
                 {
-                    printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
-                           info->nodes);
+                    if (score < -SEARCH_IS_MATE)
+                        printf("info score mate %d depth %d nodes %llu pv ",
+                               -(((score + SEARCH_SCORE_MAX) / 2) - 1), currdepth, info->nodes);
+                    else if (score > SEARCH_IS_MATE)
+                        printf("info score mate %d depth %d nodes %llu pv ",
+                               ((SEARCH_SCORE_MAX - score) / 2) + 1, currdepth, info->nodes);
+                    else
+                        printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
+                               info->nodes);
 
                     uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
 
