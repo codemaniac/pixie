@@ -150,6 +150,7 @@ int32_t search(Position* position, SearchInfo* info, Move* best_move) {
     int32_t score = _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX,
                                     info, &table, best_move);
     free(table.contents);
+    table.contents = NULL;
 
     return score;
 }
