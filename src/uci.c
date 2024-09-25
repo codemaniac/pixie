@@ -103,7 +103,7 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     }
     info.nodes = 0ULL;
 
-    (void) search(position, &info, true);
+    (void) search(position, &info, true, true);
 }
 
 static void _uci_parse_position(char* uci_line, Position* position) {

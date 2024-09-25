@@ -63,6 +63,7 @@ static int32_t _search_negamax(Position*           position,
                                TranspositionTable* table) {
 
     info->nodes++;
+    pv_length[position->ply_count] = position->ply_count;
 
     int32_t alpha_orig = alpha;
 
@@ -82,14 +83,14 @@ static int32_t _search_negamax(Position*           position,
             return entry.value;
     }
 
+    if (position->ply_count >= SEARCH_DEPTH_MAX - 1)
+        return eval_position(position);
     if (position_is_repeated(position) || position->half_move_clock >= 100)
         return 0;
     if (position_is_in_check(position))
         depth++;
     if (depth == 0)
         return _quiescence(position, alpha, beta, info);
-
-    pv_length[position->ply_count] = position->ply_count;
 
     int32_t value = -SEARCH_SCORE_MAX;
 
@@ -146,37 +147,58 @@ static int32_t _search_negamax(Position*           position,
     return value;
 }
 
-int32_t search(Position* position, SearchInfo* info, const bool is_uci) {
+int32_t search(Position* position, SearchInfo* info, const bool iterative, const bool is_uci) {
     TranspositionTable table;
     hashtable_init(&table);
 
-    int32_t score =
-      _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table);
+    memset(pv_length, 0, sizeof(pv_length));
+    memset(pv_table, 0, sizeof(pv_table));
 
-    free(table.contents);
-    table.contents = NULL;
+    int32_t score;
+    Move    pv_move;
+    char    move_str[10];
+
+    uint8_t currdepth = 1;
+
+    if (iterative)
+    {
+
+        for (currdepth = 1; currdepth <= info->depth; currdepth++)
+        {
+            score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
+                                    &table);
+
+            if (is_uci)
+            {
+                printf("info score cp %d depth %d nodes %llu pv ", score, currdepth, info->nodes);
+
+                uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
+
+                for (uint8_t count = 0; count < pv_length_to_show; count++)
+                {
+                    pv_move.move_id = pv_table[0][count];
+                    move_to_str(move_str, pv_move);
+                    printf("%s ", move_str);
+                }
+                printf("\n");
+            }
+        }
+    }
+    else
+    {
+        score =
+          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table);
+    }
 
     if (is_uci)
     {
-
-        Move pv_move;
-        char move_str[10];
-
-        printf("info score cp %d depth %d nodes %llu pv ", score, info->depth, info->nodes);
-
-        uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
-
-        for (uint8_t count = 0; count < pv_length_to_show; count++)
-        {
-            pv_move.move_id = pv_table[0][count];
-            move_to_str(move_str, pv_move);
-            printf("%s ", move_str);
-        }
-
         pv_move.move_id = pv_table[0][0];
         move_to_str(move_str, pv_move);
-        printf("\nbestmove %s\n", move_str);
+        printf("bestmove %s\n", move_str);
     }
+
+    free(table.contents);
+    table.contents = NULL;
 
     return score;
 }
