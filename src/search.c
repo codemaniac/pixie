@@ -79,7 +79,6 @@ static int32_t _search_negamax(Position*           position,
     if ((info->nodes & 2047) == 0)
         _search_check_up(info);
 
-    info->nodes++;
     pv_length[position->ply_count] = position->ply_count;
 
     int32_t alpha_orig = alpha;
@@ -120,6 +119,8 @@ static int32_t _search_negamax(Position*           position,
         depth++;
     if (depth == 0)
         return _search_quiescence(position, alpha, beta, info);
+
+    info->nodes++;
 
     int32_t value = -SEARCH_SCORE_MAX;
 
