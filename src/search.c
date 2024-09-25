@@ -12,7 +12,16 @@
 int32_t pv_length[SEARCH_DEPTH_MAX];
 int32_t pv_table[SEARCH_DEPTH_MAX][SEARCH_DEPTH_MAX];
 
-static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
+static void _search_check_up(SearchInfo* info) {
+    if (info->timeset && utils_time_curr_time_ms() >= info->stoptime)
+        info->stopped = true;
+}
+
+static int32_t
+_search_quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
+
+    if ((info->nodes & 2047) == 0)
+        _search_check_up(info);
 
     info->nodes++;
 
@@ -43,8 +52,13 @@ static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, Sear
             move_undo(position);
             continue;
         }
-        int32_t score = -_quiescence(position, -beta, -alpha, info);
+
+        int32_t score = -_search_quiescence(position, -beta, -alpha, info);
+
         move_undo(position);
+
+        if (info->stopped)
+            return 0;
 
         if (score >= beta)
             return beta;
@@ -61,6 +75,9 @@ static int32_t _search_negamax(Position*           position,
                                int32_t             beta,
                                SearchInfo*         info,
                                TranspositionTable* table) {
+
+    if ((info->nodes & 2047) == 0)
+        _search_check_up(info);
 
     info->nodes++;
     pv_length[position->ply_count] = position->ply_count;
@@ -90,7 +107,7 @@ static int32_t _search_negamax(Position*           position,
     if (position_is_in_check(position))
         depth++;
     if (depth == 0)
-        return _quiescence(position, alpha, beta, info);
+        return _search_quiescence(position, alpha, beta, info);
 
     int32_t value = -SEARCH_SCORE_MAX;
 
@@ -109,10 +126,18 @@ static int32_t _search_negamax(Position*           position,
             move_undo(position);
             continue;
         }
+
         legal_moves_count++;
+
         int32_t score = -_search_negamax(position, depth - 1, -beta, -alpha, info, table);
+
         move_undo(position);
+
+        if (info->stopped)
+            return 0;
+
         value = score > value ? score : value;
+
         if (value > alpha)
         {
             alpha = value;
@@ -123,6 +148,7 @@ static int32_t _search_negamax(Position*           position,
                 pv_table[ply][next_ply] = pv_table[ply + 1][next_ply];
             pv_length[ply] = pv_length[ply + 1];
         }
+
         if (alpha >= beta)
             break;
     }
@@ -155,32 +181,39 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
     memset(pv_table, 0, sizeof(pv_table));
 
     int32_t score;
-    Move    pv_move;
+    Move    pv_move, bestmove;
     char    move_str[10];
 
     uint8_t currdepth = 1;
 
     if (iterative)
     {
-
         for (currdepth = 1; currdepth <= info->depth; currdepth++)
         {
+            if (info->stopped)
+                break;
+
             score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
                                     &table);
-
-            if (is_uci)
+            if (!info->stopped)
             {
-                printf("info score cp %d depth %d nodes %llu pv ", score, currdepth, info->nodes);
+                bestmove.move_id = pv_table[0][0];
 
-                uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
-
-                for (uint8_t count = 0; count < pv_length_to_show; count++)
+                if (is_uci)
                 {
-                    pv_move.move_id = pv_table[0][count];
-                    move_to_str(move_str, pv_move);
-                    printf("%s ", move_str);
+                    printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
+                           info->nodes);
+
+                    uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
+
+                    for (uint8_t count = 0; count < pv_length_to_show; count++)
+                    {
+                        pv_move.move_id = pv_table[0][count];
+                        move_to_str(move_str, pv_move);
+                        printf("%s ", move_str);
+                    }
+                    printf("\n");
                 }
-                printf("\n");
             }
         }
     }
@@ -188,12 +221,12 @@ int32_t search(Position* position, SearchInfo* info, const bool iterative, const
     {
         score =
           _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table);
+        bestmove.move_id = pv_table[0][0];
     }
 
     if (is_uci)
     {
-        pv_move.move_id = pv_table[0][0];
-        move_to_str(move_str, pv_move);
+        move_to_str(move_str, bestmove);
         printf("bestmove %s\n", move_str);
     }
 

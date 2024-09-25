@@ -93,6 +93,8 @@ static void _uci_parse_go(char* uci_line, Position* position) {
     info.timeset   = false;
     info.starttime = utils_time_curr_time_ms();
     info.stoptime  = 0;
+    info.stopped   = false;
+    info.nodes     = 0ULL;
 
     if (time > 0)
     {
@@ -101,7 +103,6 @@ static void _uci_parse_go(char* uci_line, Position* position) {
         time -= 50;
         info.stoptime = info.starttime + time + inc;
     }
-    info.nodes = 0ULL;
 
     (void) search(position, &info, true, true);
 }
