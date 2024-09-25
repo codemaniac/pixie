@@ -84,20 +84,24 @@ static int32_t _search_negamax(Position*           position,
 
     int32_t alpha_orig = alpha;
 
-    TTEntry entry;
-    bool    hashtable_probe_status = hashtable_probe(table, position, &entry);
-
-    if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
+    if (position->ply_count > 0)
     {
-        if (entry.flag == EXACT)
-            return entry.value;
-        else if (entry.flag == LOWERBOUND)
-            alpha = alpha > entry.value ? alpha : entry.value;
-        else if (entry.flag == UPPERBOUND)
-            beta = beta < entry.value ? beta : entry.value;
 
-        if (alpha >= beta)
-            return entry.value;
+        TTEntry entry;
+        bool    hashtable_probe_status = hashtable_probe(table, position, &entry);
+
+        if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
+        {
+            if (entry.flag == EXACT)
+                return entry.value;
+            else if (entry.flag == LOWERBOUND)
+                alpha = alpha > entry.value ? alpha : entry.value;
+            else if (entry.flag == UPPERBOUND)
+                beta = beta < entry.value ? beta : entry.value;
+
+            if (alpha >= beta)
+                return entry.value;
+        }
     }
 
     if (position->ply_count >= SEARCH_DEPTH_MAX - 1)
