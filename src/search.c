@@ -1,36 +1,13 @@
 #include "include/search.h"
 #include "include/chess.h"
 #include "include/eval.h"
+#include "include/transpositiontable.h"
 #include "include/utils.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static void _hashtable_store(
-  HashTable* table, Position* position, uint8_t depth, HashFlag flag, int32_t value) {
-
-    uint64_t index = position->hash % table->size;
-    assert(index >= 0 && index <= table->size);
-
-    HashTableEntry entry = {
-      .hash = position->hash, .depth = depth, .flag = flag, .value = value, .is_valid = true};
-
-    table->contents[index] = entry;
-}
-
-static HashTableEntry _hashtable_probe(HashTable* table, Position* position) {
-    uint64_t index = position->hash % table->size;
-    assert(index >= 0 && index <= table->size);
-
-    if (table->contents[index].hash == position->hash)
-        return table->contents[index];
-
-    HashTableEntry empty_entry = {
-      .hash = 0ULL, .depth = 0, .value = -SEARCH_SCORE_MAX, .is_valid = false};
-    return empty_entry;
-}
 
 static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* info) {
 
@@ -75,19 +52,19 @@ static int32_t _quiescence(Position* position, int32_t alpha, int32_t beta, Sear
     return alpha;
 }
 
-static int32_t _search_negamax(Position*   position,
-                               uint8_t     depth,
-                               int32_t     alpha,
-                               int32_t     beta,
-                               SearchInfo* info,
-                               HashTable*  table,
-                               Move*       best_move) {
+static int32_t _search_negamax(Position*           position,
+                               uint8_t             depth,
+                               int32_t             alpha,
+                               int32_t             beta,
+                               SearchInfo*         info,
+                               TranspositionTable* table,
+                               Move*               best_move) {
 
     info->nodes++;
 
     int32_t alpha_orig = alpha;
 
-    HashTableEntry entry = _hashtable_probe(table, position);
+    TTEntry entry = hashtable_probe(table, position);
     if (entry.is_valid && entry.depth >= depth)
     {
         if (entry.flag == EXACT)
@@ -152,32 +129,20 @@ static int32_t _search_negamax(Position*   position,
     if (alpha != alpha_orig)
         *best_move = best_move_so_far;
 
-    HashFlag flag;
+    TTFlag flag;
     if (value <= alpha_orig)
         flag = UPPERBOUND;
     else if (value >= beta)
         flag = LOWERBOUND;
     else
         flag = EXACT;
-    _hashtable_store(table, position, depth, flag, value);
+    hashtable_store(table, position, depth, flag, value);
 
     return value;
 }
 
-void hashtable_init(HashTable* table) {
-    table->size = 0x500000 / sizeof(HashTableEntry);
-    table->size -= 2;
-
-    HashTableEntry entries[table->size];
-    HashTableEntry empty_entry = {
-      .hash = 0ULL, .depth = 0, .value = -SEARCH_SCORE_MAX, .is_valid = false};
-    for (uint64_t i = 0; i < table->size; i++)
-        entries[i] = empty_entry;
-    table->contents = entries;
-}
-
 int32_t search(Position* position, SearchInfo* info, Move* best_move) {
-    HashTable table;
+    TranspositionTable table;
     hashtable_init(&table);
 
     return _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, &table,
