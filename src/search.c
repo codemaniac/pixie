@@ -92,15 +92,22 @@ static int32_t _search_negamax(Position*           position,
 
         if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
         {
+            int32_t value = entry.value;
+
+            if (value > SEARCH_IS_MATE)
+                value -= position->ply_count;
+            else if (value < -SEARCH_IS_MATE)
+                value += position->ply_count;
+
             if (entry.flag == EXACT)
-                return entry.value;
+                return value;
             else if (entry.flag == LOWERBOUND)
-                alpha = alpha > entry.value ? alpha : entry.value;
+                alpha = alpha > value ? alpha : value;
             else if (entry.flag == UPPERBOUND)
-                beta = beta < entry.value ? beta : entry.value;
+                beta = beta < value ? beta : value;
 
             if (alpha >= beta)
-                return entry.value;
+                return value;
         }
     }
 

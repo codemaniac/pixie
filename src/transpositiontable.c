@@ -1,5 +1,6 @@
 #include "include/transpositiontable.h"
 #include "include/chess.h"
+#include "include/search.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,10 +35,15 @@ void hashtable_store(TranspositionTable* table,
                      const Position*     position,
                      const uint8_t       depth,
                      const TTFlag        flag,
-                     const int32_t       value) {
+                     int32_t             value) {
 
     const uint64_t index = position->hash % table->size;
     assert(index >= 0 && index < table->size);
+
+    if (value > SEARCH_IS_MATE)
+        value += position->ply_count;
+    else if (value < -SEARCH_IS_MATE)
+        value -= position->ply_count;
 
     table->contents[index].hash     = position->hash;
     table->contents[index].depth    = depth;

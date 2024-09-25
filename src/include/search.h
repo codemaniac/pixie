@@ -8,6 +8,7 @@
 
 #define SEARCH_SCORE_MAX 999999
 #define SEARCH_DEPTH_MAX 64
+#define SEARCH_IS_MATE (SEARCH_SCORE_MAX - SEARCH_DEPTH_MAX)
 
 typedef struct {
     uint8_t  depth;
