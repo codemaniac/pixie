@@ -4,11 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-uint64_t perft(Position* position, const uint8_t depth) {
-    MoveList candidate_moves;
-    Move     move;
-    uint64_t nodes         = 0ULL;
-    bool     is_valid_move = false;
+unsigned long long perft(Position* position, const uint8_t depth) {
+    MoveList           candidate_moves;
+    Move               move;
+    unsigned long long nodes         = 0ULL;
+    bool               is_valid_move = false;
 
     if (depth == 0)
         return 1ULL;
@@ -33,8 +33,8 @@ void divide(Position* position, const uint8_t depth) {
     Move     move;
     char     move_str[10];
 
-    uint64_t nodes       = 0ULL;
-    uint64_t total_nodes = 0ULL;
+    unsigned long long nodes       = 0ULL;
+    unsigned long long total_nodes = 0ULL;
 
     movegen_pseudo_legal_all(position, &candidate_moves);
 

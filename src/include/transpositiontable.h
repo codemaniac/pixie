@@ -11,16 +11,16 @@ typedef enum {
 } TTFlag;
 
 typedef struct {
-    uint64_t hash;
-    uint8_t  depth;
-    TTFlag   flag;
-    int32_t  value;
-    bool     is_valid;
+    unsigned long long hash;
+    uint8_t            depth;
+    TTFlag             flag;
+    int32_t            value;
+    bool               is_valid;
 } TTEntry;
 
 typedef struct {
-    TTEntry* contents;
-    uint64_t size;
+    TTEntry*           contents;
+    unsigned long long size;
 } TranspositionTable;
 
 void hashtable_init(TranspositionTable* table);

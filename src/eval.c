@@ -112,7 +112,7 @@ int32_t eval_position(const Position* position) {
             continue;
         }
 
-        uint64_t bb = position->board.bitboards[p];
+        unsigned long long bb = position->board.bitboards[p];
 
         while (bb)
         {

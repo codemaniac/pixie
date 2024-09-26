@@ -17,7 +17,7 @@ static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
     Position position = position_create();
     fen_to_position(fen, &position);
 
-    uint64_t result = perft(&position, depth);
+    unsigned long long result = perft(&position, depth);
 
     return PyLong_FromLong(result);
 }

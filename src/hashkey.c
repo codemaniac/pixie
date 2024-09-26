@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-const uint64_t HASHTABLE[12][64] = {
+const unsigned long long HASHTABLE[12][64] = {
   {3566623202ULL, 2210514145ULL, 1614465847ULL, 692918632ULL,  4281325224ULL, 232702253ULL,
    71112635ULL,   1168668362ULL, 3006150408ULL, 347639644ULL,  3434634103ULL, 3125116039ULL,
    3376098275ULL, 3310677953ULL, 3052226155ULL, 199837609ULL,  2604879236ULL, 3609150253ULL,
@@ -139,11 +139,11 @@ const uint64_t HASHTABLE[12][64] = {
    222742836ULL,  4207968613ULL, 1277402953ULL, 2640255143ULL, 3976394691ULL, 2652556260ULL,
    1393142757ULL, 1659313936ULL, 1251157886ULL, 1222308062ULL}};
 
-uint64_t hashkey_position(Position* position) {
-    uint64_t hash           = 0ULL;
-    uint64_t piece_bitmap   = 0ULL;
-    uint8_t  piece_hash_idx = 0;
-    uint8_t  piece_pos      = 0;
+unsigned long long hashkey_position(Position* position) {
+    unsigned long long hash           = 0ULL;
+    unsigned long long piece_bitmap   = 0ULL;
+    uint8_t            piece_hash_idx = 0;
+    uint8_t            piece_pos      = 0;
 
     for (uint8_t p = 1; p < 15; p++)
     {

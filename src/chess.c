@@ -2,9 +2,9 @@
 #include "include/hashkey.h"
 #include "include/utils.h"
 #include <assert.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <stdbool.h>
-#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +14,7 @@
 
 #define MOVE_SCORE_MVV_LVA_IDX(a, v) (((a - 1) * 6) + (v - 1))
 
-static const uint64_t MAGIC_BISHOP[64] = {
+static const unsigned long long MAGIC_BISHOP[64] = {
   0x100420000431024ULL,  0x280800101073404ULL,  0x42000a00840802ULL,   0xca800c0410c2ULL,
   0x81004290941c20ULL,   0x400200450020250ULL,  0x444a019204022084ULL, 0x88610802202109aULL,
   0x11210a0800086008ULL, 0x400a08c08802801ULL,  0x1301a0500111c808ULL, 0x1280100480180404ULL,
@@ -33,7 +33,7 @@ static const uint64_t MAGIC_BISHOP[64] = {
   0xa90240000006404ULL,  0x500d082244010008ULL, 0x28190d00040014e0ULL, 0x825201600c082444ULL,
 };
 
-static const uint64_t MAGIC_ROOK[64] = {
+static const unsigned long long MAGIC_ROOK[64] = {
   0x2080020500400f0ULL,  0x28444000400010ULL,   0x20000a1004100014ULL, 0x20010c090202006ULL,
   0x8408008200810004ULL, 0x1746000808002ULL,    0x2200098000808201ULL, 0x12c0002080200041ULL,
   0x104000208e480804ULL, 0x8084014008281008ULL, 0x4200810910500410ULL, 0x100014481c20400cULL,
@@ -69,44 +69,48 @@ typedef struct {
 } MovegenThreadData;
 
 typedef struct {
-    uint64_t mask;
-    uint8_t  mask_bits;
+    unsigned long long mask;
+    uint8_t            mask_bits;
 } AttackMask;
 
 static AttackMask ATTACK_MASK_TABLE_BISHOP[64];
 static AttackMask ATTACK_MASK_TABLE_ROOK[64];
 
-static uint64_t ATTACK_TABLE_PAWN[2][64];
-static uint64_t ATTACK_TABLE_KNIGHT[64];
-static uint64_t ATTACK_TABLE_BISHOP[64][512];
-static uint64_t ATTACK_TABLE_ROOK[64][4096];
-static uint64_t ATTACK_TABLE_KING[64];
+static unsigned long long ATTACK_TABLE_PAWN[2][64];
+static unsigned long long ATTACK_TABLE_KNIGHT[64];
+static unsigned long long ATTACK_TABLE_BISHOP[64][512];
+static unsigned long long ATTACK_TABLE_ROOK[64][4096];
+static unsigned long long ATTACK_TABLE_KING[64];
 
 /*
 * Bitboard utility functions
 */
 
-static uint64_t _bitboard_north_one(const uint64_t b) { return b << 8; }
+static unsigned long long _bitboard_north_one(const unsigned long long b) { return b << 8; }
 
-static uint64_t _bitboard_south_one(const uint64_t b) { return b >> 8; }
+static unsigned long long _bitboard_south_one(const unsigned long long b) { return b >> 8; }
 
-static uint64_t _bitboard_east_one(const uint64_t b) { return (b & BOARD_MASK_NOT_H_FILE) << 1; }
+static unsigned long long _bitboard_east_one(const unsigned long long b) {
+    return (b & BOARD_MASK_NOT_H_FILE) << 1;
+}
 
-static uint64_t _bitboard_west_one(const uint64_t b) { return (b & BOARD_MASK_NOT_A_FILE) >> 1; }
+static unsigned long long _bitboard_west_one(const unsigned long long b) {
+    return (b & BOARD_MASK_NOT_A_FILE) >> 1;
+}
 
-static uint64_t _bitboard_north_east_one(const uint64_t b) {
+static unsigned long long _bitboard_north_east_one(const unsigned long long b) {
     return (b & BOARD_MASK_NOT_H_FILE) << 9;
 }
 
-static uint64_t _bitboard_south_east_one(const uint64_t b) {
+static unsigned long long _bitboard_south_east_one(const unsigned long long b) {
     return (b & BOARD_MASK_NOT_H_FILE) >> 7;
 }
 
-static uint64_t _bitboard_south_west_one(const uint64_t b) {
+static unsigned long long _bitboard_south_west_one(const unsigned long long b) {
     return (b & BOARD_MASK_NOT_A_FILE) >> 9;
 }
 
-static uint64_t _bitboard_north_west_one(const uint64_t b) {
+static unsigned long long _bitboard_north_west_one(const unsigned long long b) {
     return (b & BOARD_MASK_NOT_A_FILE) << 7;
 }
 
@@ -114,13 +118,13 @@ static uint64_t _bitboard_north_west_one(const uint64_t b) {
 * Initialize Magic Bitboard functions
 */
 
-static uint64_t _init_get_attack_mask_bishop(const uint8_t sq) {
+static unsigned long long _init_get_attack_mask_bishop(const uint8_t sq) {
     int8_t r, f;
 
     uint8_t tr = BOARD_SQ_TO_RANK(sq);
     uint8_t tf = BOARD_SQ_TO_FILE(sq);
 
-    uint64_t attack_mask = 0ULL;
+    unsigned long long attack_mask = 0ULL;
 
     for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++)
     {
@@ -142,14 +146,15 @@ static uint64_t _init_get_attack_mask_bishop(const uint8_t sq) {
     return attack_mask;
 }
 
-static uint64_t _init_get_attack_vector_bishop(const uint8_t sq, const uint64_t blockers) {
+static unsigned long long _init_get_attack_vector_bishop(const uint8_t            sq,
+                                                         const unsigned long long blockers) {
     int8_t r, f;
 
     uint8_t tr = BOARD_SQ_TO_RANK(sq);
     uint8_t tf = BOARD_SQ_TO_FILE(sq);
 
-    uint64_t attack_mask = 0ULL;
-    uint64_t sqb;
+    unsigned long long attack_mask = 0ULL;
+    unsigned long long sqb;
 
     for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
     {
@@ -192,8 +197,8 @@ static uint64_t _init_get_attack_vector_bishop(const uint8_t sq, const uint64_t 
 }
 
 static void _init_attack_mask_table_bishop(void) {
-    uint64_t mask;
-    uint8_t  mask_bits;
+    unsigned long long mask;
+    uint8_t            mask_bits;
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
@@ -205,13 +210,13 @@ static void _init_attack_mask_table_bishop(void) {
     }
 }
 
-static uint64_t _init_get_attack_mask_rook(const uint8_t sq) {
+static unsigned long long _init_get_attack_mask_rook(const uint8_t sq) {
     int8_t r, f;
 
     uint8_t tr = BOARD_SQ_TO_RANK(sq);
     uint8_t tf = BOARD_SQ_TO_FILE(sq);
 
-    uint64_t attack_mask = 0ULL;
+    unsigned long long attack_mask = 0ULL;
 
     for (r = tr + 1; r <= 6; r++)
     {
@@ -233,14 +238,15 @@ static uint64_t _init_get_attack_mask_rook(const uint8_t sq) {
     return attack_mask;
 }
 
-static uint64_t _init_get_attack_vector_rook(const uint8_t sq, const uint64_t blockers) {
+static unsigned long long _init_get_attack_vector_rook(const uint8_t            sq,
+                                                       const unsigned long long blockers) {
     int8_t r, f;
 
     uint8_t tr = BOARD_SQ_TO_RANK(sq);
     uint8_t tf = BOARD_SQ_TO_FILE(sq);
 
-    uint64_t attack_mask = 0ULL;
-    uint64_t sqb;
+    unsigned long long attack_mask = 0ULL;
+    unsigned long long sqb;
 
     for (r = tr + 1; r <= 7; r++)
     {
@@ -283,8 +289,8 @@ static uint64_t _init_get_attack_vector_rook(const uint8_t sq, const uint64_t bl
 }
 
 static void _init_attack_mask_table_rook(void) {
-    uint64_t mask;
-    uint8_t  mask_bits;
+    unsigned long long mask;
+    uint8_t            mask_bits;
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
@@ -296,9 +302,9 @@ static void _init_attack_mask_table_rook(void) {
     }
 }
 
-static uint64_t _init_create_variant(int index, int bits, uint64_t m) {
-    int      i, j;
-    uint64_t result = 0ULL;
+static unsigned long long _init_create_variant(int index, int bits, unsigned long long m) {
+    int                i, j;
+    unsigned long long result = 0ULL;
     for (i = 0; i < bits; i++)
     {
         j = utils_bit_bitscan_forward(&m);
@@ -308,7 +314,7 @@ static uint64_t _init_create_variant(int index, int bits, uint64_t m) {
     return result;
 }
 
-static int _init_get_magic_index(uint64_t b, uint64_t magic, int bits) {
+static int _init_get_magic_index(unsigned long long b, unsigned long long magic, int bits) {
 #if defined(USE_32_BIT_MULTIPLICATIONS)
     return (unsigned) ((int) b * (int) magic ^ (int) (b >> 32) * (int) (magic >> 32))
         >> (32 - bits);
@@ -318,11 +324,11 @@ static int _init_get_magic_index(uint64_t b, uint64_t magic, int bits) {
 }
 
 static void _init_attack_table_bishop(void) {
-    uint64_t mask, b;
-    uint8_t  n;
-    int      magic_index;
+    unsigned long long mask, b;
+    uint8_t            n;
+    int                magic_index;
 
-    for (uint64_t sq = 0; sq < 64; sq++)
+    for (unsigned long long sq = 0; sq < 64; sq++)
     {
         mask = ATTACK_MASK_TABLE_BISHOP[sq].mask;
         n    = ATTACK_MASK_TABLE_BISHOP[sq].mask_bits;
@@ -337,11 +343,11 @@ static void _init_attack_table_bishop(void) {
 }
 
 static void _init_attack_table_rook(void) {
-    uint64_t mask, b;
-    uint8_t  n;
-    int      magic_index;
+    unsigned long long mask, b;
+    uint8_t            n;
+    int                magic_index;
 
-    for (uint64_t sq = 0; sq < 64; sq++)
+    for (unsigned long long sq = 0; sq < 64; sq++)
     {
         mask = ATTACK_MASK_TABLE_ROOK[sq].mask;
         n    = ATTACK_MASK_TABLE_ROOK[sq].mask_bits;
@@ -356,9 +362,9 @@ static void _init_attack_table_rook(void) {
 }
 
 static void _init_attack_table_pawn(void) {
-    Square   sq;
-    uint64_t b;
-    uint64_t attacks;
+    Square             sq;
+    unsigned long long b;
+    unsigned long long attacks;
 
     // White pawn attacks
     for (uint8_t r = RANK_1; r <= RANK_8; r++)
@@ -386,8 +392,8 @@ static void _init_attack_table_pawn(void) {
 }
 
 static void _init_attack_table_knight(void) {
-    uint64_t attacks = 0ULL;
-    uint64_t b;
+    unsigned long long attacks = 0ULL;
+    unsigned long long b;
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
@@ -408,8 +414,8 @@ static void _init_attack_table_knight(void) {
 }
 
 static void _init_attack_table_king(void) {
-    uint64_t attacks = 0ULL;
-    uint64_t b;
+    unsigned long long attacks = 0ULL;
+    unsigned long long b;
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
@@ -443,33 +449,33 @@ void chess_initialize(void) {
 * Movegen Magic Bitboard functions
 */
 
-static uint64_t _movegen_get_pawn_attacks(int sq, Color c, uint64_t occupancy) {
+static unsigned long long _movegen_get_pawn_attacks(int sq, Color c, unsigned long long occupancy) {
     return ATTACK_TABLE_PAWN[c][sq] & occupancy;
 }
 
-static uint64_t _movegen_get_knight_attacks(int sq, uint64_t occupancy) {
+static unsigned long long _movegen_get_knight_attacks(int sq, unsigned long long occupancy) {
     return ATTACK_TABLE_KNIGHT[sq] & occupancy;
 }
 
-static uint64_t _movegen_get_bishop_attacks(int sq, uint64_t occupancy) {
+static unsigned long long _movegen_get_bishop_attacks(int sq, unsigned long long occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
     int magic_index =
       _init_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
     return ATTACK_TABLE_BISHOP[sq][magic_index];
 }
 
-static uint64_t _movegen_get_rook_attacks(int sq, uint64_t occupancy) {
+static unsigned long long _movegen_get_rook_attacks(int sq, unsigned long long occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
     int magic_index =
       _init_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
     return ATTACK_TABLE_ROOK[sq][magic_index];
 }
 
-static uint64_t _movegen_get_queen_attacks(int sq, uint64_t occupancy) {
+static unsigned long long _movegen_get_queen_attacks(int sq, unsigned long long occupancy) {
     return _movegen_get_bishop_attacks(sq, occupancy) | _movegen_get_rook_attacks(sq, occupancy);
 }
 
-static uint64_t _movegen_get_king_attacks(int sq, uint64_t occupancy) {
+static unsigned long long _movegen_get_king_attacks(int sq, unsigned long long occupancy) {
     return ATTACK_TABLE_KING[sq] & occupancy;
 }
 
@@ -679,8 +685,8 @@ void position_set_startpos(Position* position) {
 }
 
 void position_set_piece(Position* position, const Piece piece, const Square square) {
-    const uint64_t bit          = 1ULL << square;
-    const uint64_t bit_inverted = ~(bit);
+    const unsigned long long bit          = 1ULL << square;
+    const unsigned long long bit_inverted = ~(bit);
     position->board.bitboards[piece] |= bit;
     position->board.bitboards[NO_PIECE] &= bit_inverted;
     position->board.bitboards[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] |= bit;
@@ -692,8 +698,8 @@ void position_set_piece(Position* position, const Piece piece, const Square squa
 }
 
 void position_clear_piece(Position* position, const Piece piece, const Square square) {
-    const uint64_t bit          = 1ULL << square;
-    const uint64_t bit_inverted = ~(bit);
+    const unsigned long long bit          = 1ULL << square;
+    const unsigned long long bit_inverted = ~(bit);
     position->board.bitboards[piece] &= bit_inverted;
     position->board.bitboards[NO_PIECE] |= bit;
     position->board.bitboards[BOARD_WHITE_PIECES_IDX + PIECE_GET_COLOR(piece)] &= bit_inverted;
@@ -750,9 +756,9 @@ bool position_is_square_attacked(const Position* position,
 }
 
 bool position_is_in_check(const Position* position) {
-    const PieceType king     = PIECE_CREATE(KING, position->active_color);
-    uint64_t        king_bb  = position->board.bitboards[king];
-    uint8_t         king_pos = utils_bit_bitscan_forward(&king_bb);
+    const PieceType    king     = PIECE_CREATE(KING, position->active_color);
+    unsigned long long king_bb  = position->board.bitboards[king];
+    uint8_t            king_pos = utils_bit_bitscan_forward(&king_bb);
     return position_is_square_attacked(position, king_pos, !position->active_color);
 }
 
@@ -936,11 +942,11 @@ bool movegen_dequeue_move(MoveList* list, Move* move) {
 }
 
 void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list) {
-    const Color active_color = position->active_color;
-    Piece       p;
-    uint64_t    bb, attacks, occupancy;
-    uint8_t     from_sq, to_sq;
-    Move        m;
+    const Color        active_color = position->active_color;
+    Piece              p;
+    unsigned long long bb, attacks, occupancy;
+    uint8_t            from_sq, to_sq;
+    Move               m;
 
     const Move nomove = {.move_id = 0, .score = -1};
     for (int i = 0; i < MAX_MOVES; i++)
@@ -1153,11 +1159,11 @@ void movegen_pseudo_legal_captures(const Position* position, MoveList* move_list
 }
 
 void movegen_pseudo_legal_quite(const Position* position, MoveList* move_list) {
-    const Color active_color = position->active_color;
-    Piece       p;
-    uint64_t    bb, attacks, occupancy;
-    uint8_t     from_sq, to_sq;
-    Move        m;
+    const Color        active_color = position->active_color;
+    Piece              p;
+    unsigned long long bb, attacks, occupancy;
+    uint8_t            from_sq, to_sq;
+    Move               m;
 
     const Move nomove = {.move_id = 0, .score = -1};
     for (int i = 0; i < MAX_MOVES; i++)
