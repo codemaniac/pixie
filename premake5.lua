@@ -1,5 +1,6 @@
 workspace "pixie"
     configurations { "Debug", "Release" }
+    platforms { "macos", "linux64" }
     version = "0.1.0-beta"
 
     function getTargetName()
@@ -18,16 +19,20 @@ project "pixie"
     files { "src/**.h", "src/**.c" }
     removefiles { "src/pypixie.c" }
 
-    filter { "configurations:Debug" }
+    filter { "platforms:macos" }
         system "macosx"
         architecture "x86_64"
+
+    filter { "platforms:linux64" }
+        system "linux"
+        architecture "x86_64"
+
+    filter { "configurations:Debug" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
 
     filter { "configurations:Release" }
-        system "macosx"
-        architecture "x86_64"
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "speed"
