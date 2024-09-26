@@ -2,12 +2,12 @@
 #define HASHKEY_H
 
 #include "chess.h"
-#include <stdint.h>
+#include <inttypes.h>
 
 #define HASH_IDX(p) ((p > 8) ? p - 3 : p - 1)
 
-const uint64_t HASHTABLE[12][64];
+extern const unsigned long long HASHTABLE[12][64];
 
-uint64_t hashkey_position(Position* Position);
+unsigned long long hashkey_position(Position* Position);
 
 #endif

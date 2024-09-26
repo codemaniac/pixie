@@ -40,7 +40,7 @@ void hashtable_store(TranspositionTable* table,
                      const TTFlag        flag,
                      int32_t             value) {
 
-    const uint64_t index = position->hash % table->size;
+    const unsigned long long index = position->hash % table->size;
     assert(index >= 0 && index < table->size);
 
     if (value > SEARCH_IS_MATE)
@@ -56,7 +56,7 @@ void hashtable_store(TranspositionTable* table,
 }
 
 bool hashtable_probe(TranspositionTable* table, const Position* position, TTEntry* entry) {
-    uint64_t index = position->hash % table->size;
+    unsigned long long index = position->hash % table->size;
     assert(index >= 0 && index <= table->size);
 
     if (table->contents[index].hash == position->hash)

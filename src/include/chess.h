@@ -1,8 +1,8 @@
 #ifndef CHESS_H
 #define CHESS_H
 
+#include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
 
 typedef enum {
     WHITE,
@@ -130,12 +130,12 @@ typedef struct {
 } MoveList;
 
 typedef struct {
-    Move     move;
-    uint8_t  prev_casteling_rights;
-    uint8_t  prev_enpassant_target;
-    uint8_t  prev_half_move_clock;
-    uint8_t  prev_full_move_number;
-    uint64_t prev_hash;
+    Move               move;
+    uint8_t            prev_casteling_rights;
+    uint8_t            prev_enpassant_target;
+    uint8_t            prev_half_move_clock;
+    uint8_t            prev_full_move_number;
+    unsigned long long prev_hash;
 } MoveHistoryEntry;
 
 typedef struct {
@@ -145,21 +145,21 @@ typedef struct {
 } MoveHistory;
 
 typedef struct {
-    uint64_t bitboards[15];
-    uint8_t  pieces[64];
-    uint8_t  piece_count[15];
+    unsigned long long bitboards[15];
+    uint8_t            pieces[64];
+    uint8_t            piece_count[15];
 } Board;
 
 typedef struct {
-    Board       board;
-    Color       active_color;
-    uint8_t     casteling_rights;
-    uint8_t     enpassant_target;
-    uint8_t     half_move_clock;
-    uint8_t     full_move_number;
-    uint8_t     ply_count;
-    uint64_t    hash;
-    MoveHistory move_history;
+    Board              board;
+    Color              active_color;
+    uint8_t            casteling_rights;
+    uint8_t            enpassant_target;
+    uint8_t            half_move_clock;
+    uint8_t            full_move_number;
+    uint8_t            ply_count;
+    unsigned long long hash;
+    MoveHistory        move_history;
 } Position;
 
 void chess_initialize(void);
