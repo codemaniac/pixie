@@ -1836,7 +1836,7 @@ Move move_from_str(const char* move_str, const Position* position) {
 
     Piece promoted_piece = NO_PIECE;
 
-    if (strlen(move_str) == 5)
+    if (move_str[4] == 'n' || move_str[4] == 'b' || move_str[4] == 'r' || move_str[4] == 'q')
     {
         const char promotion_piece_ch = move_str[4];
         switch (promotion_piece_ch)
