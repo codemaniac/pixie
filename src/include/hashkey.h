@@ -6,7 +6,7 @@
 
 #define HASH_IDX(p) ((p > 8) ? p - 3 : p - 1)
 
-const unsigned long long HASHTABLE[12][64];
+extern const unsigned long long HASHTABLE[12][64];
 
 unsigned long long hashkey_position(Position* Position);
 
