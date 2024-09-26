@@ -2,7 +2,7 @@
 #define CHESS_H
 
 #include <stdbool.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 typedef enum {
     WHITE,

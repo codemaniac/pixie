@@ -2,7 +2,7 @@
 #define HASHKEY_H
 
 #include "chess.h"
-#include <stdint.h>
+#include <inttypes.h>
 
 #define HASH_IDX(p) ((p > 8) ? p - 3 : p - 1)
 

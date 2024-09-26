@@ -1,7 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <stdint.h>
+#include <inttypes.h>
 
 uint8_t  utils_bit_bitscan_forward(uint64_t* x);
 uint8_t  utils_bit_count1s(int64_t n);

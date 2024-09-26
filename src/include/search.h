@@ -4,7 +4,7 @@
 #include "chess.h"
 #include "transpositiontable.h"
 #include <stdbool.h>
-#include <stdint.h>
+#include <inttypes.h>
 
 #define SEARCH_SCORE_MAX 999999
 #define SEARCH_DEPTH_MAX 64

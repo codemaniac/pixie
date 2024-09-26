@@ -1,7 +1,7 @@
 #include "include/hashkey.h"
 #include "include/chess.h"
 #include "include/utils.h"
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
