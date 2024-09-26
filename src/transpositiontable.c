@@ -9,6 +9,9 @@ void hashtable_init(TranspositionTable* table) {
     table->size = 0x500000 / sizeof(TTEntry);
     table->size -= sizeof(TTEntry);
 
+    if (table->contents != NULL)
+        free(table->contents);
+
     table->contents = (TTEntry*) malloc(table->size * sizeof(TTEntry));
     if (table->contents == NULL)
     {
