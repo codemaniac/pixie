@@ -1900,7 +1900,7 @@ Move move_from_str(const char* move_str, const Position* position) {
 }
 
 void move_to_str(char* move_str, const Move move) {
-    const char* pstr = " pnbqk";
+    const char* pstr = "  nbrq";
 
     uint32_t move_id = move.move_id;
 
