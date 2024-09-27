@@ -300,9 +300,7 @@ int32_t search(Position*           position,
                         printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
                                info->nodes);
 
-                    uint8_t pv_length_to_show = (pv_length[0] > 5) ? 5 : pv_length[0];
-
-                    for (uint8_t count = 0; count < pv_length_to_show; count++)
+                    for (uint8_t count = 0; count < pv_length[0]; count++)
                     {
                         pv_move.move_id = pv_table[0][count];
                         move_to_str(move_str, pv_move);
