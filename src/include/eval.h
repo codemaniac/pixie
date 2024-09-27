@@ -2,7 +2,7 @@
 #define EVALUATION_H
 
 #include "chess.h"
-#include <stdint.h>
+#include <inttypes.h>
 
 int32_t eval_position(const Position* position);
 
