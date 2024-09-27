@@ -1838,7 +1838,7 @@ Move move_from_str(const char* move_str, const Position* position) {
     const Square  to_sq   = BOARD_RF_TO_SQ(to_rank, to_file);
 
     const Piece move_piece     = position->board.pieces[from_sq];
-    const Piece captured_piece = position->board.pieces[to_sq];
+    Piece       captured_piece = position->board.pieces[to_sq];
 
     Piece promoted_piece = NO_PIECE;
 
@@ -1871,15 +1871,18 @@ Move move_from_str(const char* move_str, const Position* position) {
 
     if (PIECE_GET_TYPE(move_piece) == PAWN)
     {
-        if (captured_piece == NO_PIECE)
+        if (to_sq == position->enpassant_target)
+        {
+            captured_piece = PIECE_CREATE(PAWN, !position->active_color);
+            flag_ep        = true;
+        }
+        else if (captured_piece == NO_PIECE)
         {
             if (position->active_color == WHITE && from_rank == RANK_2 && to_rank == RANK_4)
                 flag_ps = true;
             else if (position->active_color == BLACK && from_rank == RANK_7 && to_rank == RANK_5)
                 flag_ps = true;
         }
-        else if (PIECE_GET_TYPE(captured_piece) == PAWN && to_sq == position->enpassant_target)
-            flag_ep = true;
     }
     else if (PIECE_GET_TYPE(move_piece) == KING)
     {
