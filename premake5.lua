@@ -1,6 +1,6 @@
 workspace "pixie"
     configurations { "Debug", "Release" }
-    platforms { "macos", "linux64" }
+    platforms { "macos64", "linux64" }
     version = "0.1.0-beta"
 
     function getTargetName()

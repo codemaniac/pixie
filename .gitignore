@@ -59,7 +59,7 @@ dkms.conf
 
 # Build files
 Makefile
-*.make
+pixie.make
 
 # Output folders
 bin/
