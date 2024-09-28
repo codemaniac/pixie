@@ -184,6 +184,8 @@ static int32_t _search_negamax(Position*           position,
         }
     }
 
+    info->nodes++;
+
     if (position->ply_count >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
     if (position_is_repeated(position) || position->half_move_clock >= 100)
@@ -192,8 +194,6 @@ static int32_t _search_negamax(Position*           position,
         depth++;
     if (depth == 0)
         return _search_quiescence(position, alpha, beta, info);
-
-    info->nodes++;
 
     int32_t value = -SEARCH_SCORE_MAX;
 
