@@ -1,15 +1,7 @@
-debug ?= 0
 NAME := pixie
 
 CC := gcc
-CFLAGS := -std=gnu17 -Wall -Wextra -pedantic
-
-ifeq ($(debug), 1)
-	CFLAGS := $(CFLAGS) -DDEBUG -g -O0
-else
-	CFLAGS := $(CFLAGS) -O2
-endif
-
+CFLAGS := -std=gnu17 -Wall -Wextra -pedantic -O3 -flto
 BIN_DIR := .\bin
 BUILD_DIR := .\build
 SRC_DIR := .\src
