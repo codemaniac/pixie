@@ -1,6 +1,7 @@
 # pixie
 A free UCI chess engine
 
+[![License](https://img.shields.io/github/license/codemaniac/pixie)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 # Compiling pixie
