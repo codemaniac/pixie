@@ -1,7 +1,7 @@
 workspace "pixie"
     configurations { "Debug", "Release" }
     platforms { "macos64", "linux64" }
-    version = "0.1.0-beta"
+    version = "0.1.0-beta.2"
 
     function getTargetName()
         local os_name = os.target()

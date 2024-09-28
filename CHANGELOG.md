@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0-beta.2] - 2024-09-28
 
 ### Added
 - Code to support Linux
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
 - Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
 
-## [0.1.0-beta] - 2024-09-25
+## [0.1.0-beta](https://github.com/codemaniac/pixie/releases/tag/v0.1.0-beta) - 2024-09-25
 
 ### Added
 - Board represented using Bitboards
