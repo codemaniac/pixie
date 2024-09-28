@@ -10,7 +10,7 @@
 #include <string.h>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.1.0-beta.2"
+#define VERSION "0.1.0-rc"
 #define STARTPOS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 #define INPUTBUFFER 400 * 6
