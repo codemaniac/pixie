@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - En Passant bug when converting move string to move
-- Pawm Promotion bug when converting move string to move
+- Pawn Promotion bug when converting move string to move
 - Memory leak issue with Transposition Table in UCI
 
 # Tested Platforms
