@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pawn Promotion bug when converting move string to move
 - Memory leak issue with Transposition Table in UCI
 
-# Tested Platforms
+### Tested Platforms
 - macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
 - Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
 
