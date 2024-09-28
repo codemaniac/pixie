@@ -158,9 +158,7 @@ static int32_t _search_negamax(Position*           position,
 
     int32_t alpha_orig = alpha;
 
-    const bool is_pv_node = ((beta - alpha) > 1);
-
-    if ((position->ply_count) > 0 && !is_pv_node)
+    if (position->ply_count > 0)
     {
         TTEntry entry;
         bool    hashtable_probe_status = hashtable_probe(table, position, &entry);
