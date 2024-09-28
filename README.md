@@ -5,6 +5,12 @@ A free UCI chess engine
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
 # Compiling pixie
+## On Linux 64-bit
+
+```
+premake5 gmake2
+make config=release_linux64
+```
 ## On MacOS 64-bit
 
 ```
