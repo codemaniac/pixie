@@ -22,9 +22,11 @@ make config=release_macos64
 ```
 
 ## On Windows 64-bit
+Requires MinGW 64-bit to be installed and set in `path` variable
 
 ```
- make -f .\windows.make
+premake5 gmake2
+make CC=gcc config=release_win64
 ```
 
 # Debugging

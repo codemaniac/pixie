@@ -1,6 +1,6 @@
 workspace "pixie"
     configurations { "Debug", "Release" }
-    platforms { "macos64", "linux64" }
+    platforms { "macos64", "linux64", "win64" }
     version = "0.1.0-beta.2"
 
     function getTargetName()
@@ -26,6 +26,11 @@ project "pixie"
     filter { "platforms:linux64" }
         system "linux"
         architecture "x86_64"
+
+    filter { "platforms:win64" }
+        system "windows"
+        architecture "x86_64"
+        toolset "gcc"
 
     filter { "configurations:Debug" }
         flags { "FatalWarnings" }
