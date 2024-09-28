@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Code to support Linux
+- Build support for Windows 64-bit and Linux 64-bit
 
 ### Fixed
 - En Passant bug when converting move string to move
