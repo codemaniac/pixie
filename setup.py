@@ -19,8 +19,7 @@ module = Extension(
         "-Wall",
         "-Wextra",
         "-pedantic",
-        "-finline-functions",
-        "-funroll-loops"
+        "-O0"
     ]
 )
 

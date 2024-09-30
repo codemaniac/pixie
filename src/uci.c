@@ -195,7 +195,7 @@ void uci_loop(void) {
         if (!strcmp(line, "ucinewgame"))
         {
             position = position_create();
-            hashtable_init(&table);
+            hashtable_clear(&table);
             _uci_parse_position("position startpos\n", &position);
             position.ply_count = 0;
             continue;

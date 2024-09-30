@@ -13,9 +13,6 @@
     #include "windows.h"
 #endif
 
-int32_t pv_length[SEARCH_DEPTH_MAX];
-int32_t pv_table[SEARCH_DEPTH_MAX][SEARCH_DEPTH_MAX];
-
 // http://home.arcor.de/dreamlike/chess/
 int InputWaiting() {
 #ifndef WIN32
@@ -151,10 +148,10 @@ static int32_t _search_negamax(Position*           position,
                                SearchInfo*         info,
                                TranspositionTable* table) {
 
+    info->nodes++;
+
     if ((info->nodes & 2047) == 0)
         _search_check_up(info);
-
-    pv_length[position->ply_count] = position->ply_count;
 
     int32_t alpha_orig = alpha;
 
@@ -165,26 +162,24 @@ static int32_t _search_negamax(Position*           position,
 
         if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
         {
-            int32_t value = entry.value;
+            int32_t ttentry_value = entry.value;
 
-            if (value > SEARCH_IS_MATE)
-                value -= position->ply_count;
-            else if (value < -SEARCH_IS_MATE)
-                value += position->ply_count;
+            if (ttentry_value < -SEARCH_MATE_SCORE)
+                ttentry_value += position->ply_count;
+            else if (ttentry_value > SEARCH_MATE_SCORE)
+                ttentry_value -= position->ply_count;
 
             if (entry.flag == EXACT)
-                return value;
+                return ttentry_value;
             else if (entry.flag == LOWERBOUND)
-                alpha = alpha > value ? alpha : value;
+                alpha = alpha > ttentry_value ? alpha : ttentry_value;
             else if (entry.flag == UPPERBOUND)
-                beta = beta < value ? beta : value;
+                beta = beta < ttentry_value ? beta : ttentry_value;
 
             if (alpha >= beta)
-                return value;
+                return ttentry_value;
         }
     }
-
-    info->nodes++;
 
     if (position->ply_count >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
@@ -195,18 +190,18 @@ static int32_t _search_negamax(Position*           position,
     if (depth == 0)
         return _search_quiescence(position, alpha, beta, info);
 
-    int32_t value = -SEARCH_SCORE_MAX;
+    int32_t best_value = -SEARCH_SCORE_MAX;
+    Move    best_move;
 
     MoveList moves;
     Move     move;
     uint32_t legal_moves_count = 0;
-    bool     is_valid_move     = false;
 
     movegen_pseudo_legal_all(position, &moves);
 
     while (movegen_dequeue_move(&moves, &move))
     {
-        is_valid_move = move_do(position, move);
+        bool is_valid_move = move_do(position, move);
         if (!is_valid_move || !position_is_valid(position))
         {
             move_undo(position);
@@ -222,18 +217,13 @@ static int32_t _search_negamax(Position*           position,
         if (info->stopped)
             return 0;
 
-        value = score > value ? score : value;
-
-        if (value > alpha)
+        if (score > best_value)
         {
-            alpha = value;
-            // Set PV
-            const uint8_t ply  = position->ply_count;
-            pv_table[ply][ply] = move.move_id;
-            for (int next_ply = ply + 1; next_ply < pv_length[ply + 1]; next_ply++)
-                pv_table[ply][next_ply] = pv_table[ply + 1][next_ply];
-            pv_length[ply] = pv_length[ply + 1];
+            best_value = score;
+            best_move  = move;
         }
+
+        alpha = (best_value > alpha) ? best_value : alpha;
 
         if (alpha >= beta)
             break;
@@ -242,21 +232,21 @@ static int32_t _search_negamax(Position*           position,
     if (legal_moves_count == 0)
     {
         if (position_is_in_check(position))
-            return -SEARCH_SCORE_MAX + position->ply_count;
+            return -SEARCH_MATE_VALUE + position->ply_count;
         else
             return 0;
     }
 
     TTFlag flag;
-    if (value <= alpha_orig)
+    if (best_value <= alpha_orig)
         flag = UPPERBOUND;
-    else if (value >= beta)
+    else if (best_value >= beta)
         flag = LOWERBOUND;
     else
         flag = EXACT;
-    hashtable_store(table, position, depth, flag, value);
+    hashtable_store(table, position, depth, flag, best_value, best_move);
 
-    return value;
+    return best_value;
 }
 
 int32_t search(Position*           position,
@@ -264,45 +254,63 @@ int32_t search(Position*           position,
                SearchInfo*         info,
                const bool          iterative,
                const bool          is_uci) {
-    memset(pv_length, 0, sizeof(pv_length));
-    memset(pv_table, 0, sizeof(pv_table));
 
-    int32_t score;
-    Move    pv_move, bestmove;
-    char    move_str[10];
-
-    uint8_t currdepth = 1;
+    int32_t score = -SEARCH_SCORE_MAX;
+    Move    bestmove;
 
     if (iterative)
     {
-        for (currdepth = 1; currdepth <= info->depth; currdepth++)
+        for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
         {
             if (info->stopped)
                 break;
 
             score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info,
                                     table);
+
             if (!info->stopped)
             {
-                bestmove.move_id = pv_table[0][0];
+                Move pv[SEARCH_DEPTH_MAX];
+                char pv_move_str[10];
+
+                uint8_t pv_count = 0;
+                TTEntry entry;
+                while (pv_count < currdepth && hashtable_probe(table, position, &entry))
+                {
+                    if (entry.flag != EXACT)
+                        break;
+
+                    if (entry.move.move_id == 0)
+                        break;
+
+                    Move pv_move   = entry.move;
+                    pv[pv_count++] = pv_move;
+
+                    move_do(position, pv_move);
+                }
+
+                while (position->ply_count > 0)
+                    move_undo(position);
+
+                bestmove = pv[0];
 
                 if (is_uci)
                 {
-                    if (score < -SEARCH_IS_MATE)
+                    if (score > -SEARCH_MATE_VALUE && score < -SEARCH_MATE_SCORE)
                         printf("info score mate %d depth %d nodes %llu pv ",
-                               -(((score + SEARCH_SCORE_MAX) / 2) - 1), currdepth, info->nodes);
-                    else if (score > SEARCH_IS_MATE)
+                               -(score + SEARCH_MATE_VALUE) / 2 - 1, currdepth, info->nodes);
+                    else if (score > SEARCH_MATE_SCORE && score < SEARCH_MATE_VALUE)
                         printf("info score mate %d depth %d nodes %llu pv ",
-                               ((SEARCH_SCORE_MAX - score) / 2) + 1, currdepth, info->nodes);
+                               (SEARCH_MATE_VALUE - score) / 2 + 1, currdepth, info->nodes);
                     else
                         printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
                                info->nodes);
 
-                    for (uint8_t count = 0; count < pv_length[0]; count++)
+                    char pv_move_str[10];
+                    for (uint8_t i = 0; i < pv_count; i++)
                     {
-                        pv_move.move_id = pv_table[0][count];
-                        move_to_str(move_str, pv_move);
-                        printf("%s ", move_str);
+                        move_to_str(pv_move_str, pv[i]);
+                        printf("%s ", pv_move_str);
                     }
                     printf("\n");
                 }
@@ -313,13 +321,16 @@ int32_t search(Position*           position,
     {
         score =
           _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, info, table);
-        bestmove.move_id = pv_table[0][0];
+        TTEntry entry;
+        hashtable_probe(table, position, &entry);
+        bestmove = entry.move;
     }
 
     if (is_uci)
     {
-        move_to_str(move_str, bestmove);
-        printf("bestmove %s\n", move_str);
+        char best_move_str[10];
+        move_to_str(best_move_str, bestmove);
+        printf("bestmove %s\n", best_move_str);
     }
 
     return score;
