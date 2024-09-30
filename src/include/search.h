@@ -6,9 +6,10 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#define SEARCH_SCORE_MAX 999999
+#define SEARCH_SCORE_MAX 50000
+#define SEARCH_MATE_VALUE 49000
+#define SEARCH_MATE_SCORE 48000
 #define SEARCH_DEPTH_MAX 64
-#define SEARCH_IS_MATE (SEARCH_SCORE_MAX - SEARCH_DEPTH_MAX)
 
 typedef struct {
     uint8_t            depth;

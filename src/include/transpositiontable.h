@@ -15,6 +15,7 @@ typedef struct {
     uint8_t            depth;
     TTFlag             flag;
     int32_t            value;
+    Move               move;
     bool               is_valid;
 } TTEntry;
 
@@ -29,7 +30,8 @@ void hashtable_store(TranspositionTable* table,
                      const Position*     position,
                      const uint8_t       depth,
                      const TTFlag        flag,
-                     int32_t             value);
+                     int32_t             value,
+                     Move                move);
 bool hashtable_probe(TranspositionTable* table, const Position* position, TTEntry* entry);
 
 #endif
