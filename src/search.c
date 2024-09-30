@@ -298,10 +298,10 @@ int32_t search(Position*           position,
                 {
                     if (score > -SEARCH_MATE_VALUE && score < -SEARCH_MATE_SCORE)
                         printf("info score mate %d depth %d nodes %llu pv ",
-                               -(score + SEARCH_SCORE_MAX) / 2 - 1, currdepth, info->nodes);
+                               -(score + SEARCH_MATE_VALUE) / 2 - 1, currdepth, info->nodes);
                     else if (score > SEARCH_MATE_SCORE && score < SEARCH_MATE_VALUE)
                         printf("info score mate %d depth %d nodes %llu pv ",
-                               (SEARCH_SCORE_MAX - score) / 2 + 1, currdepth, info->nodes);
+                               (SEARCH_MATE_VALUE - score) / 2 + 1, currdepth, info->nodes);
                     else
                         printf("info score cp %d depth %d nodes %llu pv ", score, currdepth,
                                info->nodes);
