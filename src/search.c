@@ -13,6 +13,20 @@
     #include "windows.h"
 #endif
 
+#define max(a, b) \
+    ({ \
+        __typeof__(a) _a = (a); \
+        __typeof__(b) _b = (b); \
+        _a > _b ? _a : _b; \
+    })
+
+#define min(a, b) \
+    ({ \
+        __typeof__(a) _a = (a); \
+        __typeof__(b) _b = (b); \
+        _a < _b ? _a : _b; \
+    })
+
 // http://home.arcor.de/dreamlike/chess/
 int InputWaiting() {
 #ifndef WIN32
@@ -112,14 +126,13 @@ _search_quiescence(Position* position, int32_t alpha, int32_t beta, SearchInfo* 
 
     MoveList moves;
     Move     move;
-    bool     is_valid_move = false;
 
     movegen_pseudo_legal_captures(position, &moves);
 
     while (movegen_dequeue_move(&moves, &move))
     {
-        is_valid_move = move_do(position, move);
-        if (!is_valid_move || !position_is_valid(position))
+        bool is_valid_move = move_do(position, move);
+        if (!is_valid_move)
         {
             move_undo(position);
             continue;
@@ -158,26 +171,27 @@ static int32_t _search_negamax(Position*           position,
     if (position->ply_count > 0)
     {
         TTEntry entry;
-        bool    hashtable_probe_status = hashtable_probe(table, position, &entry);
-
-        if (hashtable_probe_status && entry.is_valid && entry.depth >= depth)
+        if (hashtable_probe(table, position, &entry))
         {
-            int32_t ttentry_value = entry.value;
+            if (entry.is_valid && entry.depth >= depth)
+            {
+                int32_t ttentry_value = entry.value;
 
-            if (ttentry_value < -SEARCH_MATE_SCORE)
-                ttentry_value += position->ply_count;
-            else if (ttentry_value > SEARCH_MATE_SCORE)
-                ttentry_value -= position->ply_count;
+                if (ttentry_value < -SEARCH_MATE_SCORE)
+                    ttentry_value += position->ply_count;
+                else if (ttentry_value > SEARCH_MATE_SCORE)
+                    ttentry_value -= position->ply_count;
 
-            if (entry.flag == EXACT)
-                return ttentry_value;
-            else if (entry.flag == LOWERBOUND)
-                alpha = alpha > ttentry_value ? alpha : ttentry_value;
-            else if (entry.flag == UPPERBOUND)
-                beta = beta < ttentry_value ? beta : ttentry_value;
+                if (entry.flag == EXACT)
+                    return ttentry_value;
+                else if (entry.flag == LOWERBOUND)
+                    alpha = max(alpha, ttentry_value);
+                else if (entry.flag == UPPERBOUND)
+                    beta = min(beta, ttentry_value);
 
-            if (alpha >= beta)
-                return ttentry_value;
+                if (alpha >= beta)
+                    return ttentry_value;
+            }
         }
     }
 
@@ -202,7 +216,7 @@ static int32_t _search_negamax(Position*           position,
     while (movegen_dequeue_move(&moves, &move))
     {
         bool is_valid_move = move_do(position, move);
-        if (!is_valid_move || !position_is_valid(position))
+        if (!is_valid_move)
         {
             move_undo(position);
             continue;
@@ -223,7 +237,7 @@ static int32_t _search_negamax(Position*           position,
             best_move  = move;
         }
 
-        alpha = (best_value > alpha) ? best_value : alpha;
+        alpha = max(best_value, alpha);
 
         if (alpha >= beta)
             break;
@@ -271,7 +285,6 @@ int32_t search(Position*           position,
             if (!info->stopped)
             {
                 Move pv[SEARCH_DEPTH_MAX];
-                char pv_move_str[10];
 
                 uint8_t pv_count = 0;
                 TTEntry entry;
