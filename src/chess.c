@@ -682,6 +682,7 @@ void position_set_startpos(Position* position) {
     position->half_move_clock  = 0;
     position->full_move_number = 1;
     position->ply_count        = 0;
+    position->hash             = hashkey_position(position);
 }
 
 void position_set_piece(Position* position, const Piece piece, const Square square) {
@@ -1512,11 +1513,19 @@ void movegen_display_moves(MoveList* move_list) {
     }
 }
 
+static inline bool _move_do_on_complete(Position* position) {
+    const bool is_legal_move = (!position_is_in_check(position)) && (position_is_valid(position));
+
+    position->active_color = !position->active_color;
+    if (position->active_color == BLACK)
+        position->hash ^= HASH_BLACK_TO_MOVE;
+
+    return is_legal_move;
+}
+
 bool move_do(Position* position, const Move move) {
     assert(PIECE_GET_COLOR(MOVE_PIECE(move.move_id)) == position->active_color);
     assert(!_position_history_is_full(position));
-
-    bool is_legal_move = false;
 
     const MoveHistoryEntry mhe = {.move                  = move,
                                   .prev_casteling_rights = position->casteling_rights,
@@ -1545,9 +1554,7 @@ bool move_do(Position* position, const Move move) {
             position->enpassant_target = MOVE_FROM_SQ(move.move_id) - 8;
         position_set_piece(position, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
         position->half_move_clock = 0;
-        is_legal_move             = !position_is_in_check(position);
-        position->active_color    = !position->active_color;
-        return is_legal_move;
+        return _move_do_on_complete(position);
     }
 
     if (move.move_id & MOVE_FLAG_EP)
@@ -1560,9 +1567,7 @@ bool move_do(Position* position, const Move move) {
                                  MOVE_TO_SQ(move.move_id) + 8);
         position_set_piece(position, MOVE_PIECE(move.move_id), MOVE_TO_SQ(move.move_id));
         position->half_move_clock = 0;
-        is_legal_move             = !position_is_in_check(position);
-        position->active_color    = !position->active_color;
-        return is_legal_move;
+        return _move_do_on_complete(position);
     }
 
     if (move.move_id & MOVE_FLAG_WKCA)
@@ -1571,9 +1576,8 @@ bool move_do(Position* position, const Move move) {
         position_clear_piece(position, WHITE_ROOK, H1);
         position_set_piece(position, WHITE_ROOK, F1);
         position->casteling_rights &= 0xC;
-        is_legal_move          = !position_is_in_check(position);
-        position->active_color = !position->active_color;
-        return is_legal_move;
+        position->hash ^= HASH_WKCA;
+        return _move_do_on_complete(position);
     }
 
     if (move.move_id & MOVE_FLAG_WQCA)
@@ -1582,9 +1586,8 @@ bool move_do(Position* position, const Move move) {
         position_clear_piece(position, WHITE_ROOK, A1);
         position_set_piece(position, WHITE_ROOK, D1);
         position->casteling_rights &= 0xC;
-        is_legal_move          = !position_is_in_check(position);
-        position->active_color = !position->active_color;
-        return is_legal_move;
+        position->hash ^= HASH_WQCA;
+        return _move_do_on_complete(position);
     }
 
     if (move.move_id & MOVE_FLAG_BKCA)
@@ -1593,9 +1596,8 @@ bool move_do(Position* position, const Move move) {
         position_clear_piece(position, BLACK_ROOK, H8);
         position_set_piece(position, BLACK_ROOK, F8);
         position->casteling_rights &= 0x3;
-        is_legal_move          = !position_is_in_check(position);
-        position->active_color = !position->active_color;
-        return is_legal_move;
+        position->hash ^= HASH_BKCA;
+        return _move_do_on_complete(position);
     }
 
     if (move.move_id & MOVE_FLAG_BQCA)
@@ -1604,9 +1606,8 @@ bool move_do(Position* position, const Move move) {
         position_clear_piece(position, BLACK_ROOK, A8);
         position_set_piece(position, BLACK_ROOK, D8);
         position->casteling_rights &= 0x3;
-        is_legal_move          = !position_is_in_check(position);
-        position->active_color = !position->active_color;
-        return is_legal_move;
+        position->hash ^= HASH_BQCA;
+        return _move_do_on_complete(position);
     }
 
     if (MOVE_PROMOTED(move.move_id))
@@ -1644,9 +1645,7 @@ bool move_do(Position* position, const Move move) {
 
         position_set_piece(position, MOVE_PROMOTED(move.move_id), MOVE_TO_SQ(move.move_id));
         position->half_move_clock = 0;
-        is_legal_move             = !position_is_in_check(position);
-        position->active_color    = !position->active_color;
-        return is_legal_move;
+        return _move_do_on_complete(position);
     }
 
     if (MOVE_CAPTURED(move.move_id))
@@ -1728,9 +1727,7 @@ bool move_do(Position* position, const Move move) {
         }
     }
 
-    is_legal_move          = !position_is_in_check(position);
-    position->active_color = !position->active_color;
-    return is_legal_move;
+    return _move_do_on_complete(position);
 }
 
 void move_undo(Position* position) {
@@ -1746,6 +1743,7 @@ void move_undo(Position* position) {
         position_set_piece(position, WHITE_KING, E1);
         position_clear_piece(position, WHITE_ROOK, F1);
         position_set_piece(position, WHITE_ROOK, H1);
+        position->hash ^= HASH_WKCA;
     }
     else if (prev_move.move_id & MOVE_FLAG_WQCA)
     {
@@ -1753,6 +1751,7 @@ void move_undo(Position* position) {
         position_set_piece(position, WHITE_KING, E1);
         position_clear_piece(position, WHITE_ROOK, D1);
         position_set_piece(position, WHITE_ROOK, A1);
+        position->hash ^= HASH_WQCA;
     }
     else if (prev_move.move_id & MOVE_FLAG_BKCA)
     {
@@ -1760,6 +1759,7 @@ void move_undo(Position* position) {
         position_set_piece(position, BLACK_KING, E8);
         position_clear_piece(position, BLACK_ROOK, F8);
         position_set_piece(position, BLACK_ROOK, H8);
+        position->hash ^= HASH_BKCA;
     }
     else if (prev_move.move_id & MOVE_FLAG_BQCA)
     {
@@ -1767,6 +1767,7 @@ void move_undo(Position* position) {
         position_set_piece(position, BLACK_KING, E8);
         position_clear_piece(position, BLACK_ROOK, D8);
         position_set_piece(position, BLACK_ROOK, A8);
+        position->hash ^= HASH_BQCA;
     }
     else if (prev_move.move_id & MOVE_FLAG_EP)
     {
@@ -1810,6 +1811,9 @@ void move_undo(Position* position) {
         position_set_piece(position, MOVE_PIECE(prev_move.move_id),
                            MOVE_FROM_SQ(prev_move.move_id));
     }
+
+    if (position->active_color == BLACK)
+        position->hash ^= HASH_BLACK_TO_MOVE;
 
     assert(position->hash == mhe.prev_hash);
 

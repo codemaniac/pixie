@@ -139,18 +139,37 @@ const unsigned long long HASHTABLE[12][64] = {
    222742836ULL,  4207968613ULL, 1277402953ULL, 2640255143ULL, 3976394691ULL, 2652556260ULL,
    1393142757ULL, 1659313936ULL, 1251157886ULL, 1222308062ULL}};
 
-unsigned long long hashkey_position(Position* position) {
+const unsigned long long HASH_WKCA          = 2293610930ULL;
+const unsigned long long HASH_WQCA          = 2603869796ULL;
+const unsigned long long HASH_BKCA          = 2033933788ULL;
+const unsigned long long HASH_BQCA          = 1645022392ULL;
+const unsigned long long HASH_BLACK_TO_MOVE = 1327214096ULL;
+
+unsigned long long hashkey_position(const Position* position) {
     unsigned long long hash           = 0ULL;
     unsigned long long piece_bitmap   = 0ULL;
     uint8_t            piece_hash_idx = 0;
     uint8_t            piece_pos      = 0;
 
+    if (position->active_color == BLACK)
+        hash ^= HASH_BLACK_TO_MOVE;
+
+    if (position->casteling_rights & WKCA)
+        hash ^= HASH_WKCA;
+
+    if (position->casteling_rights & WQCA)
+        hash ^= HASH_WQCA;
+
+    if (position->casteling_rights & BKCA)
+        hash ^= HASH_BKCA;
+
+    if (position->casteling_rights & BQCA)
+        hash ^= HASH_BQCA;
+
     for (uint8_t p = 1; p < 15; p++)
     {
         if (p == BOARD_WHITE_PIECES_IDX || p == BOARD_BLACK_PIECES_IDX)
-        {
             continue;
-        }
 
         piece_bitmap   = position->board.bitboards[p];
         piece_hash_idx = HASH_IDX(p);

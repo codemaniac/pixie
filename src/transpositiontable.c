@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 void hashtable_init(TranspositionTable* table) {
-    table->size = 0x500000 / sizeof(TTEntry);
+    table->size = 0x1000000 / sizeof(TTEntry);
     table->size -= sizeof(TTEntry);
 
     table->contents = (TTEntry*) malloc(table->size * sizeof(TTEntry));
@@ -28,7 +28,7 @@ void hashtable_clear(TranspositionTable* table) {
         entry->hash     = 0ULL;
         entry->depth    = 0;
         entry->flag     = NONE;
-        entry->value    = -INT32_MAX;
+        entry->value    = -SEARCH_SCORE_MAX;
         entry->move     = nomove;
         entry->is_valid = false;
     }
