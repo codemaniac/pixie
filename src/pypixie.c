@@ -34,7 +34,7 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     fen_to_position(fen, &position);
 
     TranspositionTable table;
-    hashtable_init(&table);
+    hashtable_init(&table, 10);
 
     SearchInfo info;
     info.depth     = (uint8_t) depth;

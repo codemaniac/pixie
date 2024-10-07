@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void hashtable_init(TranspositionTable* table) {
-    table->size = 0x1000000 / sizeof(TTEntry);
+void hashtable_init(TranspositionTable* table, uint8_t size_in_mb) {
+    table->size = (size_in_mb * 0x100000) / sizeof(TTEntry);
     table->size -= sizeof(TTEntry);
 
     table->contents = (TTEntry*) malloc(table->size * sizeof(TTEntry));

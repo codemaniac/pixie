@@ -24,7 +24,7 @@ typedef struct {
     unsigned long long size;
 } TranspositionTable;
 
-void hashtable_init(TranspositionTable* table);
+void hashtable_init(TranspositionTable* table, uint8_t size_in_mb);
 void hashtable_clear(TranspositionTable* table);
 void hashtable_store(TranspositionTable* table,
                      const Position*     position,
