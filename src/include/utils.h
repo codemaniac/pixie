@@ -1,15 +1,12 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <inttypes.h>
+#include <bit>
+#include <cstdint>
 
-uint8_t            utils_bit_bitscan_forward(unsigned long long* x);
-uint8_t            utils_bit_count1s(int64_t n);
-unsigned long long utils_bit_pop(const int64_t n, const uint8_t k);
-uint8_t            utils_str_indexof(const char* str, const char ch);
-char*              utils_str_trimwhitespace(char* str);
-unsigned long long utils_time_curr_time_ms(void);
-void               utils_bin_display32(const int32_t x);
-void               utils_bin_display64(const int64_t x);
+int      utils_bit_bitscan_forward(uint64_t* x);
+uint8_t  utils_bit_count1s(const uint64_t n);
+void     utils_bb_display(const uint64_t x);
+uint64_t utils_get_current_time_in_milliseconds();
 
 #endif

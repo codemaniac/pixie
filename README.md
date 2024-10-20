@@ -4,15 +4,9 @@ A free UCI chess engine
 
 [![License](https://img.shields.io/github/license/codemaniac/pixie)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![emoji-log](https://cdn.rawgit.com/ahmadawais/stuff/ca97874/emoji-log/flat-round.svg)](https://github.com/ahmadawais/Emoji-Log/)
 
 # Compiling pixie
-
-## On Linux 64-bit
-
-```
-premake5 gmake2
-make config=release_linux64
-```
 
 ## On MacOS 64-bit
 
@@ -21,12 +15,11 @@ premake5 gmake2
 make config=release_macos64
 ```
 
-## On Windows 64-bit
-Requires MinGW 64-bit to be installed and set in `path` variable
+## On Linux 64-bit
 
 ```
 premake5 gmake2
-make CC=gcc config=release_win64
+make config=release_linux64
 ```
 
 # Debugging

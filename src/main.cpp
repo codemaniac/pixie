@@ -1,8 +1,6 @@
 #include "include/uci.h"
 
-int main(void) {
-
+int main() {
     uci_loop();
-
     return 0;
 }
