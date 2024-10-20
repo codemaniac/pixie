@@ -1,10 +1,13 @@
 #ifndef PERFT_H
 #define PERFT_H
 
-#include "chess.h"
-#include <inttypes.h>
+#include "position.h"
+#include "threadpool.h"
+#include <cstdint>
 
-unsigned long long perft(Position* position, const uint8_t depth);
-void               divide(Position* position, const uint8_t depth);
+uint64_t perft(std::unique_ptr<Position>&, const uint8_t depth);
+uint64_t perft_multithreaded(std::unique_ptr<Position>&,
+                             const uint8_t                depth,
+                             std::unique_ptr<ThreadPool>& pool);
 
 #endif

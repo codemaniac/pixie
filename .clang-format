@@ -16,7 +16,7 @@ BinPackParameters: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
 BraceWrapping:
-  AfterFunction: false
+  AfterFunction: false 
   AfterClass: false
   AfterControlStatement: true
   BeforeElse: true
@@ -31,14 +31,14 @@ IndentGotoLabels: false
 IndentPPDirectives: BeforeHash
 IndentWidth: 4
 MaxEmptyLinesToKeep: 2
-NamespaceIndentation: None
+NamespaceIndentation: All
 PackConstructorInitializers: Never
 ReflowComments: false
 SortIncludes: true
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: false
-SpaceBeforeCaseColon: false
+SpaceBeforeCaseColon: true
 SpaceBeforeCpp11BracedList: false
 SpaceBeforeInheritanceColon: false
 SpaceInEmptyBlock: false

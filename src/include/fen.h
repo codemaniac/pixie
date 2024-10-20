@@ -1,10 +1,8 @@
 #ifndef FEN_H
 #define FEN_H
 
-#include "chess.h"
+#include "position.h"
 
-#define MAX_FEN_SIZE 100
-
-void fen_to_position(const char* fen, Position* position);
+void fen_to_position(std::string fen, std::unique_ptr<Position>& pos);
 
 #endif

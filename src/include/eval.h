@@ -1,9 +1,10 @@
-#ifndef EVALUATION_H
-#define EVALUATION_H
+#ifndef EVAL_H
+#define EVAL_H
 
-#include "chess.h"
-#include <inttypes.h>
+#include "position.h"
+#include <cstdint>
+#include <memory>
 
-int32_t eval_position(const Position* position);
+int32_t eval_position(std::unique_ptr<Position>&);
 
 #endif
