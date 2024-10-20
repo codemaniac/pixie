@@ -4,6 +4,7 @@ A free UCI chess engine
 
 [![License](https://img.shields.io/github/license/codemaniac/pixie)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![emoji-log](https://cdn.rawgit.com/ahmadawais/stuff/ca97874/emoji-log/flat-round.svg)](https://github.com/ahmadawais/Emoji-Log/)
 
 # Compiling pixie
 
@@ -12,6 +13,13 @@ A free UCI chess engine
 ```
 premake5 gmake2
 make config=release_macos64
+```
+
+## On Linux 64-bit
+
+```
+premake5 gmake2
+make config=release_linux64
 ```
 
 # Debugging
