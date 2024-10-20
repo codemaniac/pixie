@@ -178,6 +178,7 @@ void uci_loop(void) {
         }
         else if (input.rfind("position", 0) == 0)
         {
+            position = std::make_unique<Position>();  // TODO: Check if there is a better way
             _uci_parse_position(input, position);
             position->reset_ply_count();
         }
