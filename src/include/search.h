@@ -1,30 +1,29 @@
 #ifndef SEARCH_H
 #define SEARCH_H
 
-#include "chess.h"
-#include "transpositiontable.h"
-#include <inttypes.h>
-#include <stdbool.h>
+#include "position.h"
+#include "tt.h"
+#include <cstdint>
+#include <memory>
 
-#define SEARCH_SCORE_MAX 999999
+#define SEARCH_SCORE_MAX 50000
+#define SEARCH_MATE_VALUE 49000
+#define SEARCH_MATE_SCORE 48000
 #define SEARCH_DEPTH_MAX 64
-#define SEARCH_IS_MATE (SEARCH_SCORE_MAX - SEARCH_DEPTH_MAX)
 
-typedef struct {
-    uint8_t            depth;
-    unsigned long long starttime;
-    unsigned long long stoptime;
-    bool               timeset;
-    uint32_t           movestogo;
-    unsigned long long nodes;
-    bool               quit;
-    bool               stopped;
-} SearchInfo;
+struct SearchInfo {
+    uint8_t  depth;
+    uint64_t starttime;
+    uint64_t stoptime;
+    bool     timeset;
+    uint8_t  movestogo;
+    uint64_t nodes;
+    bool     stopped;
+    bool     use_iterative;
+    bool     use_uci;
+};
 
-int32_t search(Position*           position,
-               TranspositionTable* table,
-               SearchInfo*         info,
-               const bool          iterative,
-               const bool          is_uci);
+int32_t
+search(std::unique_ptr<Position>&, std::unique_ptr<TranspositionTable>& table, SearchInfo* info);
 
 #endif

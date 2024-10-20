@@ -67,3 +67,4 @@ build/
 obj/
 pypixie.egg-info/
 leaks.txt
+scripts/
