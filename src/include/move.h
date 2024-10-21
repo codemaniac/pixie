@@ -26,20 +26,13 @@ enum MoveFlag : uint8_t {
     MOVE_CAPTURE_PROMOTION_QUEEN,
 };
 
-union _Move {
-    struct {
-        unsigned int from: 6;
-        unsigned int to: 6;
-        unsigned int flag: 4;
-        unsigned int captured: 4;
-        unsigned int score: 12;
-    };
-    unsigned int id;
-};
-
 class Move {
    private:
-    _Move move;
+    unsigned int from;
+    unsigned int to;
+    unsigned int flag;
+    unsigned int captured;
+    unsigned int score;
 
    public:
     Move();
@@ -61,7 +54,7 @@ class Move {
     void         display() const;
 };
 
-constexpr uint8_t MOVE_SCORE_MVV_LVA_IDX(const Piece a, const Piece v) {
+constexpr uint8_t MOVE_SCORE_MVV_LVA_IDX(const PieceType a, const PieceType v) {
     return (((a - 1) * 6) + (v - 1));
 }
 constexpr bool MOVE_IS_CAPTURE(const MoveFlag m) { return (m & 0x4); }

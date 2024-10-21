@@ -600,9 +600,10 @@ void Board::generate_pseudolegal_moves_pawn(const Color      active_color,
                                             const Square     ep_target,
                                             const bool       only_captures,
                                             ArrayList<Move>* move_list) const {
-    const Piece pawn                = PIECE_CREATE(PAWN, active_color);
-    const Rank  pawn_promotion_rank = static_cast<Rank>(7 * (active_color ^ 1));
-    BitBoard    bb                  = this->bitboards[pawn];
+    const Piece pawn = PIECE_CREATE(PAWN, active_color);
+    const Rank  pawn_promotion_rank =
+      static_cast<Rank>(7 * (active_color ^ 1));  // White = 7; Black = 0
+    BitBoard bb = this->bitboards[pawn];
     while (bb)
     {
         const Square from_sq = static_cast<Square>(utils_bit_bitscan_forward(&bb));
@@ -620,25 +621,32 @@ void Board::generate_pseudolegal_moves_pawn(const Color      active_color,
             {
                 // Pawn Captures + Promotion
                 move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE_PROMOTION_QUEEN, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(pawn, victim));
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(pawn), PIECE_GET_TYPE(victim))]);
                 move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE_PROMOTION_ROOK, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(pawn, victim));
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(pawn), PIECE_GET_TYPE(victim))]);
                 move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE_PROMOTION_BISHOP, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(pawn, victim));
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(pawn), PIECE_GET_TYPE(victim))]);
                 move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE_PROMOTION_KNIGHT, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(pawn, victim));
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(pawn), PIECE_GET_TYPE(victim))]);
             }
             else if (to_sq == ep_target)
             {
                 // En Passant Capture
-                move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE_EP, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(pawn, victim));
+                const Piece ep_victim = PIECE_CREATE(PAWN, static_cast<Color>(active_color ^ 1));
+                move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE_EP, ep_victim,
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(pawn), PIECE_GET_TYPE(ep_victim))]);
             }
             else
             {
                 // Pawn Captures
                 move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(pawn, victim));
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(pawn), PIECE_GET_TYPE(victim))]);
             }
         }
 
@@ -732,7 +740,8 @@ void Board::generate_pseudolegal_moves_piece(const Piece      attacker,
                 move_list->emplace_back(from_sq, to_sq, MOVE_QUIET, NO_PIECE, 0);
             else if (victim != NO_PIECE && PIECE_GET_COLOR(victim) != active_color)
                 move_list->emplace_back(from_sq, to_sq, MOVE_CAPTURE, victim,
-                                        MOVE_SCORE_MVV_LVA_IDX(attacker, victim));
+                                        MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                          PIECE_GET_TYPE(attacker), PIECE_GET_TYPE(victim))]);
         }
     }
 }

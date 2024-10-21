@@ -14,6 +14,23 @@
     #include "windows.h"
 #endif
 
+constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
+
+struct SearchData {
+    Move killer_moves[2][SEARCH_DEPTH_MAX];
+    int  history_moves[12][SEARCH_DEPTH_MAX];
+
+    SearchData() {
+        for (int i = 0; i < SEARCH_DEPTH_MAX; i++)
+        {
+            this->killer_moves[0][i] = Move();
+            this->killer_moves[1][i] = Move();
+            for (int j = 0; j < 12; j++)
+                this->history_moves[j][i] = 0;
+        }
+    }
+};
+
 // http://home.arcor.de/dreamlike/chess/
 int InputWaiting() {
 #ifndef WIN32
@@ -90,6 +107,38 @@ static void _search_check_up(SearchInfo* info) {
     ReadInput(info);
 }
 
+static void _search_score_moves(ArrayList<Move>*           move_list,
+                                std::unique_ptr<Position>& position,
+                                SearchData&                data) {
+    for (size_t i = 0; i < move_list->size(); i++)
+    {
+        Move move = move_list->at(i);
+        if (!MOVE_IS_CAPTURE(move.get_flag()))
+        {
+            if (move == data.killer_moves[0][position->get_ply_count()])
+                move.set_score(9000);
+            else if (move == data.killer_moves[1][position->get_ply_count()])
+                move.set_score(8000);
+            else
+            {
+                const Piece        move_piece = position->get_piece(move.get_from());
+                const unsigned int score =
+                  data.history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()];
+                move.set_score(score);
+            }
+        }
+    }
+}
+
+static void _search_sort_moves(ArrayList<Move>* move_list, size_t index) {
+    const unsigned int ref_score = move_list->at(index).get_score();
+    for (int i = index + 1; i < move_list->size(); i++)
+    {
+        if (move_list->at(i).get_score() > ref_score)
+            std::swap(move_list->at(index), move_list->at(i));
+    }
+}
+
 static int32_t _search_quiescence(std::unique_ptr<Position>& position,
                                   int32_t                    alpha,
                                   int32_t                    beta,
@@ -114,8 +163,7 @@ static int32_t _search_quiescence(std::unique_ptr<Position>& position,
     position->generate_pseudolegal_moves(&capture_moves, true);
     for (const Move& move : capture_moves)
     {
-        const bool is_valid_move = position->move_do(move);
-        if (!is_valid_move)
+        if (!position->move_do(move))
         {
             position->move_undo();
             continue;
@@ -137,7 +185,8 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
                                int32_t                              alpha,
                                int32_t                              beta,
                                std::unique_ptr<TranspositionTable>& table,
-                               SearchInfo*                          info) {
+                               SearchInfo*                          info,
+                               SearchData*                          data) {
 
     info->nodes++;
 
@@ -182,24 +231,33 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
     if (depth == 0)
         return _search_quiescence(position, alpha, beta, info);
 
+    // Generate candidate moves
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
+    // Score moves for move ordering
+    _search_score_moves(&candidate_moves, position, *data);
+
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
     uint32_t legal_moves_count = 0;
-    for (const Move& move : candidate_moves)
+
+    for (size_t i = 0; i < candidate_moves.size(); i++)
     {
+        // Sort moves on the fly to have the top scoring move at i-th position
+        _search_sort_moves(&candidate_moves, i);
+        // Pick top scoring move at i-th position
+        const Move move = candidate_moves.at(i);
 #ifdef DEBUG
         assert(move.get_id() != 0);
 #endif
-        const bool is_valid_move = position->move_do(move);
-        if (!is_valid_move)
+        if (!position->move_do(move))
         {
             position->move_undo();
             continue;
         }
         legal_moves_count++;
-        int32_t score = -_search_negamax(position, depth - 1, -beta, -alpha, table, info);
+        const int32_t score =
+          -_search_negamax(position, depth - 1, -beta, -alpha, table, info, data);
         position->move_undo();
         if (info->stopped)
             return 0;
@@ -208,9 +266,28 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
             best_score       = score;
             best_move_so_far = move;
         }
-        alpha = std::max(alpha, best_score);
+        if (best_score > alpha)
+        {
+            alpha = best_score;
+            // Store history quite moves
+            if (!MOVE_IS_CAPTURE(move.get_flag()))
+            {
+                const Piece move_piece = position->get_piece(move.get_from());
+                data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()] += depth;
+            }
+        }
         if (alpha >= beta)
+        {
+            // In fail-hard beta cutoff
+            // Store killer quite moves
+            if (!MOVE_IS_CAPTURE(move.get_flag()))
+            {
+                const int32_t ply          = position->get_ply_count();
+                data->killer_moves[1][ply] = data->killer_moves[0][ply];
+                data->killer_moves[0][ply] = move;
+            }
             break;
+        }
     }
 
     if (legal_moves_count == 0)
@@ -243,6 +320,8 @@ int32_t search(std::unique_ptr<Position>&           position,
                std::unique_ptr<TranspositionTable>& table,
                SearchInfo*                          info) {
 
+    SearchData search_data;
+
     int32_t score = -SEARCH_SCORE_MAX;
     Move    bestmove;
 
@@ -254,7 +333,7 @@ int32_t search(std::unique_ptr<Position>&           position,
                 break;
 
             score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                                    info);
+                                    info, &search_data);
 
             if (!info->stopped)
             {
@@ -316,8 +395,8 @@ int32_t search(std::unique_ptr<Position>&           position,
     }
     else
     {
-        score =
-          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table, info);
+        score = _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
+                                info, &search_data);
         TTEntry entry;
         table->probe(position, &entry);
         bestmove = entry.move;

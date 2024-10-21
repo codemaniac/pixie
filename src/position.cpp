@@ -587,7 +587,9 @@ bool Position::move_do(const std::string move_str) {
     }
 
     const unsigned int move_score =
-      captured_piece == NO_PIECE ? 0 : MOVE_SCORE_MVV_LVA_IDX(move_piece, captured_piece);
+      captured_piece == NO_PIECE
+        ? 0
+        : MOVE_SCORE_MVV_LVA_IDX(PIECE_GET_TYPE(move_piece), PIECE_GET_TYPE(captured_piece));
 
     const Move move(from_sq, to_sq, flag, captured_piece, move_score);
 
