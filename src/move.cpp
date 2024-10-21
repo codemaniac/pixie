@@ -16,10 +16,10 @@ const uint16_t MOVE_SCORE_MVV_LVA[36] = {
 // clang-format on
 
 Move::Move() {
-    this->from     = 0;
-    this->to       = 0;
-    this->flag     = 0;
-    this->captured = 0;
+    this->from     = NO_SQ;
+    this->to       = NO_SQ;
+    this->flag     = MOVE_QUIET;
+    this->captured = NO_PIECE;
     this->score    = 0;
 }
 
@@ -31,31 +31,31 @@ Move::Move(const Move& move) {
     this->score    = move.get_score();
 }
 
-Move::Move(const Square       from,
-           const Square       to,
-           const MoveFlag     flag,
-           const Piece        captured,
-           const unsigned int score) {
-    this->from     = static_cast<unsigned int>(from);
-    this->to       = static_cast<unsigned int>(to);
-    this->flag     = static_cast<unsigned int>(flag);
-    this->captured = static_cast<unsigned int>(captured);
+Move::Move(const Square   from,
+           const Square   to,
+           const MoveFlag flag,
+           const Piece    captured,
+           const uint32_t score) {
+    this->from     = from;
+    this->to       = to;
+    this->flag     = flag;
+    this->captured = captured;
     this->score    = score;
 }
 
-void Move::set_score(unsigned int score) { this->score = score; }
+void Move::set_score(const uint32_t score) { this->score = score; }
 
-Square Move::get_from() const { return static_cast<Square>(this->from); }
+Square Move::get_from() const { return this->from; }
 
-Square Move::get_to() const { return static_cast<Square>(this->to); }
+Square Move::get_to() const { return this->to; }
 
-MoveFlag Move::get_flag() const { return static_cast<MoveFlag>(this->flag); }
+MoveFlag Move::get_flag() const { return this->flag; }
 
-Piece Move::get_captured() const { return static_cast<Piece>(this->captured); }
+Piece Move::get_captured() const { return this->captured; }
 
-unsigned int Move::get_score() const { return this->score; }
+uint32_t Move::get_score() const { return this->score; }
 
-unsigned int Move::get_id() const {
+int32_t Move::get_id() const {
     return (this->captured << 16) | (this->flag << 12) | (this->to << 6) | (this->from);
 }
 
