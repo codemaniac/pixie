@@ -40,6 +40,14 @@ class ArrayList: public std::array<T, Capacity> {
         (*this)[current_size++] = T(std::forward<Args>(args)...);
     }
 
+    void push(T t) {
+        if (current_size >= Capacity)
+        {
+            throw std::out_of_range("ArrayList is full: Cannot push.");
+        }
+        (*this)[current_size++] = t;
+    }
+
     size_t size() const { return current_size; }
 
     typedef typename std::array<T, Capacity>::iterator       iterator;

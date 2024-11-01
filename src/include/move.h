@@ -5,8 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#define MOVE_LIST_MAX_SIZE 256
-
 extern const uint16_t MOVE_SCORE_MVV_LVA[36];
 
 enum MoveFlag : uint8_t {
