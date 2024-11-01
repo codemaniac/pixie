@@ -274,6 +274,12 @@ static const uint64_t HASHTABLE[12][64] = {
    10306579347202345843ULL, 15976468767339030698ULL, 14181943498817654479ULL,
    8352544142070819244ULL}};
 
+static const uint64_t HASH_WKCA          = 18117139344393864356ULL;
+static const uint64_t HASH_WQCA          = 3618354482382335338ULL;
+static const uint64_t HASH_BKCA          = 3316420397683691192ULL;
+static const uint64_t HASH_BQCA          = 12843566194003531518ULL;
+static const uint64_t HASH_BLACK_TO_MOVE = 17992020611926120715ULL;
+
 // Little-Endian Rank-File Mapping
 // clang-format off
 static const uint8_t CASTLE_RIGHTS_MODIFIERS[64] = {
@@ -339,6 +345,21 @@ void Position::reset_ply_count() { this->ply_count = 0; }
 void Position::reset_hash() {
     this->hash = 0ULL;
 
+    if (this->active_color == BLACK)
+        this->hash ^= HASH_BLACK_TO_MOVE;
+
+    if (this->casteling_rights & WKCA)
+        this->hash ^= HASH_WKCA;
+
+    if (this->casteling_rights & WQCA)
+        this->hash ^= HASH_WQCA;
+
+    if (this->casteling_rights & BKCA)
+        this->hash ^= HASH_BKCA;
+
+    if (this->casteling_rights & BQCA)
+        this->hash ^= HASH_BQCA;
+
     for (uint8_t sq = 0; sq < 64; sq++)
     {
         const Piece p = this->board.get_piece(static_cast<Square>(sq));
@@ -364,6 +385,8 @@ void Position::set_start_pos() {
 bool Position::move_do_on_complete() {
     const bool is_legal_move = (!this->is_in_check()) && this->is_valid();
     this->active_color       = static_cast<Color>(this->active_color ^ 1);
+    if (this->active_color == BLACK)
+        this->hash ^= HASH_BLACK_TO_MOVE;
     return is_legal_move;
 }
 
@@ -419,6 +442,7 @@ bool Position::move_do(const Move move) {
         this->clear_piece(rook, static_cast<Square>(move_to_sq + 1));
         this->set_piece(rook, static_cast<Square>(move_to_sq - 1));
         this->casteling_rights &= CASTLE_RIGHTS_MODIFIERS[move_from_sq];
+        this->hash ^= this->active_color == WHITE ? HASH_WKCA : HASH_BKCA;
         return this->move_do_on_complete();
     }
 
@@ -430,6 +454,7 @@ bool Position::move_do(const Move move) {
         this->clear_piece(rook, static_cast<Square>(move_to_sq - 2));
         this->set_piece(rook, static_cast<Square>(move_to_sq + 1));
         this->casteling_rights &= CASTLE_RIGHTS_MODIFIERS[move_from_sq];
+        this->hash ^= this->active_color == WHITE ? HASH_WQCA : HASH_BQCA;
         return this->move_do_on_complete();
     }
 
@@ -612,6 +637,7 @@ void Position::move_undo() {
         this->set_piece(king, prev_move_from_sq);
         this->clear_piece(rook, static_cast<Square>(prev_move_to_sq - 1));
         this->set_piece(rook, static_cast<Square>(prev_move_to_sq + 1));
+        this->hash ^= this->active_color == BLACK ? HASH_WKCA : HASH_BKCA;
     }
     else if (prev_move_flag == MOVE_CASTLE_QUEEN_SIDE)
     {
@@ -621,6 +647,7 @@ void Position::move_undo() {
         this->set_piece(king, prev_move_from_sq);
         this->clear_piece(rook, static_cast<Square>(prev_move_to_sq + 1));
         this->set_piece(rook, static_cast<Square>(prev_move_to_sq - 2));
+        this->hash ^= this->active_color == BLACK ? HASH_WQCA : HASH_BQCA;
     }
     else if (prev_move_flag == MOVE_CAPTURE_EP)
     {
@@ -655,6 +682,9 @@ void Position::move_undo() {
         this->clear_piece(prev_move_piece, prev_move_to_sq);
         this->set_piece(prev_move_piece, prev_move_from_sq);
     }
+
+    if (this->active_color == BLACK)
+        this->hash ^= HASH_BLACK_TO_MOVE;
 
     assert(this->hash == mhe.prev_hash);
     assert((this->active_color ^ 1) == prev_active_color);
