@@ -171,27 +171,32 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
 
     const int32_t alpha_orig = alpha;
 
-    TTEntry entry;
-    if (table->probe(position, &entry))
+    const bool pv = alpha + 1 != beta;  // If true, then PV node
+
+    if (position->get_ply_count() > 0 && pv)
     {
-        if (entry.is_valid && entry.depth >= depth)
+        TTEntry entry;
+        if (table->probe(position, &entry))
         {
-            int32_t ttentry_value = entry.value;
+            if (entry.is_valid && entry.depth >= depth)
+            {
+                int32_t ttentry_value = entry.value;
 
-            if (ttentry_value < -SEARCH_MATE_SCORE)
-                ttentry_value += position->get_ply_count();
-            else if (ttentry_value > SEARCH_MATE_SCORE)
-                ttentry_value -= position->get_ply_count();
+                if (ttentry_value < -SEARCH_MATE_SCORE)
+                    ttentry_value += position->get_ply_count();
+                else if (ttentry_value > SEARCH_MATE_SCORE)
+                    ttentry_value -= position->get_ply_count();
 
-            if (entry.flag == EXACT)
-                return ttentry_value;
-            else if (entry.flag == LOWERBOUND)
-                alpha = std::max(alpha, ttentry_value);
-            else if (entry.flag == UPPERBOUND)
-                beta = std::min(beta, ttentry_value);
+                if (entry.flag == EXACT)
+                    return ttentry_value;
+                else if (entry.flag == LOWERBOUND)
+                    alpha = std::max(alpha, ttentry_value);
+                else if (entry.flag == UPPERBOUND)
+                    beta = std::min(beta, ttentry_value);
 
-            if (alpha >= beta)
-                return ttentry_value;
+                if (alpha >= beta)
+                    return ttentry_value;
+            }
         }
     }
 
@@ -249,10 +254,7 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
             {
                 alpha = score;
                 if (score >= beta)
-                {
-                    // fail-hard beta-cutoff
-                    break;
-                }
+                    break;  // fail-hard beta-cutoff
             }
         }
     }
