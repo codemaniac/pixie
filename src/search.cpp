@@ -171,9 +171,9 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
 
     const int32_t alpha_orig = alpha;
 
-    const bool pv = alpha + 1 != beta;  // If true, then PV node
+    const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
 
-    if (position->get_ply_count() > 0 && pv)
+    if (position->get_ply_count() > 0 && !is_pv_node)
     {
         TTEntry entry;
         if (table->probe(position, &entry))
@@ -239,7 +239,7 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
         else
         {
             score = -_search_think(position, depth - 1, -alpha - 1, -alpha, table, info);
-            if (score > alpha && beta - alpha > 1)
+            if ((score > alpha) && ((beta - alpha) > 1))
                 score = -_search_think(position, depth - 1, -beta, -alpha, table, info);
         }
         first_move = false;
