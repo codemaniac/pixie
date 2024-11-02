@@ -46,7 +46,7 @@ class Move {
     MoveFlag get_flag() const;
     Piece    get_captured() const;
     uint32_t get_score() const;
-    int32_t  get_id() const;
+    uint32_t get_id() const;
     Move&    operator=(const Move& move);
     bool     operator==(const Move& other) const;
     void     display() const;

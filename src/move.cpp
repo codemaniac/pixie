@@ -69,7 +69,7 @@ Piece Move::get_captured() const { return this->captured; }
 
 uint32_t Move::get_score() const { return this->score; }
 
-int32_t Move::get_id() const {
+uint32_t Move::get_id() const {
     return (this->captured << 16) | (this->flag << 12) | (this->to << 6) | (this->from);
 }
 
