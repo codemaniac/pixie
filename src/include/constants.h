@@ -4,33 +4,33 @@
 #include <cstdint>
 
 enum Color : uint8_t {
-    WHITE,
-    BLACK
+    WHITE,  // 0
+    BLACK   // 1
 };
 
 enum PieceType : uint8_t {
-    PAWN = 1,
-    KNIGHT,
-    BISHOP,
-    ROOK,
-    QUEEN,
-    KING
+    PAWN = 1,  // 001
+    KNIGHT,    // 010
+    BISHOP,    // 011
+    ROOK,      // 100
+    QUEEN,     // 101
+    KING       // 110
 };
 
 enum Piece : uint8_t {
-    NO_PIECE,
-    WHITE_PAWN,
-    WHITE_KNIGHT,
-    WHITE_BISHOP,
-    WHITE_ROOK,
-    WHITE_QUEEN,
-    WHITE_KING,
-    BLACK_PAWN = 9,
-    BLACK_KNIGHT,
-    BLACK_BISHOP,
-    BLACK_ROOK,
-    BLACK_QUEEN,
-    BLACK_KING
+    NO_PIECE,        // 0000
+    WHITE_PAWN,      // 0001
+    WHITE_KNIGHT,    // 0010
+    WHITE_BISHOP,    // 0011
+    WHITE_ROOK,      // 0100
+    WHITE_QUEEN,     // 0101
+    WHITE_KING,      // 0110
+    BLACK_PAWN = 9,  // 1001
+    BLACK_KNIGHT,    // 1010
+    BLACK_BISHOP,    // 1011
+    BLACK_ROOK,      // 1100
+    BLACK_QUEEN,     // 1101
+    BLACK_KING       // 1110
 };
 
 enum Rank : uint8_t {

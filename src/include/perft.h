@@ -5,9 +5,9 @@
 #include "threadpool.h"
 #include <cstdint>
 
-uint64_t perft(std::unique_ptr<Position>&, const uint8_t depth);
 uint64_t perft_multithreaded(std::unique_ptr<Position>&,
                              const uint8_t                depth,
-                             std::unique_ptr<ThreadPool>& pool);
+                             std::unique_ptr<ThreadPool>& pool,
+                             const bool                   captures_only);
 
 #endif

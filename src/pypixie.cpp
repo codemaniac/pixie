@@ -23,7 +23,23 @@ static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
     std::unique_ptr<Position> position = std::make_unique<Position>();
     fen_to_position(fen, position);
 
-    uint64_t result = perft_multithreaded(position, depth, pool);
+    uint64_t result = perft_multithreaded(position, depth, pool, false);
+
+    return PyLong_FromLong(result);
+}
+
+static PyObject* pypixie_perft_captures(PyObject* self, PyObject* args) {
+    const char* fen;
+    int         depth;
+    if (!PyArg_ParseTuple(args, "si", &fen, &depth))
+    {
+        return NULL;
+    }
+
+    std::unique_ptr<Position> position = std::make_unique<Position>();
+    fen_to_position(fen, position);
+
+    uint64_t result = perft_multithreaded(position, depth, pool, true);
 
     return PyLong_FromLong(result);
 }
@@ -56,9 +72,11 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     return PyLong_FromLong(eval);
 }
 
-static PyMethodDef PyPixieMethods[] = {{"perft", pypixie_perft, METH_VARARGS, "Perft"},
-                                       {"search", pypixie_search, METH_VARARGS, "Search"},
-                                       {NULL, NULL, 0, NULL}};
+static PyMethodDef PyPixieMethods[] = {
+  {"perft", pypixie_perft, METH_VARARGS, "Perft"},
+  {"perft_captures", pypixie_perft_captures, METH_VARARGS, "Perft Captures"},
+  {"search", pypixie_search, METH_VARARGS, "Search"},
+  {NULL, NULL, 0, NULL}};
 
 static struct PyModuleDef pypixie = {PyModuleDef_HEAD_INIT, "pypixie", NULL, -1, PyPixieMethods};
 

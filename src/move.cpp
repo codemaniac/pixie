@@ -5,6 +5,20 @@
 #include <string>
 
 // clang-format off
+
+/*
+
+    (Victims) Pawn Knight Bishop   Rook  Queen   King
+  (Attackers)
+        Pawn   105    205    305    405    505    605
+      Knight   104    204    304    404    504    604
+      Bishop   103    203    303    403    503    603
+        Rook   102    202    302    402    502    602
+       Queen   101    201    301    401    501    601
+        King   100    200    300    400    500    600
+
+*/
+
 const uint16_t MOVE_SCORE_MVV_LVA[36] = {
  	105, 205, 305, 405, 505, 605,
 	104, 204, 304, 404, 504, 604,
@@ -15,42 +29,60 @@ const uint16_t MOVE_SCORE_MVV_LVA[36] = {
 };
 // clang-format on
 
-Move::Move() { this->move.id = 0; }
-
-Move::Move(const Move& move) { this->move.id = move.get_id(); }
-
-Move::Move(const Square       from,
-           const Square       to,
-           const MoveFlag     flag,
-           const Piece        captured,
-           const unsigned int score) {
-    this->move.from     = static_cast<unsigned int>(from);
-    this->move.to       = static_cast<unsigned int>(to);
-    this->move.flag     = static_cast<unsigned int>(flag);
-    this->move.captured = static_cast<unsigned int>(captured);
-    this->move.score    = score;
+Move::Move() {
+    this->from     = NO_SQ;
+    this->to       = NO_SQ;
+    this->flag     = MOVE_QUIET;
+    this->captured = NO_PIECE;
+    this->score    = 0;
 }
 
-void Move::set_score(unsigned int score) { this->move.score = score; }
+Move::Move(const Move& move) {
+    this->from     = move.get_from();
+    this->to       = move.get_to();
+    this->flag     = move.get_flag();
+    this->captured = move.get_captured();
+    this->score    = move.get_score();
+}
 
-Square Move::get_from() const { return static_cast<Square>(this->move.from); }
+Move::Move(const Square   from,
+           const Square   to,
+           const MoveFlag flag,
+           const Piece    captured,
+           const uint32_t score) {
+    this->from     = from;
+    this->to       = to;
+    this->flag     = flag;
+    this->captured = captured;
+    this->score    = score;
+}
 
-Square Move::get_to() const { return static_cast<Square>(this->move.to); }
+void Move::set_score(const uint32_t score) { this->score = score; }
 
-MoveFlag Move::get_flag() const { return static_cast<MoveFlag>(this->move.flag); }
+Square Move::get_from() const { return this->from; }
 
-Piece Move::get_captured() const { return static_cast<Piece>(this->move.captured); }
+Square Move::get_to() const { return this->to; }
 
-unsigned int Move::get_score() const { return this->move.score; }
+MoveFlag Move::get_flag() const { return this->flag; }
 
-unsigned int Move::get_id() const { return this->move.id; }
+Piece Move::get_captured() const { return this->captured; }
+
+uint32_t Move::get_score() const { return this->score; }
+
+int32_t Move::get_id() const {
+    return (this->captured << 16) | (this->flag << 12) | (this->to << 6) | (this->from);
+}
 
 Move& Move::operator=(const Move& move) {
-    this->move.id = move.get_id();
+    this->from     = move.get_from();
+    this->to       = move.get_to();
+    this->flag     = move.get_flag();
+    this->captured = move.get_captured();
+    this->score    = move.get_score();
     return *this;
 }
 
-bool Move::operator==(const Move& other) const { return this->move.id == other.get_id(); }
+bool Move::operator==(const Move& other) const { return this->get_id() == other.get_id(); }
 
 void Move::display() const {
     const std::string file_str  = "abcdefgh";
@@ -60,7 +92,7 @@ void Move::display() const {
     const Rank        to_rank   = BOARD_SQ_TO_RANK(this->get_to());
     if (this->get_flag() >= MOVE_PROMOTION_KNIGHT)
     {
-        const std::string promotion_piece_str = "xxxxxxnbrqnbrq";
+        const std::string promotion_piece_str = "xxxxxxxxnbrqnbrq";
         printf("%c%d%c%d%c", file_str[from_file], static_cast<int>(from_rank) + 1,
                file_str[to_file], static_cast<int>(to_rank) + 1,
                promotion_piece_str[this->get_flag()]);

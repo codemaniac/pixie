@@ -90,6 +90,27 @@ static void _search_check_up(SearchInfo* info) {
     ReadInput(info);
 }
 
+static void _search_score_moves(ArrayList<Move>* move_list) {
+    for (uint32_t i = 0; i < move_list->size(); i++)
+    {
+        Move move = move_list->at(i);
+        if (MOVE_IS_CAPTURE(move.get_flag()))
+        {
+            const uint32_t raw_score = move.get_score();
+            move.set_score(raw_score + 10000);
+        }
+    }
+}
+
+static void _search_sort_moves(ArrayList<Move>* move_list, const size_t index) {
+    const uint32_t ref_score = move_list->at(index).get_score();
+    for (uint32_t i = index + 1; i < move_list->size(); i++)
+    {
+        if (move_list->at(i).get_score() > ref_score)
+            std::swap(move_list->at(index), move_list->at(i));
+    }
+}
+
 static int32_t _search_quiescence(std::unique_ptr<Position>& position,
                                   int32_t                    alpha,
                                   int32_t                    beta,
@@ -112,8 +133,12 @@ static int32_t _search_quiescence(std::unique_ptr<Position>& position,
         alpha = stand_pat;
     ArrayList<Move> capture_moves;
     position->generate_pseudolegal_moves(&capture_moves, true);
-    for (const Move& move : capture_moves)
+    for (uint32_t i = 0; i < capture_moves.size(); i++)
     {
+        // Sort moves on the fly to have the top scoring move at i-th position
+        _search_sort_moves(&capture_moves, i);
+        // Pick top scoring move at i-th position
+        const Move move          = capture_moves.at(i);
         const bool is_valid_move = position->move_do(move);
         if (!is_valid_move)
         {
@@ -132,12 +157,12 @@ static int32_t _search_quiescence(std::unique_ptr<Position>& position,
     return alpha;
 }
 
-static int32_t _search_negamax(std::unique_ptr<Position>&           position,
-                               uint8_t                              depth,
-                               int32_t                              alpha,
-                               int32_t                              beta,
-                               std::unique_ptr<TranspositionTable>& table,
-                               SearchInfo*                          info) {
+static int32_t _search_think(std::unique_ptr<Position>&           position,
+                             uint8_t                              depth,
+                             int32_t                              alpha,
+                             int32_t                              beta,
+                             std::unique_ptr<TranspositionTable>& table,
+                             SearchInfo*                          info) {
 
     info->nodes++;
 
@@ -146,7 +171,9 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
 
     const int32_t alpha_orig = alpha;
 
-    if (position->get_ply_count() > 0)
+    const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
+
+    if (position->get_ply_count() > 0 && !is_pv_node)
     {
         TTEntry entry;
         if (table->probe(position, &entry))
@@ -182,16 +209,23 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
     if (depth == 0)
         return _search_quiescence(position, alpha, beta, info);
 
+    // Generate candidate moves
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
+    // Score moves for move ordering
+    _search_score_moves(&candidate_moves);
+
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
     uint32_t legal_moves_count = 0;
-    for (const Move& move : candidate_moves)
+    bool     first_move        = true;
+
+    for (uint32_t i = 0; i < candidate_moves.size(); i++)
     {
-#ifdef DEBUG
-        assert(move.get_id() != 0);
-#endif
+        // Sort moves on the fly to have the top scoring move at i-th position
+        _search_sort_moves(&candidate_moves, i);
+        // Pick top scoring move at i-th position
+        const Move move          = candidate_moves.at(i);
         const bool is_valid_move = position->move_do(move);
         if (!is_valid_move)
         {
@@ -199,7 +233,16 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
             continue;
         }
         legal_moves_count++;
-        int32_t score = -_search_negamax(position, depth - 1, -beta, -alpha, table, info);
+        int32_t score = -SEARCH_SCORE_MAX;
+        if (first_move)
+            score = -_search_think(position, depth - 1, -beta, -alpha, table, info);
+        else
+        {
+            score = -_search_think(position, depth - 1, -alpha - 1, -alpha, table, info);
+            if ((score > alpha) && ((beta - alpha) > 1))
+                score = -_search_think(position, depth - 1, -beta, -alpha, table, info);
+        }
+        first_move = false;
         position->move_undo();
         if (info->stopped)
             return 0;
@@ -207,10 +250,13 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
         {
             best_score       = score;
             best_move_so_far = move;
+            if (score > alpha)
+            {
+                alpha = score;
+                if (score >= beta)
+                    break;  // fail-hard beta-cutoff
+            }
         }
-        alpha = std::max(alpha, best_score);
-        if (alpha >= beta)
-            break;
     }
 
     if (legal_moves_count == 0)
@@ -227,12 +273,7 @@ static int32_t _search_negamax(std::unique_ptr<Position>&           position,
     else if (best_score >= beta)
         flag = LOWERBOUND;
     else
-    {
         flag = EXACT;
-#ifdef DEBUG
-        assert(best_move_so_far.get_id() != 0);
-#endif
-    }
 
     table->store(position, depth, flag, best_score, best_move_so_far);
 
@@ -253,8 +294,8 @@ int32_t search(std::unique_ptr<Position>&           position,
             if (info->stopped)
                 break;
 
-            score = _search_negamax(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                                    info);
+            score =
+              _search_think(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table, info);
 
             if (!info->stopped)
             {
@@ -267,13 +308,10 @@ int32_t search(std::unique_ptr<Position>&           position,
                         break;
 
                     const Move pv_move = entry.move;
-#ifdef DEBUG
-                    assert(pv_move.get_id() != 0);
-#endif
                     try
                     {
                         if (position->move_do(pv_move))
-                            pv_move_list.emplace_back(pv_move);
+                            pv_move_list.push(pv_move);
                         else
                             break;
                     } catch (const std::invalid_argument& e)
@@ -317,7 +355,7 @@ int32_t search(std::unique_ptr<Position>&           position,
     else
     {
         score =
-          _search_negamax(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table, info);
+          _search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table, info);
         TTEntry entry;
         table->probe(position, &entry);
         bestmove = entry.move;
