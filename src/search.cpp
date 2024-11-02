@@ -237,7 +237,10 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
     if (position->is_in_check())
         depth++;
     if (depth == 0)
+    {
+        data->ttmove = Move();
         return _search_quiescence(position, alpha, beta, info, data);
+    }
 
     // Generate candidate moves
     ArrayList<Move> candidate_moves;
