@@ -12,7 +12,7 @@
 #include <string>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.2.0"
+#define VERSION "0.2.1"
 
 static void _uci_parse_go(const std::string&                   command,
                           std::unique_ptr<Position>&           position,
