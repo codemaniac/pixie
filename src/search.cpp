@@ -14,8 +14,22 @@
     #include "windows.h"
 #endif
 
+constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
+
 struct SearchData {
     Move ttmove;
+    Move killer_moves[2][SEARCH_DEPTH_MAX];
+    int  history_moves[12][SEARCH_DEPTH_MAX];
+
+    SearchData() {
+        for (int i = 0; i < SEARCH_DEPTH_MAX; i++)
+        {
+            this->killer_moves[0][i] = Move();
+            this->killer_moves[1][i] = Move();
+            for (int j = 0; j < 12; j++)
+                this->history_moves[j][i] = 0;
+        }
+    }
 };
 
 // http://home.arcor.de/dreamlike/chess/
@@ -94,7 +108,9 @@ static void _search_check_up(SearchInfo* info) {
     ReadInput(info);
 }
 
-static void _search_score_moves(ArrayList<Move>* move_list, SearchData* data) {
+static void _search_score_moves(ArrayList<Move>*           move_list,
+                                std::unique_ptr<Position>& position,
+                                SearchData*                data) {
     const int32_t ttmove_id = data->ttmove.get_id();
     for (uint32_t i = 0; i < move_list->size(); i++)
     {
@@ -105,6 +121,20 @@ static void _search_score_moves(ArrayList<Move>* move_list, SearchData* data) {
         {
             const uint32_t raw_score = move.get_score();
             move_list->at(i).set_score(raw_score + 10000);
+        }
+        else
+        {
+            if (move == data->killer_moves[0][position->get_ply_count()])
+                move_list->at(i).set_score(9000);
+            else if (move == data->killer_moves[1][position->get_ply_count()])
+                move_list->at(i).set_score(8000);
+            else
+            {
+                const Piece    move_piece = position->get_piece(move.get_from());
+                const uint32_t score =
+                  data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()];
+                move_list->at(i).set_score(score);
+            }
         }
     }
 }
@@ -142,7 +172,7 @@ static int32_t _search_quiescence(std::unique_ptr<Position>& position,
     ArrayList<Move> capture_moves;
     position->generate_pseudolegal_moves(&capture_moves, true);
     // Score moves for move ordering
-    _search_score_moves(&capture_moves, data);
+    _search_score_moves(&capture_moves, position, data);
     for (uint32_t i = 0; i < capture_moves.size(); i++)
     {
         // Sort moves on the fly to have the top scoring move at i-th position
@@ -246,7 +276,7 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
     // Score moves for move ordering
-    _search_score_moves(&candidate_moves, data);
+    _search_score_moves(&candidate_moves, position, data);
 
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
@@ -292,9 +322,26 @@ static int32_t _search_think(std::unique_ptr<Position>&           position,
             best_move_so_far = move;
             if (score > alpha)
             {
-                alpha = score;
                 if (score >= beta)
-                    break;  // fail-hard beta-cutoff
+                {
+                    // fail-hard beta-cutoff
+                    // Store killer quite moves
+                    if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
+                    {
+                        const int32_t ply          = position->get_ply_count();
+                        data->killer_moves[1][ply] = data->killer_moves[0][ply];
+                        data->killer_moves[0][ply] = move;
+                    }
+                    break;
+                }
+                alpha = score;
+                // Store history quite moves
+                if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
+                {
+                    const Piece move_piece = position->get_piece(move.get_from());
+                    data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()] +=
+                      depth;
+                }
             }
         }
     }
