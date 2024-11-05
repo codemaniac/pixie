@@ -17,7 +17,6 @@
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
 struct SearchData {
-    Move ttmove;
     Move killer_moves[2][SEARCH_DEPTH_MAX];
     int  history_moves[12][SEARCH_DEPTH_MAX];
 
@@ -111,7 +110,6 @@ static void search_check_up(SearchInfo* info) {
 static void search_score_moves(ArrayList<Move>*           move_list,
                                std::unique_ptr<Position>& position,
                                SearchData*                data) {
-    const int32_t ttmove_id = data->ttmove.get_id();
     for (uint32_t i = 0; i < move_list->size(); i++)
     {
         const Move move = move_list->at(i);
@@ -214,8 +212,6 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     const int32_t alpha_orig = alpha;
 
-    data->ttmove = Move();
-
     const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
 
     if (position->get_ply_count() > 0 && !is_pv_node)
@@ -252,10 +248,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (position->is_in_check())
         depth++;
     if (depth == 0)
-    {
-        data->ttmove = Move();
         return search_quiescence(position, alpha, beta, info, data);
-    }
 
     // Generate candidate moves
     ArrayList<Move> candidate_moves;
