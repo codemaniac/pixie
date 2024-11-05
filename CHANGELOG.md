@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
 - Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
 
+### SPRT Results
+```
+Score of pixie_v0.3.0 vs pixie_v0.2.2: 267 - 191 - 253  [0.553] 711
+...      pixie_v0.3.0 playing White: 152 - 79 - 125  [0.603] 356
+...      pixie_v0.3.0 playing Black: 115 - 112 - 128  [0.504] 355
+...      White vs Black: 264 - 194 - 253  [0.549] 711
+Elo difference: 37.3 +/- 20.5, LOS: 100.0 %, DrawRatio: 35.6 %
+SPRT: llr 2.96 (100.5%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
 # 0.2.3
 
 ### Fixed
