@@ -362,7 +362,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     if (legal_moves_count == 0)
     {
-        if (position->is_in_check())
+        if (is_in_check)
             return -SEARCH_MATE_VALUE + position->get_ply_count();
         else
             return 0;
