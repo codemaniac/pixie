@@ -14,9 +14,9 @@
 #define PROGRAM_NAME "pixie"
 #define VERSION "0.2.1"
 
-static void _uci_parse_go(const std::string&                   command,
-                          std::unique_ptr<Position>&           position,
-                          std::unique_ptr<TranspositionTable>& table) {
+static void uci_parse_go(const std::string&                   command,
+                         std::unique_ptr<Position>&           position,
+                         std::unique_ptr<TranspositionTable>& table) {
     std::istringstream iss(command);
     std::string        token;
 
@@ -106,7 +106,7 @@ static void _uci_parse_go(const std::string&                   command,
     (void) search(position, table, &info);
 }
 
-static void _uci_parse_position(const std::string& command, std::unique_ptr<Position>& position) {
+static void uci_parse_position(const std::string& command, std::unique_ptr<Position>& position) {
     std::istringstream iss(command);
     std::string        token;
     iss >> token;
@@ -179,12 +179,12 @@ void uci_loop(void) {
         else if (input.rfind("position", 0) == 0)
         {
             position = std::make_unique<Position>();  // TODO: Check if there is a better way
-            _uci_parse_position(input, position);
+            uci_parse_position(input, position);
             position->reset_ply_count();
         }
         else if (input.rfind("go", 0) == 0)
         {
-            _uci_parse_go(input, position, table);
+            uci_parse_go(input, position, table);
         }
         else if (input == "display")
         {
