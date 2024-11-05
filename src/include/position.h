@@ -83,4 +83,6 @@ class Position {
     void     display() const;
 };
 
+void position_init();
+
 #endif

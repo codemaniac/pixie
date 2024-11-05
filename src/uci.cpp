@@ -1,6 +1,4 @@
 #include "include/uci.h"
-#include "include/board.h"
-#include "include/constants.h"
 #include "include/fen.h"
 #include "include/position.h"
 #include "include/search.h"
@@ -154,7 +152,7 @@ static void uci_parse_position(const std::string& command, std::unique_ptr<Posit
 }
 
 void uci_loop(void) {
-    board_init();
+    position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(64);
 

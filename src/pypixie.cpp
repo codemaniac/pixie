@@ -1,4 +1,3 @@
-#include "include/board.h"
 #include "include/fen.h"
 #include "include/perft.h"
 #include "include/position.h"
@@ -81,7 +80,7 @@ static PyMethodDef PyPixieMethods[] = {
 static struct PyModuleDef pypixie = {PyModuleDef_HEAD_INIT, "pypixie", NULL, -1, PyPixieMethods};
 
 PyMODINIT_FUNC PyInit_pypixie(void) {
-    board_init();
+    position_init();
     pool  = std::make_unique<ThreadPool>(4);
     table = std::make_unique<TranspositionTable>(64);
     return PyModule_Create(&pypixie);
