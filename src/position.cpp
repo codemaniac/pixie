@@ -1,6 +1,7 @@
 #include "include/position.h"
 #include "include/board.h"
 #include "include/constants.h"
+#include "include/move.h"
 #include "include/utils.h"
 #include <cassert>
 #include <cinttypes>
@@ -260,8 +261,8 @@ bool Position::move_do(const std::string move_str) {
     const Square from_sq   = BOARD_RF_TO_SQ(from_rank, from_file);
     const Square to_sq     = BOARD_RF_TO_SQ(to_rank, to_file);
 
-    Piece move_piece     = this->get_piece(from_sq);
-    Piece captured_piece = this->get_piece(to_sq);
+    const Piece move_piece     = this->get_piece(from_sq);
+    Piece       captured_piece = this->get_piece(to_sq);
 
     const Rank pawn_promotion_rank = static_cast<Rank>(7 * (this->active_color ^ 1));
     const bool is_promotion_move   = (move_str.length() == 5) && (to_rank == pawn_promotion_rank);
@@ -276,6 +277,11 @@ bool Position::move_do(const std::string move_str) {
                 flag = MOVE_QUIET_PAWN_DBL_PUSH;
             else if (this->active_color == BLACK && from_rank == RANK_7 && to_rank == RANK_5)
                 flag = MOVE_QUIET_PAWN_DBL_PUSH;
+            else if (to_sq == this->enpassant_target)
+            {
+                captured_piece = PIECE_CREATE(PAWN, static_cast<Color>(this->active_color ^ 1));
+                flag           = MOVE_CAPTURE_EP;
+            }
             else if (is_promotion_move)
             {
                 switch (move_str[4])
@@ -349,8 +355,6 @@ bool Position::move_do(const std::string move_str) {
                         break;
                 }
             }
-            else if (to_sq == this->enpassant_target)
-                flag = MOVE_CAPTURE_EP;
             else
                 flag = MOVE_CAPTURE;
         }
@@ -358,10 +362,10 @@ bool Position::move_do(const std::string move_str) {
             flag = MOVE_CAPTURE;
     }
 
-    const unsigned int move_score =
-      captured_piece == NO_PIECE
-        ? 0
-        : MOVE_SCORE_MVV_LVA_IDX(PIECE_GET_TYPE(move_piece), PIECE_GET_TYPE(captured_piece));
+    const uint16_t move_score = captured_piece == NO_PIECE
+                                ? 0
+                                : MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(
+                                    PIECE_GET_TYPE(move_piece), PIECE_GET_TYPE(captured_piece))];
 
     const Move move(from_sq, to_sq, flag, captured_piece, move_score);
 
