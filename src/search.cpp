@@ -115,9 +115,7 @@ static void search_score_moves(ArrayList<Move>*           move_list,
     for (uint32_t i = 0; i < move_list->size(); i++)
     {
         const Move move = move_list->at(i);
-        if (ttmove_id != 0 && move == data->ttmove)
-            move_list->at(i).set_score(20000);
-        else if (MOVE_IS_CAPTURE(move.get_flag()))
+        if (MOVE_IS_CAPTURE(move.get_flag()))
         {
             const uint32_t raw_score = move.get_score();
             move_list->at(i).set_score(raw_score + 10000);
@@ -131,8 +129,8 @@ static void search_score_moves(ArrayList<Move>*           move_list,
             else
             {
                 const Piece    move_piece = position->get_piece(move.get_from());
-                const uint32_t score =
-                  data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()];
+                const uint32_t score      = std::min(
+                  7000, data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()]);
                 move_list->at(i).set_score(score);
             }
         }
@@ -237,28 +235,13 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 if (entry.flag == EXACT)
                     return ttentry_value;
                 else if (entry.flag == LOWERBOUND)
-                {
-                    alpha        = std::max(alpha, ttentry_value);
-                    data->ttmove = entry.move;
-                }
+                    alpha = std::max(alpha, ttentry_value);
                 else if (entry.flag == UPPERBOUND)
-                {
-                    beta         = std::min(beta, ttentry_value);
-                    data->ttmove = entry.move;
-                }
+                    beta = std::min(beta, ttentry_value);
 
                 if (alpha >= beta)
                     return ttentry_value;
             }
-        }
-    }
-    else
-    {
-        TTEntry entry;
-        if (table->probe(position, &entry))
-        {
-            if (entry.is_valid && entry.depth >= depth)
-                data->ttmove = entry.move;
         }
     }
 
