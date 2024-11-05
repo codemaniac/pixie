@@ -290,18 +290,11 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         // Sort moves on the fly to have the top scoring move at i-th position
         search_sort_moves(&candidate_moves, i);
         // Pick top scoring move at i-th position
-        const Move move = candidate_moves.at(i);
-        try
+        const Move move          = candidate_moves.at(i);
+        const bool is_valid_move = position->move_do(move);
+        if (!is_valid_move)
         {
-            const bool is_valid_move = position->move_do(move);
-            if (!is_valid_move)
-            {
-                position->move_undo();
-                continue;
-            }
-        } catch (const std::invalid_argument& e)
-        {
-            // Found an illegal move! Most likely, a hash collision.
+            position->move_undo();
             continue;
         }
         legal_moves_count++;
@@ -404,17 +397,10 @@ int32_t search(std::unique_ptr<Position>&           position,
                         break;
 
                     const Move pv_move = entry.move;
-                    try
-                    {
-                        if (position->move_do(pv_move))
-                            pv_move_list.push(pv_move);
-                        else
-                            break;
-                    } catch (const std::invalid_argument& e)
-                    {
-                        // Found an illegal move! Most likely, a hash collision.
+                    if (position->move_do(pv_move))
+                        pv_move_list.push(pv_move);
+                    else
                         break;
-                    }
                 }
 
                 while (position->get_ply_count() > 0)

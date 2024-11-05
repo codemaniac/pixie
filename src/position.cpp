@@ -146,9 +146,7 @@ bool Position::move_do(const Move move) {
     const MoveFlag move_flag    = move.get_flag();
 
     if (PIECE_GET_COLOR(move_piece) != this->active_color)
-    {
-        throw std::invalid_argument("Invalid move!");
-    }
+        return false;
 
     const MoveHistoryEntry mhe(move, this->casteling_rights, this->enpassant_target,
                                this->half_move_clock, this->full_move_number, this->hash);
