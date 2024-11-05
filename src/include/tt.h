@@ -32,30 +32,19 @@ struct TTEntry {
         this->move     = Move();
         this->is_valid = false;
     }
-
-    TTEntry(const uint64_t hash,
-            const uint8_t  depth,
-            const TTFlag   flag,
-            const int32_t  value,
-            const Move     move) {
-        this->hash     = hash;
-        this->depth    = depth;
-        this->flag     = flag;
-        this->value    = value;
-        this->move     = move;
-        this->is_valid = true;
-    }
 };
 
 class TranspositionTable {
    private:
     std::unique_ptr<TTEntry[]> entries;
     size_t                     size;
+    uint32_t                   current_age;
 
    public:
     TranspositionTable(const uint8_t size_in_mb);
     ~TranspositionTable();
     void     clear();
+    void     reset_for_search();
     void     store(std::unique_ptr<Position>& position,
                    const uint8_t              depth,
                    const TTFlag               flag,
