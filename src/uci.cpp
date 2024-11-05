@@ -1,6 +1,4 @@
 #include "include/uci.h"
-#include "include/board.h"
-#include "include/constants.h"
 #include "include/fen.h"
 #include "include/position.h"
 #include "include/search.h"
@@ -12,11 +10,11 @@
 #include <string>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.2.1"
+#define VERSION "0.2.2"
 
-static void _uci_parse_go(const std::string&                   command,
-                          std::unique_ptr<Position>&           position,
-                          std::unique_ptr<TranspositionTable>& table) {
+static void uci_parse_go(const std::string&                   command,
+                         std::unique_ptr<Position>&           position,
+                         std::unique_ptr<TranspositionTable>& table) {
     std::istringstream iss(command);
     std::string        token;
 
@@ -92,6 +90,7 @@ static void _uci_parse_go(const std::string&                   command,
     info.stoptime      = 0;
     info.stopped       = false;
     info.nodes         = 0ULL;
+    info.currnodes     = 0ULL;
     info.use_iterative = true;
     info.use_uci       = true;
 
@@ -106,7 +105,7 @@ static void _uci_parse_go(const std::string&                   command,
     (void) search(position, table, &info);
 }
 
-static void _uci_parse_position(const std::string& command, std::unique_ptr<Position>& position) {
+static void uci_parse_position(const std::string& command, std::unique_ptr<Position>& position) {
     std::istringstream iss(command);
     std::string        token;
     iss >> token;
@@ -153,7 +152,7 @@ static void _uci_parse_position(const std::string& command, std::unique_ptr<Posi
 }
 
 void uci_loop(void) {
-    board_init();
+    position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(64);
 
@@ -179,12 +178,12 @@ void uci_loop(void) {
         else if (input.rfind("position", 0) == 0)
         {
             position = std::make_unique<Position>();  // TODO: Check if there is a better way
-            _uci_parse_position(input, position);
+            uci_parse_position(input, position);
             position->reset_ply_count();
         }
         else if (input.rfind("go", 0) == 0)
         {
-            _uci_parse_go(input, position, table);
+            uci_parse_go(input, position, table);
         }
         else if (input == "display")
         {

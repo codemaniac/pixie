@@ -63,31 +63,31 @@ static BitBoard ATTACK_TABLE_KING[64];
 * Bitboard utility functions
 */
 
-constexpr static BitBoard _bitboard_north_one(const BitBoard b) { return b << 8; }
+constexpr static BitBoard bitboard_north_one(const BitBoard b) { return b << 8; }
 
-constexpr static BitBoard _bitboard_south_one(const BitBoard b) { return b >> 8; }
+constexpr static BitBoard bitboard_south_one(const BitBoard b) { return b >> 8; }
 
-constexpr static BitBoard _bitboard_east_one(const BitBoard b) {
+constexpr static BitBoard bitboard_east_one(const BitBoard b) {
     return (b & BOARD_MASK_NOT_H_FILE) << 1;
 }
 
-constexpr static BitBoard _bitboard_west_one(const BitBoard b) {
+constexpr static BitBoard bitboard_west_one(const BitBoard b) {
     return (b & BOARD_MASK_NOT_A_FILE) >> 1;
 }
 
-constexpr static BitBoard _bitboard_north_east_one(const BitBoard b) {
+constexpr static BitBoard bitboard_north_east_one(const BitBoard b) {
     return (b & BOARD_MASK_NOT_H_FILE) << 9;
 }
 
-constexpr static BitBoard _bitboard_south_east_one(const BitBoard b) {
+constexpr static BitBoard bitboard_south_east_one(const BitBoard b) {
     return (b & BOARD_MASK_NOT_H_FILE) >> 7;
 }
 
-constexpr static BitBoard _bitboard_south_west_one(const BitBoard b) {
+constexpr static BitBoard bitboard_south_west_one(const BitBoard b) {
     return (b & BOARD_MASK_NOT_A_FILE) >> 9;
 }
 
-constexpr static BitBoard _bitboard_north_west_one(const BitBoard b) {
+constexpr static BitBoard bitboard_north_west_one(const BitBoard b) {
     return (b & BOARD_MASK_NOT_A_FILE) << 7;
 }
 
@@ -95,7 +95,7 @@ constexpr static BitBoard _bitboard_north_west_one(const BitBoard b) {
 * Initialize Magic Bitboard attack tables
 */
 
-static BitBoard _magicbb_get_attack_mask_bishop(const Square sq) {
+static BitBoard magicbb_get_attack_mask_bishop(const Square sq) {
     int8_t r, f;
 
     const uint8_t tr = static_cast<uint8_t>(BOARD_SQ_TO_RANK(sq));
@@ -127,7 +127,7 @@ static BitBoard _magicbb_get_attack_mask_bishop(const Square sq) {
     return attack_mask;
 }
 
-static BitBoard _magicbb_get_attack_vector_bishop(const Square sq, const BitBoard blockers) {
+static BitBoard magicbb_get_attack_vector_bishop(const Square sq, const BitBoard blockers) {
     int8_t r, f;
 
     const uint8_t tr = static_cast<uint8_t>(BOARD_SQ_TO_RANK(sq));
@@ -172,13 +172,13 @@ static BitBoard _magicbb_get_attack_vector_bishop(const Square sq, const BitBoar
     return attack_mask;
 }
 
-static void _init_attack_mask_table_bishop(void) {
+static void init_attack_mask_table_bishop(void) {
     BitBoard mask;
     uint8_t  mask_bits;
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
-        mask      = _magicbb_get_attack_mask_bishop(static_cast<Square>(sq));
+        mask      = magicbb_get_attack_mask_bishop(static_cast<Square>(sq));
         mask_bits = utils_bit_count1s(mask);
 
         ATTACK_MASK_TABLE_BISHOP[sq].mask      = mask;
@@ -186,7 +186,7 @@ static void _init_attack_mask_table_bishop(void) {
     }
 }
 
-static BitBoard _magicbb_get_attack_mask_rook(const Square sq) {
+static BitBoard magicbb_get_attack_mask_rook(const Square sq) {
     int8_t r, f;
 
     const uint8_t tr = static_cast<uint8_t>(BOARD_SQ_TO_RANK(sq));
@@ -218,7 +218,7 @@ static BitBoard _magicbb_get_attack_mask_rook(const Square sq) {
     return attack_mask;
 }
 
-static BitBoard _magicbb_get_attack_vector_rook(const Square sq, const BitBoard blockers) {
+static BitBoard magicbb_get_attack_vector_rook(const Square sq, const BitBoard blockers) {
     int8_t r, f;
 
     const uint8_t tr = static_cast<uint8_t>(BOARD_SQ_TO_RANK(sq));
@@ -263,13 +263,13 @@ static BitBoard _magicbb_get_attack_vector_rook(const Square sq, const BitBoard 
     return attack_mask;
 }
 
-static void _init_attack_mask_table_rook(void) {
+static void init_attack_mask_table_rook(void) {
     BitBoard mask;
     uint8_t  mask_bits;
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
-        mask      = _magicbb_get_attack_mask_rook(static_cast<Square>(sq));
+        mask      = magicbb_get_attack_mask_rook(static_cast<Square>(sq));
         mask_bits = utils_bit_count1s(mask);
 
         ATTACK_MASK_TABLE_ROOK[sq].mask      = mask;
@@ -277,7 +277,7 @@ static void _init_attack_mask_table_rook(void) {
     }
 }
 
-static BitBoard _magicbb_create_variant(int index, int bits, BitBoard m) {
+static BitBoard magicbb_create_variant(int index, int bits, BitBoard m) {
     int      i, j;
     BitBoard result = 0ULL;
     for (i = 0; i < bits; i++)
@@ -289,7 +289,7 @@ static BitBoard _magicbb_create_variant(int index, int bits, BitBoard m) {
     return result;
 }
 
-static int _magicbb_get_magic_index(BitBoard b, BitBoard magic, int bits) {
+static int magicbb_get_magic_index(BitBoard b, BitBoard magic, int bits) {
 #if defined(USE_32_BIT_MULTIPLICATIONS)
     return (unsigned) ((int) b * (int) magic ^ (int) (b >> 32) * (int) (magic >> 32))
         >> (32 - bits);
@@ -298,7 +298,7 @@ static int _magicbb_get_magic_index(BitBoard b, BitBoard magic, int bits) {
 #endif
 }
 
-static void _init_attack_table_bishop(void) {
+static void init_attack_table_bishop(void) {
     BitBoard mask, b;
     uint8_t  n;
     int      magic_index;
@@ -310,15 +310,15 @@ static void _init_attack_table_bishop(void) {
 
         for (uint16_t i = 0; i < (1 << n); i++)
         {
-            b           = _magicbb_create_variant(i, n, mask);
-            magic_index = _magicbb_get_magic_index(b, MAGIC_BISHOP[sq], n);
+            b           = magicbb_create_variant(i, n, mask);
+            magic_index = magicbb_get_magic_index(b, MAGIC_BISHOP[sq], n);
             ATTACK_TABLE_BISHOP[sq][magic_index] =
-              _magicbb_get_attack_vector_bishop(static_cast<Square>(sq), b);
+              magicbb_get_attack_vector_bishop(static_cast<Square>(sq), b);
         }
     }
 }
 
-static void _init_attack_table_rook(void) {
+static void init_attack_table_rook(void) {
     BitBoard mask, b;
     uint8_t  n;
     int      magic_index;
@@ -330,15 +330,15 @@ static void _init_attack_table_rook(void) {
 
         for (uint16_t i = 0; i < (1 << n); i++)
         {
-            b           = _magicbb_create_variant(i, n, mask);
-            magic_index = _magicbb_get_magic_index(b, MAGIC_ROOK[sq], n);
+            b           = magicbb_create_variant(i, n, mask);
+            magic_index = magicbb_get_magic_index(b, MAGIC_ROOK[sq], n);
             ATTACK_TABLE_ROOK[sq][magic_index] =
-              _magicbb_get_attack_vector_rook(static_cast<Square>(sq), b);
+              magicbb_get_attack_vector_rook(static_cast<Square>(sq), b);
         }
     }
 }
 
-static void _init_attack_table_pawn(void) {
+static void init_attack_table_pawn(void) {
     Square   sq;
     BitBoard b;
     BitBoard attacks;
@@ -350,7 +350,7 @@ static void _init_attack_table_pawn(void) {
         {
             sq      = BOARD_RF_TO_SQ(static_cast<Rank>(r), static_cast<File>(f));
             b       = 1ULL << sq;
-            attacks = _bitboard_north_east_one(b) | _bitboard_north_west_one(b);
+            attacks = bitboard_north_east_one(b) | bitboard_north_west_one(b);
             ATTACK_TABLE_PAWN[WHITE][sq] = attacks;
         }
     }
@@ -362,13 +362,13 @@ static void _init_attack_table_pawn(void) {
         {
             sq      = BOARD_RF_TO_SQ(static_cast<Rank>(r), static_cast<File>(f));
             b       = 1ULL << sq;
-            attacks = _bitboard_south_east_one(b) | _bitboard_south_west_one(b);
+            attacks = bitboard_south_east_one(b) | bitboard_south_west_one(b);
             ATTACK_TABLE_PAWN[BLACK][sq] = attacks;
         }
     }
 }
 
-static void _init_attack_table_knight(void) {
+static void init_attack_table_knight(void) {
     BitBoard attacks = 0ULL;
     BitBoard b;
 
@@ -390,7 +390,7 @@ static void _init_attack_table_knight(void) {
     }
 }
 
-static void _init_attack_table_king(void) {
+static void init_attack_table_king(void) {
     BitBoard attacks = 0ULL;
     BitBoard b;
 
@@ -399,14 +399,14 @@ static void _init_attack_table_king(void) {
         b = 1ULL << sq;
 
         attacks = 0ULL;
-        attacks |= _bitboard_north_one(b);
-        attacks |= _bitboard_south_one(b);
-        attacks |= _bitboard_east_one(b);
-        attacks |= _bitboard_west_one(b);
-        attacks |= _bitboard_north_east_one(b);
-        attacks |= _bitboard_south_east_one(b);
-        attacks |= _bitboard_south_west_one(b);
-        attacks |= _bitboard_north_west_one(b);
+        attacks |= bitboard_north_one(b);
+        attacks |= bitboard_south_one(b);
+        attacks |= bitboard_east_one(b);
+        attacks |= bitboard_west_one(b);
+        attacks |= bitboard_north_east_one(b);
+        attacks |= bitboard_south_east_one(b);
+        attacks |= bitboard_south_west_one(b);
+        attacks |= bitboard_north_west_one(b);
 
         ATTACK_TABLE_KING[sq] = attacks;
     }
@@ -416,34 +416,33 @@ static void _init_attack_table_king(void) {
 * Movegen attack functions
 */
 
-static BitBoard
-_movegen_get_pawn_attacks(const Square sq, const Color c, const BitBoard occupancy) {
+static BitBoard movegen_get_pawn_attacks(const Square sq, const Color c, const BitBoard occupancy) {
     return ATTACK_TABLE_PAWN[c][sq] & occupancy;
 }
 
-static BitBoard _movegen_get_knight_attacks(const Square sq, const BitBoard occupancy) {
+static BitBoard movegen_get_knight_attacks(const Square sq, const BitBoard occupancy) {
     return ATTACK_TABLE_KNIGHT[sq] & occupancy;
 }
 
-static BitBoard _movegen_get_bishop_attacks(const Square sq, BitBoard occupancy) {
+static BitBoard movegen_get_bishop_attacks(const Square sq, BitBoard occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
     const int magic_index =
-      _magicbb_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
+      magicbb_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
     return ATTACK_TABLE_BISHOP[sq][magic_index];
 }
 
-static BitBoard _movegen_get_rook_attacks(const Square sq, BitBoard occupancy) {
+static BitBoard movegen_get_rook_attacks(const Square sq, BitBoard occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
     const int magic_index =
-      _magicbb_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
+      magicbb_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
     return ATTACK_TABLE_ROOK[sq][magic_index];
 }
 
-static BitBoard _movegen_get_queen_attacks(const Square sq, BitBoard occupancy) {
-    return _movegen_get_bishop_attacks(sq, occupancy) | _movegen_get_rook_attacks(sq, occupancy);
+static BitBoard movegen_get_queen_attacks(const Square sq, BitBoard occupancy) {
+    return movegen_get_bishop_attacks(sq, occupancy) | movegen_get_rook_attacks(sq, occupancy);
 }
 
-static BitBoard _movegen_get_king_attacks(const Square sq, const BitBoard occupancy) {
+static BitBoard movegen_get_king_attacks(const Square sq, const BitBoard occupancy) {
     return ATTACK_TABLE_KING[sq] & occupancy;
 }
 
@@ -452,13 +451,13 @@ static BitBoard _movegen_get_king_attacks(const Square sq, const BitBoard occupa
 */
 
 void board_init() {
-    _init_attack_table_pawn();
-    _init_attack_table_knight();
-    _init_attack_mask_table_bishop();
-    _init_attack_table_bishop();
-    _init_attack_mask_table_rook();
-    _init_attack_table_rook();
-    _init_attack_table_king();
+    init_attack_table_pawn();
+    init_attack_table_knight();
+    init_attack_mask_table_bishop();
+    init_attack_table_bishop();
+    init_attack_mask_table_rook();
+    init_attack_table_rook();
+    init_attack_table_king();
 }
 
 Board::Board() { this->reset(); }
@@ -562,15 +561,15 @@ bool Board::is_valid() const {
 
 bool Board::is_square_attacked(const Square square, const Color attacked_by_color) const {
     const Piece queen = PIECE_CREATE(QUEEN, attacked_by_color);
-    if (_movegen_get_queen_attacks(square, ~this->bitboards[NO_PIECE]) & this->bitboards[queen])
+    if (movegen_get_queen_attacks(square, ~this->bitboards[NO_PIECE]) & this->bitboards[queen])
         return true;
 
     const Piece rook = PIECE_CREATE(ROOK, attacked_by_color);
-    if (_movegen_get_rook_attacks(square, ~this->bitboards[NO_PIECE]) & this->bitboards[rook])
+    if (movegen_get_rook_attacks(square, ~this->bitboards[NO_PIECE]) & this->bitboards[rook])
         return true;
 
     const Piece bishop = PIECE_CREATE(BISHOP, attacked_by_color);
-    if (_movegen_get_bishop_attacks(square, ~this->bitboards[NO_PIECE]) & this->bitboards[bishop])
+    if (movegen_get_bishop_attacks(square, ~this->bitboards[NO_PIECE]) & this->bitboards[bishop])
         return true;
 
     const Piece knight = PIECE_CREATE(KNIGHT, attacked_by_color);
@@ -612,7 +611,7 @@ void Board::generate_pseudolegal_moves_pawn(const Color      active_color,
         BitBoard occupancy = this->bitboards[BOARD_WHITE_PIECES_IDX + (active_color ^ 1)];
         if (ep_target != NO_SQ)
             occupancy |= (1ULL << ep_target);
-        BitBoard attacks = _movegen_get_pawn_attacks(from_sq, active_color, occupancy);
+        BitBoard attacks = movegen_get_pawn_attacks(from_sq, active_color, occupancy);
         while (attacks)
         {
             const Square to_sq  = static_cast<Square>(utils_bit_bitscan_forward(&attacks));
@@ -655,9 +654,9 @@ void Board::generate_pseudolegal_moves_pawn(const Color      active_color,
             continue;
         occupancy = this->bitboards[NO_PIECE];
         if (active_color == WHITE)
-            attacks = _bitboard_north_one((1ULL << from_sq)) & occupancy;
+            attacks = bitboard_north_one((1ULL << from_sq)) & occupancy;
         else
-            attacks = _bitboard_south_one((1ULL << from_sq)) & occupancy;
+            attacks = bitboard_south_one((1ULL << from_sq)) & occupancy;
         if (attacks)
         {
             const Square to_sq = static_cast<Square>(utils_bit_bitscan_forward(&attacks));
@@ -675,13 +674,13 @@ void Board::generate_pseudolegal_moves_pawn(const Color      active_color,
         // Pawn Double push
         if (active_color == WHITE)
         {
-            attacks = _bitboard_north_one((1ULL << from_sq)) & occupancy;
-            attacks = _bitboard_north_one(attacks) & occupancy & BOARD_MASK_RANK_4;
+            attacks = bitboard_north_one((1ULL << from_sq)) & occupancy;
+            attacks = bitboard_north_one(attacks) & occupancy & BOARD_MASK_RANK_4;
         }
         else
         {
-            attacks = _bitboard_south_one((1ULL << from_sq)) & occupancy;
-            attacks = _bitboard_south_one(attacks) & occupancy & BOARD_MASK_RANK_5;
+            attacks = bitboard_south_one((1ULL << from_sq)) & occupancy;
+            attacks = bitboard_south_one(attacks) & occupancy & BOARD_MASK_RANK_5;
         }
         if (attacks)
         {
@@ -708,24 +707,24 @@ void Board::generate_pseudolegal_moves_piece(const Piece      attacker,
             case KNIGHT :
                 occupancy = this->bitboards[BOARD_WHITE_PIECES_IDX + (active_color ^ 1)]
                           | this->bitboards[NO_PIECE];
-                attacks = _movegen_get_knight_attacks(from_sq, occupancy);
+                attacks = movegen_get_knight_attacks(from_sq, occupancy);
                 break;
             case BISHOP :
                 occupancy = ~this->bitboards[NO_PIECE];
-                attacks   = _movegen_get_bishop_attacks(from_sq, occupancy);
+                attacks   = movegen_get_bishop_attacks(from_sq, occupancy);
                 break;
             case ROOK :
                 occupancy = ~this->bitboards[NO_PIECE];
-                attacks   = _movegen_get_rook_attacks(from_sq, occupancy);
+                attacks   = movegen_get_rook_attacks(from_sq, occupancy);
                 break;
             case QUEEN :
                 occupancy = ~this->bitboards[NO_PIECE];
-                attacks   = _movegen_get_queen_attacks(from_sq, occupancy);
+                attacks   = movegen_get_queen_attacks(from_sq, occupancy);
                 break;
             case KING :
                 occupancy = this->bitboards[BOARD_WHITE_PIECES_IDX + (active_color ^ 1)]
                           | this->bitboards[NO_PIECE];
-                attacks = _movegen_get_king_attacks(from_sq, occupancy);
+                attacks = movegen_get_king_attacks(from_sq, occupancy);
                 break;
             default :
                 break;

@@ -8,10 +8,10 @@
 #include <memory>
 #include <vector>
 
-static uint64_t _perft(std::unique_ptr<Position>& position,
-                       const Move&                move,
-                       const uint8_t              depth,
-                       const bool                 captures_only) {
+static uint64_t perft(std::unique_ptr<Position>& position,
+                      const Move&                move,
+                      const uint8_t              depth,
+                      const bool                 captures_only) {
     ArrayList<Move> candidate_moves;
     uint64_t        nodes = 0ULL;
 
@@ -33,7 +33,7 @@ static uint64_t _perft(std::unique_ptr<Position>& position,
     for (const Move& move : candidate_moves)
     {
         if (position->move_do(move))
-            nodes += _perft(position, move, depth - 1, captures_only);
+            nodes += perft(position, move, depth - 1, captures_only);
         position->move_undo();
     }
 
@@ -58,7 +58,7 @@ uint64_t perft_multithreaded(std::unique_ptr<Position>&   position,
             uint64_t                  nodes          = 0ULL;
             std::unique_ptr<Position> position_clone = std::make_unique<Position>(*position.get());
             if (position_clone->move_do(move))
-                nodes = _perft(position_clone, move, depth - 1, captures_only);
+                nodes = perft(position_clone, move, depth - 1, captures_only);
             return nodes;
         }));
     }

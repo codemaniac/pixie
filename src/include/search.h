@@ -18,6 +18,7 @@ struct SearchInfo {
     bool     timeset;
     uint8_t  movestogo;
     uint64_t nodes;
+    uint64_t currnodes;
     bool     stopped;
     bool     use_iterative;
     bool     use_uci;
