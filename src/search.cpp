@@ -157,6 +157,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
         search_check_up(info);
 
     info->nodes++;
+    info->currnodes++;
 
     if (position->get_ply_count() >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
@@ -208,6 +209,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                             SearchData*                          data) {
 
     info->nodes++;
+    info->currnodes++;
 
     if ((info->nodes & 2047) == 0)
         search_check_up(info);
@@ -383,8 +385,13 @@ int32_t search(std::unique_ptr<Position>&           position,
             if (info->stopped)
                 break;
 
+            info->currnodes = 0ULL;
+
+            const uint64_t starttime = utils_get_current_time_in_milliseconds();
             score = search_think(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
                                  info, &data);
+            const uint64_t stoptime = utils_get_current_time_in_milliseconds();
+            const uint64_t time     = stoptime - starttime;
 
             if (!info->stopped)
             {
@@ -429,6 +436,8 @@ int32_t search(std::unique_ptr<Position>&           position,
 
                     std::cout << " depth " << (unsigned int) currdepth;
                     std::cout << " nodes " << (unsigned long long) info->nodes;
+                    std::cout << " time " << (unsigned long long) time;
+                    std::cout << " nps " << (unsigned long long) (info->currnodes / (time + 1));
                     std::cout << " pv ";
 
                     for (const Move& pv_move : pv_move_list)

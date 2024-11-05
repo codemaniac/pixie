@@ -92,6 +92,7 @@ static void uci_parse_go(const std::string&                   command,
     info.stoptime      = 0;
     info.stopped       = false;
     info.nodes         = 0ULL;
+    info.currnodes     = 0ULL;
     info.use_iterative = true;
     info.use_uci       = true;
 
