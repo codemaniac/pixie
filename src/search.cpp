@@ -14,6 +14,9 @@
     #include "windows.h"
 #endif
 
+static const int LMR_FULL_DEPTH_MOVES = 4;
+static const int LMR_REDUCTION_LIMIT  = 3;
+
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
 struct SearchData {
@@ -143,6 +146,29 @@ static void search_sort_moves(ArrayList<Move>* move_list, const size_t index) {
     }
 }
 
+static bool search_lmr_ok_to_reduce(std::unique_ptr<Position>& position, const Move& move) {
+    // Capture move
+    if (MOVE_IS_CAPTURE(move.get_flag()))
+        return false;
+    // Killer moves
+    if (move.get_score() == 9000)
+        return false;
+    if (move.get_score() == 8000)
+        return false;
+    // Pawn move
+    if (PIECE_GET_TYPE(position->get_piece(move.get_from())) == PAWN)
+        return false;
+    // TODO: Bad Captures (SSE < 0)
+    // Moves which give check
+    if (position->is_in_check())
+        return false;
+    // Promotion move
+    if (MOVE_IS_PROMOTION(move.get_flag()))
+        return false;
+
+    return true;
+}
+
 static int32_t search_quiescence(std::unique_ptr<Position>& position,
                                  int32_t                    alpha,
                                  int32_t                    beta,
@@ -241,11 +267,13 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         }
     }
 
+    const bool is_in_check = position->is_in_check();
+
     if (position->get_ply_count() >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
     if (position->is_repeated() || position->get_half_move_clock() >= 100)
         return 0;
-    if (position->is_in_check())
+    if (is_in_check)
         depth++;
     if (depth == 0)
         return search_quiescence(position, alpha, beta, info, data);
@@ -259,7 +287,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
     uint32_t legal_moves_count = 0;
-    bool     first_move        = true;
+    uint32_t moves_searched    = 0;
 
     for (uint32_t i = 0; i < candidate_moves.size(); i++)
     {
@@ -275,15 +303,30 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         }
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
-        if (first_move)
+        if (moves_searched == 0)
             score = -search_think(position, depth - 1, -beta, -alpha, table, info, data);
         else
         {
-            score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data);
-            if ((score > alpha) && ((beta - alpha) > 1))
-                score = -search_think(position, depth - 1, -beta, -alpha, table, info, data);
+            // clang-format off
+            if (!is_pv_node &&
+                !is_in_check &&
+                moves_searched >= LMR_FULL_DEPTH_MOVES &&
+                depth >= LMR_REDUCTION_LIMIT &&
+                search_lmr_ok_to_reduce(position, move))  // clang-format on
+            {
+                score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data);
+            }
+            else
+                score = alpha + 1;  // Hack to ensure that full-depth search is done
+
+            if (score > alpha)
+            {
+                score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data);
+                if (score > alpha && score < beta)
+                    score = -search_think(position, depth - 1, -beta, -alpha, table, info, data);
+            }
         }
-        first_move = false;
+        moves_searched++;
         position->move_undo();
         if (info->stopped)
             return 0;
