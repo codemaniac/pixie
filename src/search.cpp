@@ -342,6 +342,7 @@ int32_t search(std::unique_ptr<Position>&           position,
                std::unique_ptr<TranspositionTable>& table,
                SearchInfo*                          info) {
 
+    table->reset_for_search();
     SearchData data;
 
     int32_t score = -SEARCH_SCORE_MAX;
