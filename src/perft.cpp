@@ -18,11 +18,8 @@ static uint64_t perft(std::unique_ptr<Position>& position,
 
     if (depth == 0)
     {
-        if (captures_only)
-        {
-            if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
-                return 0ULL;
-        }
+        if (captures_only && MOVE_IS_CAPTURE(move.get_flag()) == 0)
+            return 0ULL;
         return 1ULL;
     }
 
