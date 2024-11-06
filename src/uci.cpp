@@ -1,5 +1,6 @@
 #include "include/uci.h"
 #include "include/fen.h"
+#include "include/perft.h"
 #include "include/position.h"
 #include "include/search.h"
 #include "include/tt.h"
@@ -25,6 +26,20 @@ static void uci_parse_go(const std::string&                   command,
 
     while (iss >> token)
     {
+        if (token == "perft")
+        {
+            int value;
+            iss >> value;
+            depth = value;
+
+            const uint64_t starttime = utils_get_current_time_in_milliseconds();
+            divide(position, depth);
+            const uint64_t stoptime = utils_get_current_time_in_milliseconds();
+            const uint64_t time     = stoptime - starttime;
+            std::cout << "Execution Time (in ms) = " << (unsigned long long) time << std::endl;
+
+            return;
+        }
         if (token == "infinite")
         {
             // Do nothing

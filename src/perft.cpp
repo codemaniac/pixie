@@ -5,6 +5,7 @@
 #include "include/threadpool.h"
 #include <cstdint>
 #include <future>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -19,13 +20,10 @@ static uint64_t perft(std::unique_ptr<Position>& position,
     {
         if (captures_only)
         {
-            if (MOVE_IS_CAPTURE(move.get_flag()))
-                return 1ULL;
-            else
+            if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
                 return 0ULL;
         }
-        else
-            return 1ULL;
+        return 1ULL;
     }
 
     position->generate_pseudolegal_moves(&candidate_moves, false);
@@ -38,6 +36,29 @@ static uint64_t perft(std::unique_ptr<Position>& position,
     }
 
     return nodes;
+}
+
+void divide(std::unique_ptr<Position>& position, const uint8_t depth) {
+
+    ArrayList<Move> candidate_moves;
+    position->generate_pseudolegal_moves(&candidate_moves, false);
+
+    uint64_t nodes       = 0ULL;
+    uint64_t total_nodes = 0ULL;
+
+    for (const Move& move : candidate_moves)
+    {
+        if (position->move_do(move))
+        {
+            nodes = perft(position, move, depth - 1, false);
+            total_nodes += nodes;
+            move.display();
+            std::cout << " " << (unsigned long long) nodes << std::endl;
+        }
+        position->move_undo();
+    }
+
+    std::cout << std::endl << "Perft = " << (unsigned long long) total_nodes << std::endl;
 }
 
 uint64_t perft_multithreaded(std::unique_ptr<Position>&   position,
