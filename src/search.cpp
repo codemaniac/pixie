@@ -33,6 +33,8 @@ struct SearchData {
     float fh;
     float fhf;
     int   lmr_cnt;
+    int   null_cnt;
+    int   null_cut_cnt;
 #endif
 
     SearchData() {
@@ -53,6 +55,8 @@ struct SearchData {
         this->fh                = 0;
         this->fhf               = 0;
         this->lmr_cnt           = 0;
+        this->null_cnt          = 0;
+        this->null_cut_cnt      = 0;
 #endif
     }
 };
@@ -217,6 +221,9 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
     position->generate_pseudolegal_moves(&capture_moves, true);
     // Score moves for move ordering
     search_score_moves(&capture_moves, position, data);
+
+    uint32_t legal_moves_count = 0;
+
     for (uint32_t i = 0; i < capture_moves.size(); i++)
     {
         // Sort moves on the fly to have the top scoring move at i-th position
@@ -230,6 +237,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
             continue;
         }
         info->nodes++;
+        legal_moves_count++;
         const int32_t score = -search_quiescence(position, -beta, -alpha, info, data);
         position->move_undo();
         if (info->stopped)
@@ -238,7 +246,14 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
         {
             alpha = score;
             if (score >= beta)
+            {
+#ifdef DEBUG
+                if (legal_moves_count == 1)
+                    data->fhf++;
+                data->fh++;
+#endif
                 return beta;
+            }
         }
     }
     return alpha;
@@ -250,7 +265,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                             int32_t                              beta,
                             std::unique_ptr<TranspositionTable>& table,
                             SearchInfo*                          info,
-                            SearchData*                          data) {
+                            SearchData*                          data,
+                            const bool                           do_null) {
     if ((info->nodes & 2047) == 0)
         search_check_up(info);
 
@@ -323,6 +339,28 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (depth == 0)
         return search_quiescence(position, alpha, beta, info, data);
 
+    // Null move pruning
+    // TODO: Add condition to check if position is not in zugzwang
+    if (do_null && depth >= 3 && position->get_ply_count() > 0 && !is_pv_node && !is_in_check)
+    {
+#ifdef DEBUG
+        data->null_cnt++;
+#endif
+        position->move_do_null();
+        const int32_t score =
+          -search_think(position, depth - 1 - 2, -beta, -beta + 1, table, info, data, false);
+        position->move_undo_null();
+        if (info->stopped)
+            return 0;
+        if (score >= beta)
+        {
+#ifdef DEBUG
+            data->null_cut_cnt++;
+#endif
+            return beta;
+        }
+    }
+
     // Generate candidate moves
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
@@ -350,7 +388,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
         if (moves_searched == 0)
-            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data);
+            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
         else
         {
             // clang-format off
@@ -363,16 +401,19 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 #ifdef DEBUG
                 data->lmr_cnt++;
 #endif
-                score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data);
+                score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data,
+                                      do_null);
             }
             else
                 score = alpha + 1;  // Hack to ensure that full-depth search is done
 
             if (score > alpha)
             {
-                score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data);
+                score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data,
+                                      do_null);
                 if (score > alpha && score < beta)
-                    score = -search_think(position, depth - 1, -beta, -alpha, table, info, data);
+                    score =
+                      -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
             }
         }
         moves_searched++;
@@ -457,7 +498,7 @@ int32_t search(std::unique_ptr<Position>&           position,
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
         for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
         {
-            score = search_think(position, currdepth, alpha, beta, table, info, &data);
+            score = search_think(position, currdepth, alpha, beta, table, info, &data, true);
             const uint64_t stoptime = utils_get_current_time_in_milliseconds();
             const uint64_t time     = stoptime - starttime;
 
@@ -540,7 +581,7 @@ int32_t search(std::unique_ptr<Position>&           position,
     else
     {
         score = search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                             info, &data);
+                             info, &data, true);
         TTEntry entry;
         table->probe(position, &entry);
         bestmove = entry.move;
@@ -563,7 +604,9 @@ int32_t search(std::unique_ptr<Position>&           position,
     std::cout << "\n  " << "TT Hit Upperbound = " << data.tt_hit_upperbound;
     std::cout << "\n  " << "TT Hit Cut = " << data.tt_hit_cut;
     std::cout << "\n" << "TT Hit Fail = " << data.tt_hit_fail;
-    std::cout << "\n" << "LMR Searches = " << data.lmr_cnt << "\n" << std::endl;
+    std::cout << "\n" << "LMR Searches = " << data.lmr_cnt;
+    std::cout << "\n" << "NMP = " << data.null_cnt;
+    std::cout << "\n" << "NMP Cuts = " << data.null_cut_cnt << "\n" << std::endl;
 #endif
 
     return score;

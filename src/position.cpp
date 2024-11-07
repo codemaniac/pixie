@@ -372,6 +372,17 @@ bool Position::move_do(const std::string move_str) {
     return this->move_do(move);
 }
 
+void Position::move_do_null() {
+    const Move             null_move;
+    const MoveHistoryEntry mhe(null_move, this->casteling_rights, this->enpassant_target,
+                               this->half_move_clock, this->full_move_number, this->hash);
+    this->history.push(mhe);
+    this->enpassant_target = NO_SQ;
+    this->active_color     = static_cast<Color>(this->active_color ^ 1);
+    if (this->active_color == BLACK)
+        this->hash ^= HASH_BLACK_TO_MOVE;
+}
+
 void Position::move_undo() {
     const MoveHistoryEntry& mhe               = this->history.top();
     const Move              prev_move         = mhe.move;
@@ -446,6 +457,25 @@ void Position::move_undo() {
     this->half_move_clock  = mhe.prev_half_move_clock;
     this->full_move_number = mhe.prev_full_move_number;
     this->ply_count--;
+
+    this->history.pop();
+}
+
+void Position::move_undo_null() {
+    const MoveHistoryEntry& mhe               = this->history.top();
+    const Color             prev_active_color = static_cast<Color>(this->active_color ^ 1);
+
+    if (this->active_color == BLACK)
+        this->hash ^= HASH_BLACK_TO_MOVE;
+
+    assert(this->hash == mhe.prev_hash);
+    assert((this->active_color ^ 1) == prev_active_color);
+
+    this->active_color     = prev_active_color;
+    this->casteling_rights = mhe.prev_casteling_rights;
+    this->enpassant_target = mhe.prev_enpassant_target;
+    this->half_move_clock  = mhe.prev_half_move_clock;
+    this->full_move_number = mhe.prev_full_move_number;
 
     this->history.pop();
 }
