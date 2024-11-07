@@ -377,8 +377,13 @@ void Position::move_do_null() {
     const MoveHistoryEntry mhe(null_move, this->casteling_rights, this->enpassant_target,
                                this->half_move_clock, this->full_move_number, this->hash);
     this->history.push(mhe);
+
     this->enpassant_target = NO_SQ;
-    this->active_color     = static_cast<Color>(this->active_color ^ 1);
+    this->half_move_clock++;
+    if (this->active_color == BLACK)
+        this->full_move_number++;
+    this->ply_count++;
+    this->active_color = static_cast<Color>(this->active_color ^ 1);
     if (this->active_color == BLACK)
         this->hash ^= HASH_BLACK_TO_MOVE;
 }
@@ -476,6 +481,7 @@ void Position::move_undo_null() {
     this->enpassant_target = mhe.prev_enpassant_target;
     this->half_move_clock  = mhe.prev_half_move_clock;
     this->full_move_number = mhe.prev_full_move_number;
+    this->ply_count--;
 
     this->history.pop();
 }
