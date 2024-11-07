@@ -23,6 +23,20 @@ void TranspositionTable::clear() {
 
 void TranspositionTable::reset_for_search() { this->current_age++; }
 
+#ifdef DEBUG
+void TranspositionTable::reset_counters() {
+    this->new_writes_empty  = 0;
+    this->new_writes_age    = 0;
+    this->new_writes_depth  = 0;
+    this->tt_hit_success    = 0;
+    this->tt_hit_fail       = 0;
+    this->tt_hit_lowerbound = 0;
+    this->tt_hit_upperbound = 0;
+    this->tt_hit_exact      = 0;
+    this->tt_hit_cut        = 0;
+}
+#endif
+
 void TranspositionTable::store(std::unique_ptr<Position>& position,
                                const uint8_t              depth,
                                const TTFlag               flag,
@@ -35,11 +49,26 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
     bool replace = false;
 
     if (this->entries[index].hash == 0ULL)
+    {
         replace = true;
+#ifdef DEBUG
+        this->new_writes_empty++;
+#endif
+    }
     else if (this->entries[index].age < this->current_age)
+    {
         replace = true;
+#ifdef DEBUG
+        this->new_writes_age++;
+#endif
+    }
     else if (this->entries[index].depth <= depth)
+    {
         replace = true;
+#ifdef DEBUG
+        this->new_writes_depth++;
+#endif
+    }
 
     if (!replace)
         return;

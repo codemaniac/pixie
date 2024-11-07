@@ -196,6 +196,7 @@ void uci_loop(void) {
             position = std::make_unique<Position>();  // TODO: Check if there is a better way
             uci_parse_position(input, position);
             position->reset_ply_count();
+            table->reset_for_search();
         }
         else if (input.rfind("go", 0) == 0)
         {

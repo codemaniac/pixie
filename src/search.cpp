@@ -241,6 +241,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         TTEntry entry;
         if (table->probe(position, &entry))
         {
+#ifdef DEBUG
+            table->tt_hit_success++;
+#endif
             if (entry.is_valid && entry.depth >= depth)
             {
                 int32_t ttentry_value = entry.value;
@@ -251,16 +254,40 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                     ttentry_value -= position->get_ply_count();
 
                 if (entry.flag == EXACT)
+                {
+#ifdef DEBUG
+                    table->tt_hit_exact++;
+#endif
                     return ttentry_value;
+                }
                 else if (entry.flag == LOWERBOUND)
+                {
+#ifdef DEBUG
+                    table->tt_hit_lowerbound++;
+#endif
                     alpha = std::max(alpha, ttentry_value);
+                }
                 else if (entry.flag == UPPERBOUND)
+                {
+#ifdef DEBUG
+                    table->tt_hit_upperbound++;
+#endif
                     beta = std::min(beta, ttentry_value);
+                }
 
                 if (alpha >= beta)
+                {
+#ifdef DEBUG
+                    table->tt_hit_cut++;
+#endif
                     return ttentry_value;
+                }
             }
         }
+#ifdef DEBUG
+        else
+            table->tt_hit_fail++;
+#endif
     }
 
     const bool is_in_check = position->is_in_check();
@@ -340,7 +367,6 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                         info->fhf++;
                     info->fh++;
 #endif
-
                     // fail-hard beta-cutoff
                     // Store killer quite moves
                     if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
@@ -387,9 +413,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 int32_t search(std::unique_ptr<Position>&           position,
                std::unique_ptr<TranspositionTable>& table,
                SearchInfo*                          info) {
-
-    table->reset_for_search();
-
+#ifdef DEBUG
+    table->reset_counters();
+#endif
     SearchData data;
 
     int32_t score = -SEARCH_SCORE_MAX;
@@ -501,6 +527,18 @@ int32_t search(std::unique_ptr<Position>&           position,
         bestmove.display();
         std::cout << std::endl;
     }
+
+#ifdef DEBUG
+    std::cout << std::endl << "New Writes Empty = " << table->new_writes_empty;
+    std::cout << "\n" << "New Writes Age = " << table->new_writes_age;
+    std::cout << "\n" << "New Writes Depth = " << table->new_writes_depth;
+    std::cout << "\n" << "TT Hit Success = " << table->tt_hit_success;
+    std::cout << "\n  " << "TT Hit Exact = " << table->tt_hit_exact;
+    std::cout << "\n  " << "TT Hit Lowerbound = " << table->tt_hit_lowerbound;
+    std::cout << "\n  " << "TT Hit Upperbound = " << table->tt_hit_upperbound;
+    std::cout << "\n  " << "TT Hit Cut = " << table->tt_hit_cut;
+    std::cout << "\n" << "TT Hit Fail = " << table->tt_hit_fail << "\n" << std::endl;
+#endif
 
     return score;
 }

@@ -41,10 +41,25 @@ class TranspositionTable {
     uint32_t                   current_age;
 
    public:
+#ifdef DEBUG
+    int new_writes_empty;
+    int new_writes_age;
+    int new_writes_depth;
+    int tt_hit_success;
+    int tt_hit_fail;
+    int tt_hit_lowerbound;
+    int tt_hit_upperbound;
+    int tt_hit_exact;
+    int tt_hit_cut;
+#endif
+
     TranspositionTable(const uint8_t size_in_mb);
     ~TranspositionTable();
-    void     clear();
-    void     reset_for_search();
+    void clear();
+    void reset_for_search();
+#ifdef DEBUG
+    void reset_counters();
+#endif
     void     store(std::unique_ptr<Position>& position,
                    const uint8_t              depth,
                    const TTFlag               flag,
