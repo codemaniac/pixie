@@ -395,16 +395,33 @@ int32_t search(std::unique_ptr<Position>&           position,
 
     if (info->use_iterative)
     {
+        int32_t alpha = -SEARCH_SCORE_MAX;
+        int32_t beta  = SEARCH_SCORE_MAX;
+
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
         for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
         {
+            score = search_think(position, currdepth, alpha, beta, table, info, &data);
+            const uint64_t stoptime = utils_get_current_time_in_milliseconds();
+            const uint64_t time     = stoptime - starttime;
+
             if (info->stopped)
                 break;
 
-            score = search_think(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                                 info, &data);
-            const uint64_t stoptime = utils_get_current_time_in_milliseconds();
-            const uint64_t time     = stoptime - starttime;
+            if ((score <= alpha) || (score >= beta))
+            {
+                // We fell outside the window
+                // Try again with a full-width window (and the same depth).
+                alpha = -SEARCH_SCORE_MAX;
+                beta  = SEARCH_SCORE_MAX;
+                currdepth--;
+                continue;
+            }
+            else
+            {
+                alpha = score - 100;
+                beta  = score + 100;
+            }
 
             if (!info->stopped)
             {
