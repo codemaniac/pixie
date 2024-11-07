@@ -7,6 +7,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <unistd.h>
@@ -206,7 +207,6 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
             continue;
         }
         info->nodes++;
-        info->currnodes++;
         const int32_t score = -search_quiescence(position, -beta, -alpha, info, data);
         position->move_undo();
         if (info->stopped)
@@ -297,7 +297,6 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             continue;
         }
         info->nodes++;
-        info->currnodes++;
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
         if (moves_searched == 0)
@@ -335,6 +334,10 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             {
                 if (score >= beta)
                 {
+                    if (legal_moves_count == 1)
+                        info->fhf++;
+                    info->fh++;
+
                     // fail-hard beta-cutoff
                     // Store killer quite moves
                     if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
@@ -383,6 +386,7 @@ int32_t search(std::unique_ptr<Position>&           position,
                SearchInfo*                          info) {
 
     table->reset_for_search();
+
     SearchData data;
 
     int32_t score = -SEARCH_SCORE_MAX;
@@ -390,14 +394,12 @@ int32_t search(std::unique_ptr<Position>&           position,
 
     if (info->use_iterative)
     {
+        const uint64_t starttime = utils_get_current_time_in_milliseconds();
         for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
         {
             if (info->stopped)
                 break;
 
-            info->currnodes = 0ULL;
-
-            const uint64_t starttime = utils_get_current_time_in_milliseconds();
             score = search_think(position, currdepth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
                                  info, &data);
             const uint64_t stoptime = utils_get_current_time_in_milliseconds();
@@ -440,8 +442,9 @@ int32_t search(std::unique_ptr<Position>&           position,
                     std::cout << " depth " << (unsigned int) currdepth;
                     std::cout << " nodes " << (unsigned long long) info->nodes;
                     std::cout << " time " << (unsigned long long) time;
-                    std::cout << " nps "
-                              << (unsigned long long) (info->currnodes * 1000 / (time + 1));
+                    std::cout << " nps " << (unsigned long long) (info->nodes * 1000 / (time + 1));
+                    std::cout << " ord " << std::fixed << std::setprecision(4)
+                              << (float) (info->fhf / info->fh);
                     std::cout << " pv ";
 
                     for (const Move& pv_move : pv_move_list)
