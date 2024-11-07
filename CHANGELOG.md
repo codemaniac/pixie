@@ -5,10 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.4.0]
 
 ### Added
+- Aspiration Windows in iterative deepening search
 - Divide function in perft
+- Debug metrics
+
+### Fixed
+- NPS calculation
+
+### Tested Platformms
+- macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
+- Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
+
+### SPRT Results
+```
+Score of pixie_v0.4.0 vs pixie_v0.3.0: 334 - 380 - 458  [0.480] 1172
+...      pixie_v0.4.0 playing White: 193 - 128 - 265  [0.555] 586
+...      pixie_v0.4.0 playing Black: 141 - 252 - 193  [0.405] 586
+...      White vs Black: 445 - 269 - 458  [0.575] 1172
+Elo difference: -13.6 +/- 15.5, LOS: 4.3 %, DrawRatio: 39.1 %
+SPRT: llr -2.97 (-101.0%), lbound -2.94, ubound 2.94 - H0 was accepted
+```
 
 ## [0.3.0]
 
@@ -131,3 +150,4 @@ SPRT: llr 2.97 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
 [0.2.2]: https://github.com/codemaniac/pixie/releases/tag/v0.2.2
 [0.2.3]: https://github.com/codemaniac/pixie/releases/tag/v0.2.3
 [0.3.0]: https://github.com/codemaniac/pixie/releases/tag/v0.3.0
+[0.4.0]: https://github.com/codemaniac/pixie/releases/tag/v0.4.0

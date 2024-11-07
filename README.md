@@ -39,8 +39,8 @@ To run tests, run the following
 
 ```
 python setup.py develop
-python tests/test_perft.py
-python tests/test_mate.py TestMate.test_mate_in_2
+python test/test_perft.py
+python test/test_mate.py TestMate.test_mate_in_2
 ```
 
 # Acknowledgements
