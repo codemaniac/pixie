@@ -25,15 +25,9 @@ void TranspositionTable::reset_for_search() { this->current_age++; }
 
 #ifdef DEBUG
 void TranspositionTable::reset_counters() {
-    this->new_writes_empty  = 0;
-    this->new_writes_age    = 0;
-    this->new_writes_depth  = 0;
-    this->tt_hit_success    = 0;
-    this->tt_hit_fail       = 0;
-    this->tt_hit_lowerbound = 0;
-    this->tt_hit_upperbound = 0;
-    this->tt_hit_exact      = 0;
-    this->tt_hit_cut        = 0;
+    this->new_writes_empty = 0;
+    this->new_writes_age   = 0;
+    this->new_writes_depth = 0;
 }
 #endif
 

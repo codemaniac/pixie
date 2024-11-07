@@ -21,8 +21,6 @@ struct SearchInfo {
     bool     stopped;
     bool     use_iterative;
     bool     use_uci;
-    float    fh;
-    float    fhf;
 };
 
 int32_t

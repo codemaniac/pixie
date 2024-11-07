@@ -23,6 +23,17 @@ constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p
 struct SearchData {
     Move killer_moves[2][SEARCH_DEPTH_MAX];
     int  history_moves[12][SEARCH_DEPTH_MAX];
+#ifdef DEBUG
+    int   tt_hit_success;
+    int   tt_hit_fail;
+    int   tt_hit_lowerbound;
+    int   tt_hit_upperbound;
+    int   tt_hit_exact;
+    int   tt_hit_cut;
+    float fh;
+    float fhf;
+    int   lmr_cnt;
+#endif
 
     SearchData() {
         for (int i = 0; i < SEARCH_DEPTH_MAX; i++)
@@ -32,6 +43,17 @@ struct SearchData {
             for (int j = 0; j < 12; j++)
                 this->history_moves[j][i] = 0;
         }
+#ifdef DEBUG
+        this->tt_hit_success    = 0;
+        this->tt_hit_fail       = 0;
+        this->tt_hit_lowerbound = 0;
+        this->tt_hit_upperbound = 0;
+        this->tt_hit_exact      = 0;
+        this->tt_hit_cut        = 0;
+        this->fh                = 0;
+        this->fhf               = 0;
+        this->lmr_cnt           = 0;
+#endif
     }
 };
 
@@ -242,7 +264,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         if (table->probe(position, &entry))
         {
 #ifdef DEBUG
-            table->tt_hit_success++;
+            data->tt_hit_success++;
 #endif
             if (entry.is_valid && entry.depth >= depth)
             {
@@ -256,21 +278,21 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 if (entry.flag == EXACT)
                 {
 #ifdef DEBUG
-                    table->tt_hit_exact++;
+                    data->tt_hit_exact++;
 #endif
                     return ttentry_value;
                 }
                 else if (entry.flag == LOWERBOUND)
                 {
 #ifdef DEBUG
-                    table->tt_hit_lowerbound++;
+                    data->tt_hit_lowerbound++;
 #endif
                     alpha = std::max(alpha, ttentry_value);
                 }
                 else if (entry.flag == UPPERBOUND)
                 {
 #ifdef DEBUG
-                    table->tt_hit_upperbound++;
+                    data->tt_hit_upperbound++;
 #endif
                     beta = std::min(beta, ttentry_value);
                 }
@@ -278,7 +300,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 if (alpha >= beta)
                 {
 #ifdef DEBUG
-                    table->tt_hit_cut++;
+                    data->tt_hit_cut++;
 #endif
                     return ttentry_value;
                 }
@@ -286,7 +308,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         }
 #ifdef DEBUG
         else
-            table->tt_hit_fail++;
+            data->tt_hit_fail++;
 #endif
     }
 
@@ -338,6 +360,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 depth >= LMR_REDUCTION_LIMIT &&
                 search_lmr_ok_to_reduce(position, move))  // clang-format on
             {
+#ifdef DEBUG
+                data->lmr_cnt++;
+#endif
                 score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data);
             }
             else
@@ -364,8 +389,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 {
 #ifdef DEBUG
                     if (legal_moves_count == 1)
-                        info->fhf++;
-                    info->fh++;
+                        data->fhf++;
+                    data->fh++;
 #endif
                     // fail-hard beta-cutoff
                     // Store killer quite moves
@@ -497,7 +522,7 @@ int32_t search(std::unique_ptr<Position>&           position,
                     std::cout << " nps " << (unsigned long long) (info->nodes * 1000 / (time + 1));
 #ifdef DEBUG
                     std::cout << " ord " << std::fixed << std::setprecision(4)
-                              << (float) (info->fhf / info->fh);
+                              << (float) (data.fhf / data.fh);
                     std::cout << " res " << (int) researches;
 #endif
                     std::cout << " pv ";
@@ -532,12 +557,13 @@ int32_t search(std::unique_ptr<Position>&           position,
     std::cout << std::endl << "New Writes Empty = " << table->new_writes_empty;
     std::cout << "\n" << "New Writes Age = " << table->new_writes_age;
     std::cout << "\n" << "New Writes Depth = " << table->new_writes_depth;
-    std::cout << "\n" << "TT Hit Success = " << table->tt_hit_success;
-    std::cout << "\n  " << "TT Hit Exact = " << table->tt_hit_exact;
-    std::cout << "\n  " << "TT Hit Lowerbound = " << table->tt_hit_lowerbound;
-    std::cout << "\n  " << "TT Hit Upperbound = " << table->tt_hit_upperbound;
-    std::cout << "\n  " << "TT Hit Cut = " << table->tt_hit_cut;
-    std::cout << "\n" << "TT Hit Fail = " << table->tt_hit_fail << "\n" << std::endl;
+    std::cout << "\n" << "TT Hit Success = " << data.tt_hit_success;
+    std::cout << "\n  " << "TT Hit Exact = " << data.tt_hit_exact;
+    std::cout << "\n  " << "TT Hit Lowerbound = " << data.tt_hit_lowerbound;
+    std::cout << "\n  " << "TT Hit Upperbound = " << data.tt_hit_upperbound;
+    std::cout << "\n  " << "TT Hit Cut = " << data.tt_hit_cut;
+    std::cout << "\n" << "TT Hit Fail = " << data.tt_hit_fail;
+    std::cout << "\n" << "LMR Searches = " << data.lmr_cnt << "\n" << std::endl;
 #endif
 
     return score;
