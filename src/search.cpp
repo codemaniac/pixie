@@ -178,9 +178,6 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
     if ((info->nodes & 2047) == 0)
         search_check_up(info);
 
-    info->nodes++;
-    info->currnodes++;
-
     if (position->get_ply_count() >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
     if (position->is_repeated() || position->get_half_move_clock() >= 100)
@@ -208,6 +205,8 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
             position->move_undo();
             continue;
         }
+        info->nodes++;
+        info->currnodes++;
         const int32_t score = -search_quiescence(position, -beta, -alpha, info, data);
         position->move_undo();
         if (info->stopped)
@@ -229,10 +228,6 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                             std::unique_ptr<TranspositionTable>& table,
                             SearchInfo*                          info,
                             SearchData*                          data) {
-
-    info->nodes++;
-    info->currnodes++;
-
     if ((info->nodes & 2047) == 0)
         search_check_up(info);
 
@@ -301,6 +296,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             position->move_undo();
             continue;
         }
+        info->nodes++;
+        info->currnodes++;
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
         if (moves_searched == 0)
@@ -443,7 +440,8 @@ int32_t search(std::unique_ptr<Position>&           position,
                     std::cout << " depth " << (unsigned int) currdepth;
                     std::cout << " nodes " << (unsigned long long) info->nodes;
                     std::cout << " time " << (unsigned long long) time;
-                    std::cout << " nps " << (unsigned long long) (info->currnodes / (time + 1));
+                    std::cout << " nps "
+                              << (unsigned long long) (info->currnodes * 1000 / (time + 1));
                     std::cout << " pv ";
 
                     for (const Move& pv_move : pv_move_list)
