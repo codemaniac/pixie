@@ -335,9 +335,11 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             {
                 if (score >= beta)
                 {
+#ifdef DEBUG
                     if (legal_moves_count == 1)
                         info->fhf++;
                     info->fh++;
+#endif
 
                     // fail-hard beta-cutoff
                     // Store killer quite moves
@@ -397,6 +399,9 @@ int32_t search(std::unique_ptr<Position>&           position,
     {
         int32_t alpha = -SEARCH_SCORE_MAX;
         int32_t beta  = SEARCH_SCORE_MAX;
+#ifdef DEBUG
+        int researches = 0;
+#endif
 
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
         for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
@@ -415,6 +420,9 @@ int32_t search(std::unique_ptr<Position>&           position,
                 alpha = -SEARCH_SCORE_MAX;
                 beta  = SEARCH_SCORE_MAX;
                 currdepth--;
+#ifdef DEBUG
+                researches++;
+#endif
                 continue;
             }
             else
@@ -461,8 +469,11 @@ int32_t search(std::unique_ptr<Position>&           position,
                     std::cout << " nodes " << (unsigned long long) info->nodes;
                     std::cout << " time " << (unsigned long long) time;
                     std::cout << " nps " << (unsigned long long) (info->nodes * 1000 / (time + 1));
+#ifdef DEBUG
                     std::cout << " ord " << std::fixed << std::setprecision(4)
                               << (float) (info->fhf / info->fh);
+                    std::cout << " res " << (int) researches;
+#endif
                     std::cout << " pv ";
 
                     for (const Move& pv_move : pv_move_list)
