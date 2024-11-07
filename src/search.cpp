@@ -21,7 +21,6 @@ static const int LMR_REDUCTION_LIMIT  = 3;
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
 struct SearchData {
-    Move hashmove;
     Move killer_moves[2][SEARCH_DEPTH_MAX];
     int  history_moves[12][SEARCH_DEPTH_MAX];
 
@@ -33,7 +32,6 @@ struct SearchData {
             for (int j = 0; j < 12; j++)
                 this->history_moves[j][i] = 0;
         }
-        hashmove = Move();
     }
 };
 
@@ -120,9 +118,7 @@ static void search_score_moves(ArrayList<Move>*           move_list,
     {
         const Move move = move_list->at(i);
 
-        if (move == data->hashmove)
-            move_list->at(i).set_score(20000);
-        else if (MOVE_IS_CAPTURE(move.get_flag()))
+        if (MOVE_IS_CAPTURE(move.get_flag()))
         {
             const uint32_t raw_score = move.get_score();
             move_list->at(i).set_score(raw_score + 10000);
@@ -240,12 +236,12 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
 
-    TTEntry entry;
-    if (table->probe(position, &entry))
+    if (position->get_ply_count() > 0 && !is_pv_node)
     {
-        if (entry.is_valid && entry.depth >= depth)
+        TTEntry entry;
+        if (table->probe(position, &entry))
         {
-            if (position->get_ply_count() > 0 && !is_pv_node)
+            if (entry.is_valid && entry.depth >= depth)
             {
                 int32_t ttentry_value = entry.value;
 
@@ -263,11 +259,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
                 if (alpha >= beta)
                     return ttentry_value;
-
-                data->hashmove = entry.move;
             }
-            else
-                data->hashmove = entry.move;
         }
     }
 
