@@ -260,7 +260,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
 }
 
 static int32_t search_think(std::unique_ptr<Position>&           position,
-                            uint8_t                              depth,
+                            int                                  depth,
                             int32_t                              alpha,
                             int32_t                              beta,
                             std::unique_ptr<TranspositionTable>& table,
@@ -336,7 +336,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         return 0;
     if (is_in_check)
         depth++;
-    if (depth == 0)
+    if (depth <= 0)
         return search_quiescence(position, alpha, beta, info, data);
 
 #ifdef DEBUG
@@ -356,8 +356,6 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         data->null_cnt++;
 #endif
         int R = 2;
-        if (depth > 6)
-            R = 3;
         position->move_do_null();
         const int32_t score =
           -search_think(position, depth - 1 - R, -beta, -beta + 1, table, info, data, false);
@@ -403,43 +401,38 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         info->nodes++;
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
-        if (do_null == false)
-        {
-            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, false);
-        }
+
+        if (moves_searched == 0)
+            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
         else
         {
-            if (moves_searched == 0)
-                score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, true);
-            else
-            {
-                // clang-format off
+            // clang-format off
             if (!is_pv_node &&
                 !is_in_check &&
                 moves_searched >= LMR_FULL_DEPTH_MOVES &&
                 depth >= LMR_REDUCTION_LIMIT &&
                 search_lmr_ok_to_reduce(position, move))  // clang-format on
-                {
+            {
 #ifdef DEBUG
-                    data->lmr_cnt++;
+                data->lmr_cnt++;
 #endif
-                    score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info,
-                                          data, true);
-                }
-                else
-                    score = alpha + 1;  // Hack to ensure that full-depth search is done
-
-                if (score > alpha)
-                {
-                    score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info,
-                                          data, true);
-                    if (score > alpha && score < beta)
-                        score = -search_think(position, depth - 1, -beta, -alpha, table, info, data,
-                                              true);
-                }
+                score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data,
+                                      do_null);
             }
-            moves_searched++;
+            else
+                score = alpha + 1;  // Hack to ensure that full-depth search is done
+
+            if (score > alpha)
+            {
+                score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data,
+                                      do_null);
+                if (score > alpha && score < beta)
+                    score =
+                      -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+            }
         }
+        moves_searched++;
+
         position->move_undo();
         if (info->stopped)
             return 0;
