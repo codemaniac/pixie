@@ -17,6 +17,7 @@
 
 static const int LMR_FULL_DEPTH_MOVES = 4;
 static const int LMR_REDUCTION_LIMIT  = 3;
+static const int NMP_REDUCTION_FACTOR = 2;
 
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
@@ -260,7 +261,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
 }
 
 static int32_t search_think(std::unique_ptr<Position>&           position,
-                            int                                  depth,
+                            int32_t                              depth,
                             int32_t                              alpha,
                             int32_t                              beta,
                             std::unique_ptr<TranspositionTable>& table,
@@ -355,10 +356,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 #ifdef DEBUG
         data->null_cnt++;
 #endif
-        int R = 2;
         position->move_do_null();
-        const int32_t score =
-          -search_think(position, depth - 1 - R, -beta, -beta + 1, table, info, data, false);
+        const int32_t score = -search_think(position, depth - 1 - NMP_REDUCTION_FACTOR, -beta,
+                                            -beta + 1, table, info, data, false);
         position->move_undo_null();
         if (info->stopped)
             return 0;
@@ -479,19 +479,15 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             return 0;
     }
 
-    if (do_null)
-    {
-        TTFlag flag = NONE;
-        if (best_score <= alpha_orig)
-            flag = UPPERBOUND;
-        else if (best_score >= beta)
-            flag = LOWERBOUND;
-        else
-            flag = EXACT;
+    TTFlag flag = NONE;
+    if (best_score <= alpha_orig)
+        flag = UPPERBOUND;
+    else if (best_score >= beta)
+        flag = LOWERBOUND;
+    else
+        flag = EXACT;
 
-
-        table->store(position, depth, flag, best_score, best_move_so_far);
-    }
+    table->store(position, depth, flag, best_score, best_move_so_far);
 
     return best_score;
 }
