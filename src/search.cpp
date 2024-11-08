@@ -20,11 +20,6 @@ static const int LMR_REDUCTION_LIMIT  = 3;
 
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
-enum NodeType {
-    NON_PV,
-    PV
-};
-
 struct SearchData {
     Move killer_moves[2][SEARCH_DEPTH_MAX];
     int  history_moves[12][SEARCH_DEPTH_MAX];
@@ -264,7 +259,6 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
     return alpha;
 }
 
-template<NodeType node_type>
 static int32_t search_think(std::unique_ptr<Position>&           position,
                             uint8_t                              depth,
                             int32_t                              alpha,
@@ -278,10 +272,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     const int32_t alpha_orig = alpha;
 
-    constexpr bool is_pv_node_type = node_type != NON_PV;
-    const bool     is_pv_node      = (beta - alpha) > 1;  // If true, then PV node
+    const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
 
-    if (position->get_ply_count() > 0 && !is_pv_node)
+    if (position->get_ply_count() > 0 && !is_pv_node && do_null)
     {
         TTEntry entry;
         if (table->probe(position, &entry))
@@ -355,7 +348,6 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (do_null &&
         depth >= 3 &&
         position->get_ply_count() > 0 &&
-        !is_pv_node_type &&
         !is_pv_node &&
         !is_in_check &&
         !eval_is_end_game(position))  // clang-format on
@@ -367,8 +359,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         if (depth > 6)
             R = 3;
         position->move_do_null();
-        const int32_t score = -search_think<NON_PV>(position, depth - 1 - R, -beta, -beta + 1,
-                                                    table, info, data, false);
+        const int32_t score =
+          -search_think(position, depth - 1 - R, -beta, -beta + 1, table, info, data, false);
         position->move_undo_null();
         if (info->stopped)
             return 0;
@@ -411,37 +403,43 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         info->nodes++;
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
-        if (moves_searched == 0)
-            score = -search_think<node_type>(position, depth - 1, -beta, -alpha, table, info, data,
-                                             do_null);
+        if (do_null == false)
+        {
+            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, false);
+        }
         else
         {
-            // clang-format off
+            if (moves_searched == 0)
+                score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, true);
+            else
+            {
+                // clang-format off
             if (!is_pv_node &&
                 !is_in_check &&
                 moves_searched >= LMR_FULL_DEPTH_MOVES &&
                 depth >= LMR_REDUCTION_LIMIT &&
                 search_lmr_ok_to_reduce(position, move))  // clang-format on
-            {
+                {
 #ifdef DEBUG
-                data->lmr_cnt++;
+                    data->lmr_cnt++;
 #endif
-                score = -search_think<NON_PV>(position, depth - 2, -alpha - 1, -alpha, table, info,
-                                              data, do_null);
-            }
-            else
-                score = alpha + 1;  // Hack to ensure that full-depth search is done
+                    score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info,
+                                          data, true);
+                }
+                else
+                    score = alpha + 1;  // Hack to ensure that full-depth search is done
 
-            if (score > alpha)
-            {
-                score = -search_think<NON_PV>(position, depth - 1, -alpha - 1, -alpha, table, info,
-                                              data, do_null);
-                if (score > alpha && score < beta)
-                    score = -search_think<PV>(position, depth - 1, -beta, -alpha, table, info, data,
-                                              do_null);
+                if (score > alpha)
+                {
+                    score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info,
+                                          data, true);
+                    if (score > alpha && score < beta)
+                        score = -search_think(position, depth - 1, -beta, -alpha, table, info, data,
+                                              true);
+                }
             }
+            moves_searched++;
         }
-        moves_searched++;
         position->move_undo();
         if (info->stopped)
             return 0;
@@ -488,15 +486,19 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             return 0;
     }
 
-    TTFlag flag = NONE;
-    if (best_score <= alpha_orig)
-        flag = UPPERBOUND;
-    else if (best_score >= beta)
-        flag = LOWERBOUND;
-    else
-        flag = EXACT;
+    if (do_null)
+    {
+        TTFlag flag = NONE;
+        if (best_score <= alpha_orig)
+            flag = UPPERBOUND;
+        else if (best_score >= beta)
+            flag = LOWERBOUND;
+        else
+            flag = EXACT;
 
-    table->store(position, depth, flag, best_score, best_move_so_far);
+
+        table->store(position, depth, flag, best_score, best_move_so_far);
+    }
 
     return best_score;
 }
@@ -524,7 +526,7 @@ int32_t search(std::unique_ptr<Position>&           position,
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
         for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
         {
-            score = search_think<PV>(position, currdepth, alpha, beta, table, info, &data, true);
+            score = search_think(position, currdepth, alpha, beta, table, info, &data, true);
             const uint64_t stoptime = utils_get_current_time_in_milliseconds();
             const uint64_t time     = stoptime - starttime;
 
@@ -614,8 +616,8 @@ int32_t search(std::unique_ptr<Position>&           position,
     }
     else
     {
-        score = search_think<PV>(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                                 info, &data, true);
+        score = search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
+                             info, &data, true);
         TTEntry entry;
         table->probe(position, &entry);
         bestmove = entry.move;
