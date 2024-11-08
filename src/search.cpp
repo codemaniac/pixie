@@ -358,7 +358,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         !is_pv_node_type &&
         !is_pv_node &&
         !is_in_check &&
-        eval_is_end_game(position))  // clang-format on
+        !eval_is_end_game(position))  // clang-format on
     {
 #ifdef DEBUG
         data->null_cnt++;
