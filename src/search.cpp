@@ -20,6 +20,11 @@ static const int LMR_REDUCTION_LIMIT  = 3;
 
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
+enum NodeType {
+    NON_PV,
+    PV
+};
+
 struct SearchData {
     Move killer_moves[2][SEARCH_DEPTH_MAX];
     int  history_moves[12][SEARCH_DEPTH_MAX];
@@ -259,6 +264,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
     return alpha;
 }
 
+template<NodeType node_type>
 static int32_t search_think(std::unique_ptr<Position>&           position,
                             uint8_t                              depth,
                             int32_t                              alpha,
@@ -272,7 +278,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     const int32_t alpha_orig = alpha;
 
-    const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
+    constexpr bool is_pv_node_type = node_type != NON_PV;
+    const bool     is_pv_node      = (beta - alpha) > 1;  // If true, then PV node
 
     if (position->get_ply_count() > 0 && !is_pv_node)
     {
@@ -339,17 +346,26 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (depth == 0)
         return search_quiescence(position, alpha, beta, info, data);
 
+#ifdef DEBUG
+    const uint64_t hash = position->get_hash();
+#endif
+
     // Null move pruning
-    // TODO: Add condition to check if position is not in zugzwang
-    if (do_null && depth >= 4 && position->get_ply_count() > 0 && !is_pv_node && !is_in_check
-        && eval_has_big_pieces(position))
+    // clang-format off
+    if (do_null &&
+        depth >= 4 &&
+        position->get_ply_count() > 0 &&
+        !is_pv_node_type &&
+        !is_pv_node &&
+        !is_in_check &&
+        eval_has_big_pieces(position))  // clang-format on
     {
 #ifdef DEBUG
         data->null_cnt++;
 #endif
         position->move_do_null();
-        const int32_t score =
-          -search_think(position, depth - 1 - 1, -beta, -beta + 1, table, info, data, false);
+        const int32_t score = -search_think<NON_PV>(position, depth - 1 - 1, -beta, -beta + 1,
+                                                    table, info, data, false);
         position->move_undo_null();
         if (info->stopped)
             return 0;
@@ -361,6 +377,10 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             return beta;
         }
     }
+
+#ifdef DEBUG
+    assert(hash == position->get_hash());
+#endif
 
     // Generate candidate moves
     ArrayList<Move> candidate_moves;
@@ -389,7 +409,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
         if (moves_searched == 0)
-            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+            score = -search_think<node_type>(position, depth - 1, -beta, -alpha, table, info, data,
+                                             do_null);
         else
         {
             // clang-format off
@@ -402,19 +423,19 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 #ifdef DEBUG
                 data->lmr_cnt++;
 #endif
-                score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data,
-                                      do_null);
+                score = -search_think<NON_PV>(position, depth - 2, -alpha - 1, -alpha, table, info,
+                                              data, do_null);
             }
             else
                 score = alpha + 1;  // Hack to ensure that full-depth search is done
 
             if (score > alpha)
             {
-                score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data,
-                                      do_null);
+                score = -search_think<NON_PV>(position, depth - 1, -alpha - 1, -alpha, table, info,
+                                              data, do_null);
                 if (score > alpha && score < beta)
-                    score =
-                      -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+                    score = -search_think<PV>(position, depth - 1, -beta, -alpha, table, info, data,
+                                              do_null);
             }
         }
         moves_searched++;
@@ -493,18 +514,23 @@ int32_t search(std::unique_ptr<Position>&           position,
         int32_t alpha = -SEARCH_SCORE_MAX;
         int32_t beta  = SEARCH_SCORE_MAX;
 #ifdef DEBUG
-        int researches = 0;
+        int            researches = 0;
+        const uint64_t hash       = position->get_hash();
 #endif
 
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
         for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
         {
-            score = search_think(position, currdepth, alpha, beta, table, info, &data, true);
+            score = search_think<PV>(position, currdepth, alpha, beta, table, info, &data, true);
             const uint64_t stoptime = utils_get_current_time_in_milliseconds();
             const uint64_t time     = stoptime - starttime;
 
             if (info->stopped)
                 break;
+
+#ifdef DEBUG
+            assert(hash == position->get_hash());
+#endif
 
             if ((score <= alpha) || (score >= beta))
             {
@@ -544,6 +570,10 @@ int32_t search(std::unique_ptr<Position>&           position,
                 while (position->get_ply_count() > 0)
                     position->move_undo();
 
+#ifdef DEBUG
+                assert(hash == position->get_hash());
+#endif
+
                 if (pv_move_list.size() > 0)
                     bestmove = pv_move_list.at(0);
 
@@ -581,8 +611,8 @@ int32_t search(std::unique_ptr<Position>&           position,
     }
     else
     {
-        score = search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                             info, &data, true);
+        score = search_think<PV>(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
+                                 info, &data, true);
         TTEntry entry;
         table->probe(position, &entry);
         bestmove = entry.move;
