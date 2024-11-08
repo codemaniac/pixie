@@ -341,14 +341,15 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     // Null move pruning
     // TODO: Add condition to check if position is not in zugzwang
-    if (do_null && depth >= 3 && position->get_ply_count() > 0 && !is_pv_node && !is_in_check)
+    if (do_null && depth >= 4 && position->get_ply_count() > 0 && !is_pv_node && !is_in_check
+        && eval_has_big_pieces(position))
     {
 #ifdef DEBUG
         data->null_cnt++;
 #endif
         position->move_do_null();
         const int32_t score =
-          -search_think(position, depth - 1 - 2, -beta, -beta + 1, table, info, data, false);
+          -search_think(position, depth - 1 - 1, -beta, -beta + 1, table, info, data, false);
         position->move_undo_null();
         if (info->stopped)
             return 0;

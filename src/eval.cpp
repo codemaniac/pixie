@@ -178,3 +178,28 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
 
     return eval;
 }
+
+bool eval_has_big_pieces(std::unique_ptr<Position>& position) {
+    const uint8_t wQ = position->get_piece_count(WHITE_QUEEN);
+    const uint8_t bQ = position->get_piece_count(BLACK_QUEEN);
+
+    const uint8_t wR = position->get_piece_count(WHITE_ROOK);
+    const uint8_t bR = position->get_piece_count(BLACK_ROOK);
+
+    const uint8_t wB = position->get_piece_count(WHITE_BISHOP);
+    const uint8_t bB = position->get_piece_count(BLACK_BISHOP);
+
+    const uint8_t wN = position->get_piece_count(WHITE_KNIGHT);
+    const uint8_t bN = position->get_piece_count(BLACK_KNIGHT);
+
+    if ((wN + bN) + (wB + bB) >= 2)
+        return true;
+
+    if ((wR + bR) >= 1)
+        return true;
+
+    if ((wQ + bQ) >= 1)
+        return true;
+
+    return false;
+}
