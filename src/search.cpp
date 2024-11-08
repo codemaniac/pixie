@@ -339,7 +339,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     if (position->get_ply_count() >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
-    if (position->is_repeated() || position->get_half_move_clock() >= 100)
+    if (do_null & position->is_repeated() || position->get_half_move_clock() >= 100)
         return 0;
     if (is_in_check)
         depth++;
