@@ -356,9 +356,12 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 #ifdef DEBUG
         data->null_cnt++;
 #endif
+        uint8_t r = NMP_REDUCTION_FACTOR;
+        if (depth > 6)
+            r += 1;
         position->move_do_null();
-        const int32_t score = -search_think(position, depth - 1 - NMP_REDUCTION_FACTOR, -beta,
-                                            -beta + 1, table, info, data, false);
+        const int32_t score =
+          -search_think(position, depth - 1 - r, -beta, -beta + 1, table, info, data, false);
         position->move_undo_null();
         if (info->stopped)
             return 0;
@@ -479,15 +482,18 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             return 0;
     }
 
-    TTFlag flag = NONE;
-    if (best_score <= alpha_orig)
-        flag = UPPERBOUND;
-    else if (best_score >= beta)
-        flag = LOWERBOUND;
-    else
-        flag = EXACT;
+    if (do_null)
+    {
+        TTFlag flag = NONE;
+        if (best_score <= alpha_orig)
+            flag = UPPERBOUND;
+        else if (best_score >= beta)
+            flag = LOWERBOUND;
+        else
+            flag = EXACT;
 
-    table->store(position, depth, flag, best_score, best_move_so_far);
+        table->store(position, depth, flag, best_score, best_move_so_far);
+    }
 
     return best_score;
 }
