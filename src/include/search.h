@@ -12,7 +12,7 @@
 #define SEARCH_DEPTH_MAX 64
 
 struct SearchInfo {
-    uint8_t  depth;
+    int      depth;
     uint64_t starttime;
     uint64_t stoptime;
     bool     timeset;
