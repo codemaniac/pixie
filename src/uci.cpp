@@ -11,7 +11,7 @@
 #include <string>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.4.0"
+#define VERSION "0.5.0"
 
 static void uci_parse_go(const std::string&                   command,
                          std::unique_ptr<Position>&           position,

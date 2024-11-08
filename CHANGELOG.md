@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0]
+
+### Added
+- Null Move Pruning
+
+### Tested Platformms
+- macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
+- Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
+
+### SPRT Results
+```
+Score of pixie_v0.5.0 vs pixie_v0.4.0: 159 - 86 - 117  [0.601] 362
+...      pixie_v0.5.0 playing White: 107 - 23 - 52  [0.731] 182
+...      pixie_v0.5.0 playing Black: 52 - 63 - 65  [0.469] 180
+...      White vs Black: 170 - 75 - 117  [0.631] 362
+Elo difference: 71.0 +/- 29.8, LOS: 100.0 %, DrawRatio: 32.3 %
+SPRT: llr 2.95 (100.2%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
 ## [0.4.0]
 
 ### Added
@@ -151,3 +170,4 @@ SPRT: llr 2.97 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
 [0.2.3]: https://github.com/codemaniac/pixie/releases/tag/v0.2.3
 [0.3.0]: https://github.com/codemaniac/pixie/releases/tag/v0.3.0
 [0.4.0]: https://github.com/codemaniac/pixie/releases/tag/v0.4.0
+[0.5.0]: https://github.com/codemaniac/pixie/releases/tag/v0.5.0
