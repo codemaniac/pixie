@@ -353,18 +353,21 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     // Null move pruning
     // clang-format off
     if (do_null &&
-        depth >= 4 &&
+        depth >= 3 &&
         position->get_ply_count() > 0 &&
         !is_pv_node_type &&
         !is_pv_node &&
         !is_in_check &&
-        eval_has_big_pieces(position))  // clang-format on
+        eval_is_end_game(position))  // clang-format on
     {
 #ifdef DEBUG
         data->null_cnt++;
 #endif
+        int R = 2;
+        if (depth > 6)
+            R = 3;
         position->move_do_null();
-        const int32_t score = -search_think<NON_PV>(position, depth - 1 - 1, -beta, -beta + 1,
+        const int32_t score = -search_think<NON_PV>(position, depth - 1 - R, -beta, -beta + 1,
                                                     table, info, data, false);
         position->move_undo_null();
         if (info->stopped)

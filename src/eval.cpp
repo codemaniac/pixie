@@ -179,7 +179,7 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
     return eval;
 }
 
-bool eval_has_big_pieces(std::unique_ptr<Position>& position) {
+bool eval_is_end_game(std::unique_ptr<Position>& position) {
     const uint8_t wQ = position->get_piece_count(WHITE_QUEEN);
     const uint8_t bQ = position->get_piece_count(BLACK_QUEEN);
 
@@ -192,14 +192,15 @@ bool eval_has_big_pieces(std::unique_ptr<Position>& position) {
     const uint8_t wN = position->get_piece_count(WHITE_KNIGHT);
     const uint8_t bN = position->get_piece_count(BLACK_KNIGHT);
 
-    if ((wN + bN) + (wB + bB) >= 2)
-        return true;
+    bool is_end_game = false;
 
-    if ((wR + bR) >= 1)
-        return true;
+    if (wQ == 0 && bQ == 0)
+        is_end_game = true;
+    else if (wQ == 1 && bQ == 1 && wR == 0 && bR == 0)
+    {
+        if ((wN + wB) <= 1 && (bN + bB) <= 1)
+            is_end_game = true;
+    }
 
-    if ((wQ + bQ) >= 1)
-        return true;
-
-    return false;
+    return is_end_game;
 }
