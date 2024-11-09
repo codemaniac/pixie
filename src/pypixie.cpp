@@ -1,3 +1,4 @@
+#include "include/eval.h"
 #include "include/fen.h"
 #include "include/perft.h"
 #include "include/position.h"
@@ -81,6 +82,7 @@ static struct PyModuleDef pypixie = {PyModuleDef_HEAD_INIT, "pypixie", NULL, -1,
 
 PyMODINIT_FUNC PyInit_pypixie(void) {
     position_init();
+    eval_init();
     pool  = std::make_unique<ThreadPool>(4);
     table = std::make_unique<TranspositionTable>(64);
     return PyModule_Create(&pypixie);

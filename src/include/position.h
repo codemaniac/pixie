@@ -72,6 +72,7 @@ class Position {
     void     move_do_null();
     void     move_undo();
     void     move_undo_null();
+    Board    get_board() const;
     Piece    get_piece(const Square square) const;
     uint8_t  get_piece_count(const Piece piece) const;
     Color    get_active_color() const;

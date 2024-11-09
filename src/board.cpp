@@ -60,38 +60,6 @@ static BitBoard ATTACK_TABLE_ROOK[64][4096];
 static BitBoard ATTACK_TABLE_KING[64];
 
 /*
-* Bitboard utility functions
-*/
-
-constexpr static BitBoard bitboard_north_one(const BitBoard b) { return b << 8; }
-
-constexpr static BitBoard bitboard_south_one(const BitBoard b) { return b >> 8; }
-
-constexpr static BitBoard bitboard_east_one(const BitBoard b) {
-    return (b & BOARD_MASK_NOT_H_FILE) << 1;
-}
-
-constexpr static BitBoard bitboard_west_one(const BitBoard b) {
-    return (b & BOARD_MASK_NOT_A_FILE) >> 1;
-}
-
-constexpr static BitBoard bitboard_north_east_one(const BitBoard b) {
-    return (b & BOARD_MASK_NOT_H_FILE) << 9;
-}
-
-constexpr static BitBoard bitboard_south_east_one(const BitBoard b) {
-    return (b & BOARD_MASK_NOT_H_FILE) >> 7;
-}
-
-constexpr static BitBoard bitboard_south_west_one(const BitBoard b) {
-    return (b & BOARD_MASK_NOT_A_FILE) >> 9;
-}
-
-constexpr static BitBoard bitboard_north_west_one(const BitBoard b) {
-    return (b & BOARD_MASK_NOT_A_FILE) << 7;
-}
-
-/*
 * Initialize Magic Bitboard attack tables
 */
 
@@ -536,6 +504,8 @@ void Board::set_start_pos() {
     this->set_piece(BLACK_PAWN, G7);
     this->set_piece(BLACK_PAWN, H7);
 }
+
+BitBoard Board::get_bitboard(int index) const { return this->bitboards[index]; }
 
 Piece Board::get_piece(const Square square) const {
     return static_cast<Piece>(this->pieces[square]);

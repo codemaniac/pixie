@@ -29,6 +29,34 @@ constexpr Square BOARD_RF_TO_SQ(Rank r, File f) { return static_cast<Square>(8 *
 constexpr Rank   BOARD_SQ_TO_RANK(Square sq) { return static_cast<Rank>(sq >> 3); }
 constexpr File   BOARD_SQ_TO_FILE(Square sq) { return static_cast<File>(sq & 7); }
 
+/*
+* Bitboard utility functions
+*/
+
+constexpr BitBoard bitboard_north_one(const BitBoard b) { return b << 8; }
+
+constexpr BitBoard bitboard_south_one(const BitBoard b) { return b >> 8; }
+
+constexpr BitBoard bitboard_east_one(const BitBoard b) { return (b & BOARD_MASK_NOT_H_FILE) << 1; }
+
+constexpr BitBoard bitboard_west_one(const BitBoard b) { return (b & BOARD_MASK_NOT_A_FILE) >> 1; }
+
+constexpr BitBoard bitboard_north_east_one(const BitBoard b) {
+    return (b & BOARD_MASK_NOT_H_FILE) << 9;
+}
+
+constexpr BitBoard bitboard_south_east_one(const BitBoard b) {
+    return (b & BOARD_MASK_NOT_H_FILE) >> 7;
+}
+
+constexpr BitBoard bitboard_south_west_one(const BitBoard b) {
+    return (b & BOARD_MASK_NOT_A_FILE) >> 9;
+}
+
+constexpr BitBoard bitboard_north_west_one(const BitBoard b) {
+    return (b & BOARD_MASK_NOT_A_FILE) << 7;
+}
+
 class Board {
    private:
     BitBoard     bitboards[15];
@@ -51,20 +79,21 @@ class Board {
 
    public:
     Board();
-    void    reset();
-    void    set_piece(const Piece piece, const Square square);
-    void    clear_piece(const Piece piece, const Square square);
-    void    set_start_pos();
-    Piece   get_piece(const Square square) const;
-    uint8_t get_piece_count(const Piece piece) const;
-    bool    is_valid() const;
-    bool    is_in_check(const Color active_color) const;
-    void    generate_pseudolegal_moves(const Color      active_color,
-                                       const uint8_t    casteling_rights,
-                                       const Square     ep_target,
-                                       const bool       only_captures,
-                                       ArrayList<Move>* move_list) const;
-    void    display() const;
+    void     reset();
+    void     set_piece(const Piece piece, const Square square);
+    void     clear_piece(const Piece piece, const Square square);
+    void     set_start_pos();
+    BitBoard get_bitboard(int index) const;
+    Piece    get_piece(const Square square) const;
+    uint8_t  get_piece_count(const Piece piece) const;
+    bool     is_valid() const;
+    bool     is_in_check(const Color active_color) const;
+    void     generate_pseudolegal_moves(const Color      active_color,
+                                        const uint8_t    casteling_rights,
+                                        const Square     ep_target,
+                                        const bool       only_captures,
+                                        ArrayList<Move>* move_list) const;
+    void     display() const;
 };
 
 void board_init();

@@ -486,6 +486,8 @@ void Position::move_undo_null() {
     this->history.pop();
 }
 
+Board Position::get_board() const { return this->board; }
+
 Piece Position::get_piece(const Square square) const { return this->board.get_piece(square); }
 
 uint8_t Position::get_piece_count(const Piece piece) const {

@@ -1,6 +1,8 @@
 #include "include/eval.h"
+#include "include/board.h"
 #include "include/constants.h"
 #include "include/position.h"
+#include "include/utils.h"
 #include <memory>
 
 // clang-format off
@@ -49,14 +51,14 @@ static const int8_t POSITIONAL_SCORE_ROOK[64] = {
 };
 
 static const int8_t POSITIONAL_SCORE_QUEEN[64] = {
-    -20, -10, -10, -5, -5, -10, -10, -20,
-    -10,   0,   0,  0,  0,   0,   0, -10,
-    -10,   0,   5,  5,  5,   5,   0, -10,
-     -5,   0,   5,  5,  5,   5,   0,  -5,
-      0,   0,   5,  5,  5,   5,   0,  -5,
-    -10,   5,   5,  5,  5,   5,   0, -10,
-    -10,   0,   5,  0,  0,   0,   0, -10,
-    -20, -10, -10, -5, -5, -10, -10, -20
+    -20, -10, -10,  -5,  -5, -10, -10, -20,
+    -10,   0,   0,   0,   0,   0,   0, -10,
+    -10,   0,   5,   5,   5,   5,   0, -10,
+     -5,   0,   5,   5,   5,   5,   0,  -5,
+      0,   0,   5,   5,   5,   5,   0,  -5,
+    -10,   5,   5,   5,   5,   5,   0, -10,
+    -10,   0,   5,   0,   0,   0,   0, -10,
+    -20, -10, -10,  -5,  -5, -10, -10, -20
 };
 
 static const int8_t POSITIONAL_SCORE_KING_MIDDLEGAME[64] = {
@@ -93,24 +95,93 @@ static const int SQUARES_MIRRORED[64] = {
 };
 // clang-format on
 
+static BitBoard MASK_SQ_FILE[64];
+static BitBoard MASK_SQ_RANK[64];
+static BitBoard MASK_PAWN_ISOLATED[64];
+static BitBoard MASK_PAWN_PASSED_WHITE[64];
+static BitBoard MASK_PAWN_PASSED_BLACK[64];
+
+static const int DOUBLE_PAWN_PENALTY   = -10;
+static const int ISOLATED_PAWN_PENALTY = -10;
+static const int PASSED_PAWN_BONUS[8]  = {0, 5, 10, 20, 35, 60, 100, 200};
+
+void eval_init() {
+    for (int sq = A1; sq <= H8; sq++)
+    {
+        const Square square = static_cast<Square>(sq);
+        const Rank   rank   = BOARD_SQ_TO_RANK(square);
+        const File   file   = BOARD_SQ_TO_FILE(square);
+
+        // Fill MASK_SQ_FILE
+        MASK_SQ_FILE[sq] = BOARD_MASK_A_FILE << file;
+
+        // Fill MASK_SQ_RANK
+        switch (rank)
+        {
+            case RANK_1 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_1;
+                break;
+            case RANK_2 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_1 << 8;
+                break;
+            case RANK_3 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_1 << 16;
+                break;
+            case RANK_4 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_4;
+                break;
+            case RANK_5 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_5;
+                break;
+            case RANK_6 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_5 << 8;
+                break;
+            case RANK_7 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_5 << 16;
+                break;
+            case RANK_8 :
+                MASK_SQ_RANK[sq] = BOARD_MASK_RANK_8;
+                break;
+        }
+
+        // Fill MASK_PAWN_ISOLATED
+        MASK_PAWN_ISOLATED[sq] =
+          bitboard_west_one(MASK_SQ_FILE[sq]) | bitboard_east_one(MASK_SQ_FILE[sq]);
+
+        // Fill MASK_PAWN_PASSED_WHITE
+        MASK_PAWN_PASSED_WHITE[sq] = bitboard_west_one(MASK_SQ_FILE[sq]) | MASK_SQ_FILE[sq]
+                                   | bitboard_east_one(MASK_SQ_FILE[sq]);
+        for (int r = RANK_1; r <= rank; r++)
+            MASK_PAWN_PASSED_WHITE[sq] &= ~MASK_SQ_RANK[r * 8];
+
+        // Fill MASK_PAWN_PASSED_BLACK
+        MASK_PAWN_PASSED_BLACK[sq] = bitboard_west_one(MASK_SQ_FILE[sq]) | MASK_SQ_FILE[sq]
+                                   | bitboard_east_one(MASK_SQ_FILE[sq]);
+        MASK_PAWN_PASSED_BLACK[sq] ^= MASK_PAWN_PASSED_WHITE[sq];
+        MASK_PAWN_PASSED_BLACK[sq] &= ~MASK_SQ_RANK[sq];
+    }
+}
+
 int32_t eval_position(std::unique_ptr<Position>& position) {
-    const uint8_t wK = position->get_piece_count(WHITE_KING);
-    const uint8_t bK = position->get_piece_count(BLACK_KING);
+    const Board board = position->get_board();
 
-    const uint8_t wQ = position->get_piece_count(WHITE_QUEEN);
-    const uint8_t bQ = position->get_piece_count(BLACK_QUEEN);
+    const uint8_t wK = board.get_piece_count(WHITE_KING);
+    const uint8_t bK = board.get_piece_count(BLACK_KING);
 
-    const uint8_t wR = position->get_piece_count(WHITE_ROOK);
-    const uint8_t bR = position->get_piece_count(BLACK_ROOK);
+    const uint8_t wQ = board.get_piece_count(WHITE_QUEEN);
+    const uint8_t bQ = board.get_piece_count(BLACK_QUEEN);
 
-    const uint8_t wB = position->get_piece_count(WHITE_BISHOP);
-    const uint8_t bB = position->get_piece_count(BLACK_BISHOP);
+    const uint8_t wR = board.get_piece_count(WHITE_ROOK);
+    const uint8_t bR = board.get_piece_count(BLACK_ROOK);
 
-    const uint8_t wN = position->get_piece_count(WHITE_KNIGHT);
-    const uint8_t bN = position->get_piece_count(BLACK_KNIGHT);
+    const uint8_t wB = board.get_piece_count(WHITE_BISHOP);
+    const uint8_t bB = board.get_piece_count(BLACK_BISHOP);
 
-    const uint8_t wP = position->get_piece_count(WHITE_PAWN);
-    const uint8_t bP = position->get_piece_count(BLACK_PAWN);
+    const uint8_t wN = board.get_piece_count(WHITE_KNIGHT);
+    const uint8_t bN = board.get_piece_count(BLACK_KNIGHT);
+
+    const uint8_t wP = board.get_piece_count(WHITE_PAWN);
+    const uint8_t bP = board.get_piece_count(BLACK_PAWN);
 
     int32_t eval = (20000 * (wK - bK)) + (900 * (wQ - bQ)) + (500 * (wR - bR)) + (330 * (wB - bB))
                  + (320 * (wN - bN)) + (100 * (wP - bP));
@@ -125,13 +196,29 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
             is_end_game = true;
     }
 
-    for (uint8_t sq = 0; sq < 64; sq++)
+    int      doubled_pawns = 0, is_isolated_pawn = 0, is_passed_pawn = 0;
+    BitBoard bb, opponent_bb;
+
+    for (uint8_t sq = A1; sq <= H8; sq++)
     {
-        const Piece piece = position->get_piece(static_cast<Square>(sq));
+        const Piece piece = board.get_piece(static_cast<Square>(sq));
         switch (piece)
         {
             case WHITE_PAWN :
                 eval += POSITIONAL_SCORE_PAWN[SQUARES_MIRRORED[sq]];
+
+                bb = board.get_bitboard(WHITE_PAWN);
+
+                doubled_pawns = utils_bit_count1s(bb & MASK_SQ_FILE[sq]) - 1;
+                eval += (DOUBLE_PAWN_PENALTY * doubled_pawns);
+
+                is_isolated_pawn = utils_bit_count1s(bb & MASK_PAWN_ISOLATED[sq]) == 0;
+                eval += (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
+
+                opponent_bb    = board.get_bitboard(BLACK_PAWN);
+                is_passed_pawn = utils_bit_count1s(opponent_bb && MASK_PAWN_PASSED_WHITE[sq]) == 0;
+                eval += PASSED_PAWN_BONUS[BOARD_SQ_TO_RANK(static_cast<Square>(sq))];
+
                 break;
             case WHITE_KNIGHT :
                 eval += POSITIONAL_SCORE_KNIGHT[SQUARES_MIRRORED[sq]];
@@ -151,6 +238,19 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
                 break;
             case BLACK_PAWN :
                 eval -= POSITIONAL_SCORE_PAWN[sq];
+
+                bb = board.get_bitboard(BLACK_PAWN);
+
+                doubled_pawns = utils_bit_count1s(bb & MASK_SQ_FILE[sq]) - 1;
+                eval -= (DOUBLE_PAWN_PENALTY * doubled_pawns);
+
+                is_isolated_pawn = utils_bit_count1s(bb & MASK_PAWN_ISOLATED[sq]) == 0;
+                eval -= (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
+
+                opponent_bb    = board.get_bitboard(WHITE_PAWN);
+                is_passed_pawn = utils_bit_count1s(opponent_bb && MASK_PAWN_PASSED_BLACK[sq]) == 0;
+                eval -= PASSED_PAWN_BONUS[RANK_8 - BOARD_SQ_TO_RANK(static_cast<Square>(sq))];
+
                 break;
             case BLACK_KNIGHT :
                 eval -= POSITIONAL_SCORE_KNIGHT[sq];
@@ -180,17 +280,19 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
 }
 
 bool eval_is_end_game(std::unique_ptr<Position>& position) {
-    const uint8_t wQ = position->get_piece_count(WHITE_QUEEN);
-    const uint8_t bQ = position->get_piece_count(BLACK_QUEEN);
+    const Board board = position->get_board();
 
-    const uint8_t wR = position->get_piece_count(WHITE_ROOK);
-    const uint8_t bR = position->get_piece_count(BLACK_ROOK);
+    const uint8_t wQ = board.get_piece_count(WHITE_QUEEN);
+    const uint8_t bQ = board.get_piece_count(BLACK_QUEEN);
 
-    const uint8_t wB = position->get_piece_count(WHITE_BISHOP);
-    const uint8_t bB = position->get_piece_count(BLACK_BISHOP);
+    const uint8_t wR = board.get_piece_count(WHITE_ROOK);
+    const uint8_t bR = board.get_piece_count(BLACK_ROOK);
 
-    const uint8_t wN = position->get_piece_count(WHITE_KNIGHT);
-    const uint8_t bN = position->get_piece_count(BLACK_KNIGHT);
+    const uint8_t wB = board.get_piece_count(WHITE_BISHOP);
+    const uint8_t bB = board.get_piece_count(BLACK_BISHOP);
+
+    const uint8_t wN = board.get_piece_count(WHITE_KNIGHT);
+    const uint8_t bN = board.get_piece_count(BLACK_KNIGHT);
 
     bool is_end_game = false;
 

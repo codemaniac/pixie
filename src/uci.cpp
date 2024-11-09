@@ -1,4 +1,5 @@
 #include "include/uci.h"
+#include "include/eval.h"
 #include "include/fen.h"
 #include "include/perft.h"
 #include "include/position.h"
@@ -167,6 +168,7 @@ static void uci_parse_position(const std::string& command, std::unique_ptr<Posit
 
 void uci_loop(void) {
     position_init();
+    eval_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(64);
 
