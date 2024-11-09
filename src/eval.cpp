@@ -101,9 +101,11 @@ static BitBoard MASK_PAWN_ISOLATED[64];
 static BitBoard MASK_PAWN_PASSED_WHITE[64];
 static BitBoard MASK_PAWN_PASSED_BLACK[64];
 
-static const int DOUBLE_PAWN_PENALTY   = -10;
-static const int ISOLATED_PAWN_PENALTY = -10;
-static const int PASSED_PAWN_BONUS[8]  = {0, 5, 10, 20, 35, 60, 100, 200};
+// Will be subtracted for WHITE and added for BLACK
+static const int DOUBLE_PAWN_PENALTY   = 10;
+static const int ISOLATED_PAWN_PENALTY = 10;
+// Will be added for WHITE and subtracted for BLACK
+static const int PASSED_PAWN_BONUS[8] = {0, 5, 10, 20, 35, 60, 100, 200};
 
 void eval_init() {
     for (int sq = A1; sq <= H8; sq++)
@@ -196,8 +198,9 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
             is_end_game = true;
     }
 
-    int      doubled_pawns = 0, is_isolated_pawn = 0, is_passed_pawn = 0;
-    BitBoard bb, opponent_bb;
+    int            doubled_pawns = 0, is_isolated_pawn = 0, is_passed_pawn = 0;
+    const BitBoard wP_bb = board.get_bitboard(WHITE_PAWN);
+    const BitBoard bP_bb = board.get_bitboard(BLACK_PAWN);
 
     for (uint8_t sq = A1; sq <= H8; sq++)
     {
@@ -207,16 +210,13 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
             case WHITE_PAWN :
                 eval += POSITIONAL_SCORE_PAWN[SQUARES_MIRRORED[sq]];
 
-                bb = board.get_bitboard(WHITE_PAWN);
+                doubled_pawns = utils_bit_count1s(wP_bb & MASK_SQ_FILE[sq]) - 1;
+                eval -= (DOUBLE_PAWN_PENALTY * doubled_pawns);
 
-                doubled_pawns = utils_bit_count1s(bb & MASK_SQ_FILE[sq]) - 1;
-                eval += (DOUBLE_PAWN_PENALTY * doubled_pawns);
+                is_isolated_pawn = utils_bit_count1s(wP_bb & MASK_PAWN_ISOLATED[sq]) == 0;
+                eval -= (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
 
-                is_isolated_pawn = utils_bit_count1s(bb & MASK_PAWN_ISOLATED[sq]) == 0;
-                eval += (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
-
-                opponent_bb    = board.get_bitboard(BLACK_PAWN);
-                is_passed_pawn = utils_bit_count1s(opponent_bb && MASK_PAWN_PASSED_WHITE[sq]) == 0;
+                is_passed_pawn = utils_bit_count1s(bP_bb && MASK_PAWN_PASSED_WHITE[sq]) == 0;
                 eval += PASSED_PAWN_BONUS[BOARD_SQ_TO_RANK(static_cast<Square>(sq))];
 
                 break;
@@ -239,16 +239,13 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
             case BLACK_PAWN :
                 eval -= POSITIONAL_SCORE_PAWN[sq];
 
-                bb = board.get_bitboard(BLACK_PAWN);
+                doubled_pawns = utils_bit_count1s(wP_bb & MASK_SQ_FILE[sq]) - 1;
+                eval += (DOUBLE_PAWN_PENALTY * doubled_pawns);
 
-                doubled_pawns = utils_bit_count1s(bb & MASK_SQ_FILE[sq]) - 1;
-                eval -= (DOUBLE_PAWN_PENALTY * doubled_pawns);
+                is_isolated_pawn = utils_bit_count1s(wP_bb & MASK_PAWN_ISOLATED[sq]) == 0;
+                eval += (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
 
-                is_isolated_pawn = utils_bit_count1s(bb & MASK_PAWN_ISOLATED[sq]) == 0;
-                eval -= (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
-
-                opponent_bb    = board.get_bitboard(WHITE_PAWN);
-                is_passed_pawn = utils_bit_count1s(opponent_bb && MASK_PAWN_PASSED_BLACK[sq]) == 0;
+                is_passed_pawn = utils_bit_count1s(bP_bb && MASK_PAWN_PASSED_BLACK[sq]) == 0;
                 eval -= PASSED_PAWN_BONUS[RANK_8 - BOARD_SQ_TO_RANK(static_cast<Square>(sq))];
 
                 break;
