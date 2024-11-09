@@ -196,9 +196,9 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
             is_end_game = true;
     }
 
-    int            doubled_pawns = 0, is_isolated_pawn = 0, is_passed_pawn = 0;
-    const BitBoard wP_bb = board.get_bitboard(WHITE_PAWN);
-    const BitBoard bP_bb = board.get_bitboard(BLACK_PAWN);
+    int            doubled_pawns = 0;
+    const BitBoard wP_bb         = board.get_bitboard(WHITE_PAWN);
+    const BitBoard bP_bb         = board.get_bitboard(BLACK_PAWN);
 
     for (uint8_t sq = A1; sq <= H8; sq++)
     {
@@ -210,6 +210,9 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
 
                 doubled_pawns = utils_bit_count1s(wP_bb & MASK_SQ_FILE[sq]);
                 eval += (DOUBLE_PAWN_PENALTY * doubled_pawns);
+
+                if (utils_bit_count1s(wP_bb & MASK_PAWN_ISOLATED[sq]) == 0)
+                    eval += ISOLATED_PAWN_PENALTY;
 
                 break;
             case WHITE_KNIGHT :
@@ -233,6 +236,9 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
 
                 doubled_pawns = utils_bit_count1s(bP_bb & MASK_SQ_FILE[sq]);
                 eval -= (DOUBLE_PAWN_PENALTY * doubled_pawns);
+
+                if (utils_bit_count1s(bP_bb & MASK_PAWN_ISOLATED[sq]) == 0)
+                    eval -= ISOLATED_PAWN_PENALTY;
 
                 break;
             case BLACK_KNIGHT :
