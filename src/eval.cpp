@@ -101,11 +101,9 @@ static BitBoard MASK_PAWN_ISOLATED[64];
 static BitBoard MASK_PAWN_PASSED_WHITE[64];
 static BitBoard MASK_PAWN_PASSED_BLACK[64];
 
-// Will be subtracted for WHITE and added for BLACK
-static const int DOUBLE_PAWN_PENALTY   = 10;
-static const int ISOLATED_PAWN_PENALTY = 10;
-// Will be added for WHITE and subtracted for BLACK
-static const int PASSED_PAWN_BONUS[8] = {0, 5, 10, 20, 35, 60, 100, 200};
+static const int DOUBLE_PAWN_PENALTY   = -10;
+static const int ISOLATED_PAWN_PENALTY = -10;
+static const int PASSED_PAWN_BONUS[8]  = {0, 10, 30, 50, 75, 100, 150, 200};
 
 void eval_init() {
     for (int sq = A1; sq <= H8; sq++)
@@ -211,10 +209,10 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
                 eval += POSITIONAL_SCORE_PAWN[SQUARES_MIRRORED[sq]];
 
                 doubled_pawns = utils_bit_count1s(wP_bb & MASK_SQ_FILE[sq]) - 1;
-                eval -= (DOUBLE_PAWN_PENALTY * doubled_pawns);
+                eval += (DOUBLE_PAWN_PENALTY * doubled_pawns);
 
                 is_isolated_pawn = utils_bit_count1s(wP_bb & MASK_PAWN_ISOLATED[sq]) == 0;
-                eval -= (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
+                eval += (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
 
                 is_passed_pawn = utils_bit_count1s(bP_bb && MASK_PAWN_PASSED_WHITE[sq]) == 0;
                 eval += PASSED_PAWN_BONUS[BOARD_SQ_TO_RANK(static_cast<Square>(sq))];
@@ -239,11 +237,11 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
             case BLACK_PAWN :
                 eval -= POSITIONAL_SCORE_PAWN[sq];
 
-                doubled_pawns = utils_bit_count1s(wP_bb & MASK_SQ_FILE[sq]) - 1;
-                eval += (DOUBLE_PAWN_PENALTY * doubled_pawns);
+                doubled_pawns = utils_bit_count1s(bP_bb & MASK_SQ_FILE[sq]) - 1;
+                eval -= (DOUBLE_PAWN_PENALTY * doubled_pawns);
 
-                is_isolated_pawn = utils_bit_count1s(wP_bb & MASK_PAWN_ISOLATED[sq]) == 0;
-                eval += (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
+                is_isolated_pawn = utils_bit_count1s(bP_bb & MASK_PAWN_ISOLATED[sq]) == 0;
+                eval -= (ISOLATED_PAWN_PENALTY * is_isolated_pawn);
 
                 is_passed_pawn = utils_bit_count1s(bP_bb && MASK_PAWN_PASSED_BLACK[sq]) == 0;
                 eval -= PASSED_PAWN_BONUS[RANK_8 - BOARD_SQ_TO_RANK(static_cast<Square>(sq))];
