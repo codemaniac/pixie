@@ -27,7 +27,7 @@ module = Extension(
 
 setup(
     name="pypixie",
-    version="0.5.0",
+    version="0.5.1",
     description="A free UCI chess engine",
     license_files = ('LICENSE',),
     ext_modules=[module],
