@@ -138,14 +138,31 @@ static void search_check_up(SearchInfo* info) {
     ReadInput(info);
 }
 
-static void search_score_moves(ArrayList<Move>*           move_list,
-                               std::unique_ptr<Position>& position,
-                               SearchData*                data) {
+static void search_score_moves(ArrayList<Move>*                     move_list,
+                               std::unique_ptr<Position>&           position,
+                               std::unique_ptr<TranspositionTable>& table,
+                               SearchData*                          data) {
+    Move    pvmove;
+    bool    pvmove_found = false;
+    TTEntry entry;
+    if (table->probe(position, &entry) && entry.is_valid)
+    {
+        if (entry.flag == EXACT)
+        {
+            pvmove       = entry.move;
+            pvmove_found = true;
+        }
+    }
+
     for (uint32_t i = 0; i < move_list->size(); i++)
     {
         const Move move = move_list->at(i);
 
-        if (MOVE_IS_CAPTURE(move.get_flag()))
+        if (pvmove_found && move == pvmove)
+        {
+            move_list->at(i).set_score(30000);
+        }
+        else if (MOVE_IS_CAPTURE(move.get_flag()))
         {
             const uint32_t raw_score = move.get_score();
             move_list->at(i).set_score(raw_score + 10000);
@@ -198,11 +215,12 @@ static bool search_lmr_ok_to_reduce(std::unique_ptr<Position>& position, const M
     return true;
 }
 
-static int32_t search_quiescence(std::unique_ptr<Position>& position,
-                                 int32_t                    alpha,
-                                 int32_t                    beta,
-                                 SearchInfo*                info,
-                                 SearchData*                data) {
+static int32_t search_quiescence(std::unique_ptr<Position>&           position,
+                                 int32_t                              alpha,
+                                 int32_t                              beta,
+                                 std::unique_ptr<TranspositionTable>& table,
+                                 SearchInfo*                          info,
+                                 SearchData*                          data) {
 
     if ((info->nodes & 2047) == 0)
         search_check_up(info);
@@ -221,7 +239,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
     ArrayList<Move> capture_moves;
     position->generate_pseudolegal_moves(&capture_moves, true);
     // Score moves for move ordering
-    search_score_moves(&capture_moves, position, data);
+    search_score_moves(&capture_moves, position, table, data);
 
     uint32_t legal_moves_count = 0;
 
@@ -239,7 +257,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>& position,
         }
         info->nodes++;
         legal_moves_count++;
-        const int32_t score = -search_quiescence(position, -beta, -alpha, info, data);
+        const int32_t score = -search_quiescence(position, -beta, -alpha, table, info, data);
         position->move_undo();
         if (info->stopped)
             return 0;
@@ -338,7 +356,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (is_in_check)
         depth++;
     if (depth <= 0)
-        return search_quiescence(position, alpha, beta, info, data);
+        return search_quiescence(position, alpha, beta, table, info, data);
 
 #ifdef DEBUG
     const uint64_t hash = position->get_hash();
@@ -378,6 +396,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     assert(hash == position->get_hash());
 #endif
 
+    // Razoring
     if (!is_pv_node && !is_in_check && depth <= 3)
     {
         const int32_t static_eval = eval_position(position);
@@ -388,13 +407,13 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         {
             if (depth == 1)
             {
-                new_score = search_quiescence(position, alpha, beta, info, data);
+                new_score = search_quiescence(position, alpha, beta, table, info, data);
                 return std::max(new_score, score);
             }
             score += 175;
             if (score < beta && depth <= 3)
             {
-                new_score = search_quiescence(position, alpha, beta, info, data);
+                new_score = search_quiescence(position, alpha, beta, table, info, data);
                 if (new_score < beta)
                     return std::max(new_score, score);
             }
@@ -405,7 +424,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
     // Score moves for move ordering
-    search_score_moves(&candidate_moves, position, data);
+    search_score_moves(&candidate_moves, position, table, data);
 
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
@@ -428,6 +447,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
 
+        // PVS + LMR
         if (moves_searched == 0)
             score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
         else
@@ -555,6 +575,7 @@ int32_t search(std::unique_ptr<Position>&           position,
             assert(hash == position->get_hash());
 #endif
 
+            // Aspiration Windows
             if ((score <= alpha) || (score >= beta))
             {
                 // We fell outside the window
