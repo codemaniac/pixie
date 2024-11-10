@@ -200,4 +200,4 @@ SPRT: llr 2.97 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
 [0.4.0]: https://github.com/codemaniac/pixie/releases/tag/v0.4.0
 [0.5.0]: https://github.com/codemaniac/pixie/releases/tag/v0.5.0
 [0.5.1]: https://github.com/codemaniac/pixie/releases/tag/v0.5.1
-[0.6.6]: https://github.com/codemaniac/pixie/releases/tag/v0.6.0
+[0.6.0]: https://github.com/codemaniac/pixie/releases/tag/v0.6.0
