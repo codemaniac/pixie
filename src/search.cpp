@@ -378,6 +378,29 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     assert(hash == position->get_hash());
 #endif
 
+    if (!is_pv_node && !is_in_check && depth <= 3)
+    {
+        const int32_t static_eval = eval_position(position);
+        int32_t       score       = static_eval + 125;
+        int32_t       new_score;
+
+        if (score < beta)
+        {
+            if (depth == 1)
+            {
+                new_score = search_quiescence(position, alpha, beta, info, data);
+                return std::max(new_score, score);
+            }
+            score += 175;
+            if (score < beta && depth <= 3)
+            {
+                new_score = search_quiescence(position, alpha, beta, info, data);
+                if (new_score < beta)
+                    return std::max(new_score, score);
+            }
+        }
+    }
+
     // Generate candidate moves
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
