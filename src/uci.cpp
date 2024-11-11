@@ -13,6 +13,21 @@
 #define PROGRAM_NAME "pixie"
 #define VERSION "0.7.0"
 
+static void uci_parse_setoption(const std::string&                   command,
+                                std::unique_ptr<TranspositionTable>& table) {
+    std::istringstream iss(command);
+    std::string        cmd, name, id, valuename, value;
+
+    iss >> cmd >> name >> id >> valuename >> value;
+
+    if (id == "Hash")
+    {
+        const int ttsize = std::stoi(value);
+        if (ttsize > 0)
+            table = std::make_unique<TranspositionTable>(ttsize);
+    }
+}
+
 static void uci_parse_go(const std::string&                   command,
                          std::unique_ptr<Position>&           position,
                          std::unique_ptr<TranspositionTable>& table) {
@@ -170,6 +185,11 @@ void uci_loop(void) {
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(64);
 
+    std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
+    std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+    std::cout << "uciok" << std::endl;
+
     std::string input;
 
     while (std::getline(std::cin, input))
@@ -178,6 +198,7 @@ void uci_loop(void) {
         {
             std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
             std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
+            std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
             std::cout << "uciok" << std::endl;
         }
         else if (input == "isready")
@@ -199,6 +220,10 @@ void uci_loop(void) {
         else if (input.rfind("go", 0) == 0)
         {
             uci_parse_go(input, position, table);
+        }
+        else if (input.rfind("setoption", 0) == 0)
+        {
+            uci_parse_setoption(input, table);
         }
         else if (input == "display")
         {
