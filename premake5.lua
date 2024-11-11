@@ -1,5 +1,5 @@
 workspace "pixie"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Release", "Test" }
     platforms { "macos64", "linux64", "win64" }
 
 project "pixie"
@@ -30,6 +30,12 @@ project "pixie"
         symbols "On"
 
     filter { "configurations:Release" }
+        flags { "FatalWarnings", "LinkTimeOptimization" }
+        defines { "NDEBUG" }
+        optimize "Speed"
+
+    filter { "configurations:Test" }
+        targetdir "openbench"
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"
