@@ -6,6 +6,8 @@ A free UCI chess engine
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![emoji-log](https://cdn.rawgit.com/ahmadawais/stuff/ca97874/emoji-log/flat-round.svg)](https://github.com/ahmadawais/Emoji-Log/)
 
+OpenBench is the primary testing framework used for the development of Pixie. The primary instance of OpenBench can be found at [https://pixiechess.pythonanywhere.com/](https://pixiechess.pythonanywhere.com/)
+
 # Compiling pixie
 
 ## On MacOS 64-bit
