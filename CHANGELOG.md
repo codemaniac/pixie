@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0]
+
+### Added
+- PV Move ordering in search
+
+### Tested Platformms
+- macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
+- Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
+
+### SPRT Results
+```
+Score of pixie_v0.7.0 vs pixie_v0.6.0: 485 - 402 - 580  [0.528] 1467
+...      pixie_v0.7.0 playing White: 304 - 157 - 273  [0.600] 734
+...      pixie_v0.7.0 playing Black: 181 - 245 - 307  [0.456] 733
+...      White vs Black: 549 - 338 - 580  [0.572] 1467
+Elo difference: 19.7 +/- 13.8, LOS: 99.7 %, DrawRatio: 39.5 %
+SPRT: llr 2.95 (100.3%), lbound -2.94, ubound 2.94 - H1 was accepted
+```
+
 ## [0.6.0]
 
 ### Added
@@ -201,3 +220,4 @@ SPRT: llr 2.97 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
 [0.5.0]: https://github.com/codemaniac/pixie/releases/tag/v0.5.0
 [0.5.1]: https://github.com/codemaniac/pixie/releases/tag/v0.5.1
 [0.6.0]: https://github.com/codemaniac/pixie/releases/tag/v0.6.0
+[0.7.0]: https://github.com/codemaniac/pixie/releases/tag/v0.7.0
