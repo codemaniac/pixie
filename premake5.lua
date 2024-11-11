@@ -1,6 +1,6 @@
 workspace "pixie"
-    configurations { "Debug", "Release", "Test" }
-    platforms { "macos64", "linux64", "win64" }
+    configurations { "Debug", "Release" }
+    platforms { "macos64", "linux64" }
 
 project "pixie"
     kind "ConsoleApp"
@@ -20,22 +20,12 @@ project "pixie"
         system "linux"
         architecture "x86_64"
 
-    filter { "platforms:win64" }
-        system "windows"
-        architecture "x86_64"
-
     filter { "configurations:Debug" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
 
     filter { "configurations:Release" }
-        flags { "FatalWarnings", "LinkTimeOptimization" }
-        defines { "NDEBUG" }
-        optimize "Speed"
-
-    filter { "configurations:Test" }
-        targetdir "openbench"
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"

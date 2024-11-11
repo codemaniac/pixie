@@ -70,4 +70,3 @@ utils.o: $(SRC_DIR)/utils.cpp $(INCLUDE_DIR)/utils.h
 	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/utils.cpp -o $(OBJ_DIR)/utils.o
 
 .PHONY: clean dir
-
