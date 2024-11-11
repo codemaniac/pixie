@@ -18,9 +18,10 @@ dir:
 	@mkdir -p $(OBJ_DIR)
 	@mkdir -p $(BIN_DIR)
 
-pixie: main.o board.o eval.o fen.o move.o perft.o position.o search.o threadpool.o tt.o uci.o utils.o
+pixie: main.o bench.o board.o eval.o fen.o move.o perft.o position.o search.o threadpool.o tt.o uci.o utils.o
 	@echo "==== Building pixie ===="
 	@$(CXX) $(LDFLAGS) -o $(BIN_DIR)/$(EXE) $(OBJ_DIR)/main.o \
+		$(OBJ_DIR)/bench.o \
 		$(OBJ_DIR)/board.o \
 		$(OBJ_DIR)/eval.o \
 		$(OBJ_DIR)/fen.o \
@@ -35,6 +36,9 @@ pixie: main.o board.o eval.o fen.o move.o perft.o position.o search.o threadpool
 
 main.o: $(SRC_DIR)/main.cpp
 	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/main.cpp -o $(OBJ_DIR)/main.o
+
+bench.o: $(SRC_DIR)/bench.cpp $(INCLUDE_DIR)/bench.h
+	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/bench.cpp -o $(OBJ_DIR)/bench.o
 
 board.o: $(SRC_DIR)/board.cpp $(INCLUDE_DIR)/board.h
 	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/board.cpp -o $(OBJ_DIR)/board.o
