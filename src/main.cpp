@@ -19,6 +19,9 @@ void bench() {
 }
 
 int main(int argc, char* argv[]) {
+    // Random number generator seed
+    srand(3094875238);
+
     if (argc == 1)
     {
         uci_loop();
