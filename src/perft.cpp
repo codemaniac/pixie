@@ -35,7 +35,7 @@ static uint64_t perft(std::unique_ptr<Position>& position,
     return nodes;
 }
 
-void divide(std::unique_ptr<Position>& position, const uint8_t depth) {
+uint64_t divide(std::unique_ptr<Position>& position, const uint8_t depth, const bool display) {
 
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
@@ -49,13 +49,19 @@ void divide(std::unique_ptr<Position>& position, const uint8_t depth) {
         {
             nodes = perft(position, move, depth - 1, false);
             total_nodes += nodes;
-            move.display();
-            std::cout << " " << (unsigned long long) nodes << std::endl;
+            if (display)
+            {
+                move.display();
+                std::cout << " " << (unsigned long long) nodes << std::endl;
+            }
         }
         position->move_undo();
     }
 
-    std::cout << std::endl << "Perft = " << (unsigned long long) total_nodes << std::endl;
+    if (display)
+        std::cout << std::endl << "Perft = " << (unsigned long long) total_nodes << std::endl;
+
+    return total_nodes;
 }
 
 uint64_t perft_multithreaded(std::unique_ptr<Position>&   position,

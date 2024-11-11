@@ -10,6 +10,6 @@ uint64_t perft_multithreaded(std::unique_ptr<Position>&,
                              std::unique_ptr<ThreadPool>& pool,
                              const bool                   captures_only);
 
-void divide(std::unique_ptr<Position>& position, const uint8_t depth);
+uint64_t divide(std::unique_ptr<Position>& position, const uint8_t depth, const bool display);
 
 #endif
