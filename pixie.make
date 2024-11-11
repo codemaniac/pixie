@@ -118,7 +118,7 @@ endif
 ifeq ($(origin AR), default)
   AR = llvm-ar
 endif
-TARGETDIR = .
+TARGETDIR = openbench
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/macos64/Test
 DEFINES += -DNDEBUG
@@ -128,7 +128,7 @@ ALL_LDFLAGS += $(LDFLAGS) -m64 -flto
 
 else ifeq ($(config),test_linux64)
 RESCOMP = windres
-TARGETDIR = .
+TARGETDIR = openbench
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Test
 DEFINES += -DNDEBUG
@@ -138,7 +138,7 @@ ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
 
 else ifeq ($(config),test_win64)
 RESCOMP = windres
-TARGETDIR = .
+TARGETDIR = openbench
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/win64/Test
 DEFINES += -DNDEBUG

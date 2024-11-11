@@ -35,7 +35,7 @@ project "pixie"
         optimize "Speed"
 
     filter { "configurations:Test" }
-        targetdir "."
+        targetdir "openbench"
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"
