@@ -1,5 +1,5 @@
 workspace "pixie"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Test", "Release" }
     platforms { "macos64", "linux64" }
 
 project "pixie"
@@ -26,6 +26,13 @@ project "pixie"
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
+
+    filter { "configurations:Test" }
+        buildoptions { "-fsanitize=undefined" }
+        linkoptions { "-fsanitize=undefined" }
+        flags { "FatalWarnings" }
+        defines { "NDEBUG" }
+        optimize "Speed"
 
     filter { "configurations:Release" }
         flags { "FatalWarnings", "LinkTimeOptimization" }
