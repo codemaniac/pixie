@@ -21,6 +21,8 @@ project "pixie"
         architecture "x86_64"
 
     filter { "configurations:Debug" }
+        buildoptions { "-fsanitize=undefined" }
+        linkoptions { "-fsanitize=undefined" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
