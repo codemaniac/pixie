@@ -183,12 +183,7 @@ static void uci_parse_position(const std::string& command, std::unique_ptr<Posit
 void uci_loop(void) {
     position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
-    std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(64);
-
-    std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
-    std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
-    std::cout << "uciok" << std::endl;
+    std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(16);
 
     std::string input;
 
@@ -198,6 +193,7 @@ void uci_loop(void) {
         {
             std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
             std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
+            std::cout << "option name Hash type spin default 16 min 1 max 256" << std::endl;
             std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
             std::cout << "uciok" << std::endl;
         }

@@ -73,6 +73,8 @@ void bench() {
     {
         position = std::make_unique<Position>();
         fen_to_position(fen, position);
+        position->reset_ply_count();
+        table->clear();
 
         SearchInfo info;
         info.depth         = 7;
