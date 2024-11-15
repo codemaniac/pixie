@@ -5,6 +5,7 @@
 #include "include/search.h"
 #include "include/tt.h"
 #include "include/utils.h"
+#include <future>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -12,6 +13,8 @@
 
 #define PROGRAM_NAME "pixie"
 #define VERSION "0.7.0"
+
+SearchInfo info;
 
 static void uci_parse_setoption(const std::string&                   command,
                                 std::unique_ptr<TranspositionTable>& table) {
@@ -28,9 +31,10 @@ static void uci_parse_setoption(const std::string&                   command,
     }
 }
 
-static void uci_parse_go(const std::string&                   command,
-                         std::unique_ptr<Position>&           position,
-                         std::unique_ptr<TranspositionTable>& table) {
+static std::future<void> uci_parse_go(const std::string&                   command,
+                                      std::unique_ptr<Position>&           position,
+                                      std::unique_ptr<TranspositionTable>& table,
+                                      SearchInfo*                          info) {
     std::istringstream iss(command);
     std::string        token;
 
@@ -47,13 +51,17 @@ static void uci_parse_go(const std::string&                   command,
             iss >> value;
             depth = value;
 
-            const uint64_t starttime = utils_get_current_time_in_milliseconds();
-            (void) divide(position, depth, true);
-            const uint64_t stoptime = utils_get_current_time_in_milliseconds();
-            const uint64_t time     = stoptime - starttime;
-            std::cout << "Execution Time (in ms) = " << (unsigned long long) time << std::endl;
+            std::future<void> f = std::async(std::launch::async, [&position, depth] {
+                std::unique_ptr<Position> position_clone =
+                  std::make_unique<Position>(*position.get());
+                const uint64_t starttime = utils_get_current_time_in_milliseconds();
+                (void) divide(position, depth, true);
+                const uint64_t stoptime = utils_get_current_time_in_milliseconds();
+                const uint64_t time     = stoptime - starttime;
+                std::cout << "Execution Time (in ms) = " << (unsigned long long) time << std::endl;
+            });
 
-            return;
+            return f;
         }
         if (token == "infinite")
         {
@@ -112,26 +120,29 @@ static void uci_parse_go(const std::string&                   command,
     if (depth == -1)
         depth = 64;
 
-    SearchInfo info;
-
-    info.depth         = (uint8_t) depth;
-    info.timeset       = false;
-    info.starttime     = utils_get_current_time_in_milliseconds();
-    info.stoptime      = 0;
-    info.stopped       = false;
-    info.nodes         = 0ULL;
-    info.use_iterative = true;
-    info.use_uci       = true;
+    info->depth         = (uint8_t) depth;
+    info->timeset       = false;
+    info->starttime     = utils_get_current_time_in_milliseconds();
+    info->stoptime      = 0;
+    info->stopped       = false;
+    info->nodes         = 0ULL;
+    info->use_iterative = true;
+    info->use_uci       = true;
 
     if (time > 0)
     {
-        info.timeset = true;
+        info->timeset = true;
         time /= movestogo;
         time -= 50;
-        info.stoptime = info.starttime + time + inc;
+        info->stoptime = info->starttime + time + inc;
     }
 
-    (void) search(position, table, &info);
+    std::future<void> f = std::async(std::launch::async, [&position, &table, &info] {
+        std::unique_ptr<Position> position_clone = std::make_unique<Position>(*position.get());
+        (void) search(position_clone, table, info);
+    });
+
+    return f;
 }
 
 static void uci_parse_position(const std::string& command, std::unique_ptr<Position>& position) {
@@ -184,6 +195,8 @@ void uci_loop(void) {
     position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(16);
+    SearchInfo                          info;
+    std::future<void>                   uci_go_future;
 
     std::string input;
 
@@ -215,7 +228,8 @@ void uci_loop(void) {
         }
         else if (input.rfind("go", 0) == 0)
         {
-            uci_parse_go(input, position, table);
+            info          = SearchInfo();
+            uci_go_future = uci_parse_go(input, position, table, &info);
         }
         else if (input.rfind("setoption", 0) == 0)
         {
@@ -225,8 +239,15 @@ void uci_loop(void) {
         {
             position->display();
         }
+        else if (input == "stop")
+        {
+            info.stopped = true;
+            uci_go_future.wait();
+        }
         else if (input == "quit")
         {
+            info.stopped = true;
+            uci_go_future.wait();
             break;
         }
     }
