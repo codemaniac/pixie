@@ -11,7 +11,7 @@
 #include <iostream>
 #include <memory>
 #include <unistd.h>
-#ifdef WIN32
+#ifdef _WIN32
     #include "windows.h"
 #endif
 
@@ -64,7 +64,7 @@ struct SearchData {
 
 // http://home.arcor.de/dreamlike/chess/
 int InputWaiting() {
-#ifndef WIN32
+#ifndef _WIN32
     fd_set         readfds;
     struct timeval tv;
     FD_ZERO(&readfds);

@@ -1,6 +1,6 @@
 workspace "pixie"
     configurations { "Debug", "Test", "Release" }
-    platforms { "macos64", "linux64" }
+    platforms { "macos64", "linux64", "windows64" }
 
 project "pixie"
     kind "ConsoleApp"
@@ -18,6 +18,10 @@ project "pixie"
 
     filter { "platforms:linux64" }
         system "linux"
+        architecture "x86_64"
+
+    filter { "platforms:windows64" }
+        system "windows"
         architecture "x86_64"
 
     filter { "configurations:Debug" }
