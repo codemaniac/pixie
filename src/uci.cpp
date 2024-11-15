@@ -159,7 +159,7 @@ static void uci_parse_position(const std::string& command, std::unique_ptr<Posit
     }
 
     int moves_pos = command.find("moves");
-    if (moves_pos != std::string::npos)
+    if (moves_pos != (int) std::string::npos)
     {
         std::string        moves = command.substr(moves_pos + 6);
         std::string        move;

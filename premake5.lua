@@ -25,20 +25,21 @@ project "pixie"
         architecture "x86_64"
 
     filter { "configurations:Debug" }
-        buildoptions { "-fsanitize=undefined" }
-        linkoptions { "-fsanitize=undefined" }
+        buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
+        linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
 
     filter { "configurations:Test" }
-        buildoptions { "-fsanitize=undefined" }
-        linkoptions { "-fsanitize=undefined" }
+        buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
+        linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
         flags { "FatalWarnings" }
         defines { "NDEBUG" }
         optimize "Speed"
 
     filter { "configurations:Release" }
+        buildoptions { "-Wall", "-Wextra"}
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"

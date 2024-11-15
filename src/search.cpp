@@ -241,7 +241,9 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
     // Score moves for move ordering
     search_score_moves(&capture_moves, position, table, data);
 
+#ifdef DEBUG
     uint32_t legal_moves_count = 0;
+#endif
 
     for (uint32_t i = 0; i < capture_moves.size(); i++)
     {
@@ -256,7 +258,9 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
             continue;
         }
         info->nodes++;
+#ifdef DEBUG
         legal_moves_count++;
+#endif
         const int32_t score = -search_quiescence(position, -beta, -alpha, table, info, data);
         position->move_undo();
         if (info->stopped)
