@@ -16,7 +16,6 @@ clean:
 
 dir:
 	@mkdir -p $(OBJ_DIR)
-	@mkdir -p $(BIN_DIR)
 
 pixie: main.o bench.o board.o eval.o fen.o move.o perft.o position.o search.o threadpool.o tt.o uci.o utils.o
 	@echo "==== Building pixie ===="
