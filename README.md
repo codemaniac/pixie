@@ -6,8 +6,6 @@ A free UCI chess engine
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![emoji-log](https://cdn.rawgit.com/ahmadawais/stuff/ca97874/emoji-log/flat-round.svg)](https://github.com/ahmadawais/Emoji-Log/)
 
-OpenBench is the primary testing framework used for the development of Pixie. The primary instance of OpenBench can be found at [https://pixiechess.pythonanywhere.com/](https://pixiechess.pythonanywhere.com/)
-
 # Compiling pixie
 
 ## On MacOS 64-bit
@@ -22,6 +20,15 @@ make config=release_macos64
 ```
 premake5 gmake2
 make config=release_linux64
+```
+
+## On Windows 64-bit
+
+Requires MinGW 64-bit to be installed and added to `path` using [msys2](https://www.msys2.org)
+
+```
+premake5 gmake2
+make config=release_windows64
 ```
 
 # Debugging

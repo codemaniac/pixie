@@ -5,12 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.7.1]
 
 ### Added
 
 - OpenBench support
+- `bench` command
+- Checks for undefined behaviour, address sanitization, and compiler warning flags
 - Windows support
+- `Makefile` to repository
+
+### Changed
+
+- PRNG function
+- 64-bit multiplication for Magic bitboards
+- UCI `go` command to process asynchronously
+
+### Tested Platformms
+
+- macOS Ventura on 2.3 GHz Dual-Core Intel Core i5 64-bit CPU with 8 GB 2133 MHz LPDDR3 Memory
+- Ubuntu 24.04 (LTS) x64 on 4-core Intel processor with 8 GB Memory
+- Windows 11 64-bit
 
 ## [0.7.0]
 
@@ -262,3 +277,4 @@ SPRT: llr 2.97 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
 [0.5.1]: https://github.com/codemaniac/pixie/releases/tag/v0.5.1
 [0.6.0]: https://github.com/codemaniac/pixie/releases/tag/v0.6.0
 [0.7.0]: https://github.com/codemaniac/pixie/releases/tag/v0.7.0
+[0.7.1]: https://github.com/codemaniac/pixie/releases/tag/v0.7.1
