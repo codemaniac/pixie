@@ -67,6 +67,7 @@ TEST_CASE("testing Transposition Table store and probe") {
     CHECK(ttdata.flag == EXACT);
     CHECK(ttdata.value == 100);
     CHECK(ttdata.move == m);
+    CHECK(ttdata.move.get_score() == MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(BISHOP, BISHOP)]);
     CHECK(ttdata.is_valid == true);
 }
 
