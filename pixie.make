@@ -70,6 +70,44 @@ ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -fsanitize
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -fsanitize=undefined -fsanitize=address
 
+else ifeq ($(config),unittest_macos64)
+ifeq ($(origin CC), default)
+  CC = clang
+endif
+ifeq ($(origin CXX), default)
+  CXX = clang++
+endif
+ifeq ($(origin AR), default)
+  AR = ar
+endif
+TARGETDIR = bin/UnitTest
+TARGET = $(TARGETDIR)/pixie
+OBJDIR = obj/macos64/UnitTest
+DEFINES += -DNDEBUG
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -m64
+
+else ifeq ($(config),unittest_linux64)
+RESCOMP = windres
+TARGETDIR = bin/UnitTest
+TARGET = $(TARGETDIR)/pixie
+OBJDIR = obj/linux64/UnitTest
+DEFINES += -DNDEBUG
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
+
+else ifeq ($(config),unittest_windows64)
+RESCOMP = windres
+TARGETDIR = bin/UnitTest
+TARGET = $(TARGETDIR)/pixie.exe
+OBJDIR = obj/windows64/UnitTest
+DEFINES += -DNDEBUG
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
+
 else ifeq ($(config),test_macos64)
 ifeq ($(origin CC), default)
   CC = clang
@@ -158,32 +196,112 @@ endif
 GENERATED :=
 OBJECTS :=
 
-GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/board.o
 GENERATED += $(OBJDIR)/eval.o
 GENERATED += $(OBJDIR)/fen.o
-GENERATED += $(OBJDIR)/main.o
 GENERATED += $(OBJDIR)/move.o
 GENERATED += $(OBJDIR)/perft.o
 GENERATED += $(OBJDIR)/position.o
 GENERATED += $(OBJDIR)/search.o
 GENERATED += $(OBJDIR)/threadpool.o
 GENERATED += $(OBJDIR)/tt.o
-GENERATED += $(OBJDIR)/uci.o
 GENERATED += $(OBJDIR)/utils.o
-OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/board.o
 OBJECTS += $(OBJDIR)/eval.o
 OBJECTS += $(OBJDIR)/fen.o
-OBJECTS += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/move.o
 OBJECTS += $(OBJDIR)/perft.o
 OBJECTS += $(OBJDIR)/position.o
 OBJECTS += $(OBJDIR)/search.o
 OBJECTS += $(OBJDIR)/threadpool.o
 OBJECTS += $(OBJDIR)/tt.o
-OBJECTS += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/utils.o
+
+ifeq ($(config),debug_macos64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),debug_linux64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),debug_windows64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),unittest_macos64)
+GENERATED += $(OBJDIR)/test_pixie.o
+OBJECTS += $(OBJDIR)/test_pixie.o
+
+else ifeq ($(config),unittest_linux64)
+GENERATED += $(OBJDIR)/test_pixie.o
+OBJECTS += $(OBJDIR)/test_pixie.o
+
+else ifeq ($(config),unittest_windows64)
+GENERATED += $(OBJDIR)/test_pixie.o
+OBJECTS += $(OBJDIR)/test_pixie.o
+
+else ifeq ($(config),test_macos64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),test_linux64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),test_windows64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),release_macos64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),release_linux64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+else ifeq ($(config),release_windows64)
+GENERATED += $(OBJDIR)/bench.o
+GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/uci.o
+OBJECTS += $(OBJDIR)/bench.o
+OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/uci.o
+
+endif
 
 # Rules
 # #############################################
@@ -247,9 +365,6 @@ endif
 # File Rules
 # #############################################
 
-$(OBJDIR)/bench.o: src/bench.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/board.o: src/board.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -257,9 +372,6 @@ $(OBJDIR)/eval.o: src/eval.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/fen.o: src/fen.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/main.o: src/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/move.o: src/move.cpp
@@ -280,12 +392,125 @@ $(OBJDIR)/threadpool.o: src/threadpool.cpp
 $(OBJDIR)/tt.o: src/tt.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/uci.o: src/uci.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/utils.o: src/utils.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+ifeq ($(config),debug_macos64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),debug_linux64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),debug_windows64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),unittest_macos64)
+$(OBJDIR)/test_pixie.o: test/test_pixie.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),unittest_linux64)
+$(OBJDIR)/test_pixie.o: test/test_pixie.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),unittest_windows64)
+$(OBJDIR)/test_pixie.o: test/test_pixie.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),test_macos64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),test_linux64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),test_windows64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),release_macos64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),release_linux64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),release_windows64)
+$(OBJDIR)/bench.o: src/bench.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+endif
 
 -include $(OBJECTS:%.o=%.d)
 ifneq (,$(PCH))

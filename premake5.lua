@@ -1,5 +1,5 @@
 workspace "pixie"
-    configurations { "Debug", "Test", "Release" }
+    configurations { "Debug", "UnitTest", "Test", "Release" }
     platforms { "macos64", "linux64", "windows64" }
 
 project "pixie"
@@ -30,6 +30,21 @@ project "pixie"
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
+
+    filter{"configurations:UnitTest"}
+        files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
+        removefiles{
+            "src/main.cpp",
+            "src/include/bench.h",
+            "src/bench.cpp",
+            "src/include/uci.h",
+            "src/uci.cpp",
+            "src/pypixie.cpp"
+        }
+        buildoptions{"-Wall", "-Wextra"}
+        flags{"FatalWarnings"}
+        defines{"NDEBUG"}
+        optimize "Speed"
 
     filter { "configurations:Test" }
         buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
