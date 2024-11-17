@@ -2,6 +2,7 @@
 #define SEARCH_H
 
 #include "position.h"
+#include "threadpool.h"
 #include "tt.h"
 #include <cstdint>
 #include <memory>
@@ -17,13 +18,14 @@ struct SearchInfo {
     uint64_t stoptime;
     bool     timeset;
     uint8_t  movestogo;
-    uint64_t nodes;
     bool     stopped;
     bool     use_iterative;
     bool     use_uci;
 };
 
-int32_t
-search(std::unique_ptr<Position>&, std::unique_ptr<TranspositionTable>& table, SearchInfo* info);
+std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&           position,
+                                    std::unique_ptr<TranspositionTable>& table,
+                                    std::unique_ptr<ThreadPool>&         pool,
+                                    SearchInfo*                          info);
 
 #endif

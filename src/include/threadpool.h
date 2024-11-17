@@ -10,6 +10,8 @@
 
 class ThreadPool {
    private:
+    size_t nthreads;
+
     // Thread workers
     std::vector<std::thread> workers;
 
@@ -28,7 +30,8 @@ class ThreadPool {
     ~ThreadPool();
 
     template<class F, class... Args>
-    auto enqueue(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>>;
+    auto   enqueue(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>>;
+    size_t size() const;
 };
 
 // Function to add tasks to the thread pool

@@ -14,23 +14,31 @@ enum TTFlag : uint8_t {
     EXACT,
 };
 
-struct TTEntry {
-    uint64_t hash;
-    uint8_t  depth;
-    uint8_t  age;
-    TTFlag   flag;
-    int32_t  value;
-    Move     move;
-    bool     is_valid;
+struct TTData {
+    uint8_t depth;  // 6 bits
+    TTFlag  flag;   // 2 bits
+    int32_t value;  // 16 bits + 1 bit for overflow
+    Move    move;   // 36 bits
+    bool    is_valid;
 
-    TTEntry() {
-        this->hash     = 0ULL;
+    TTData() {
         this->depth    = 0;
-        this->age      = 0;
         this->flag     = NONE;
         this->value    = 0;
         this->move     = Move();
         this->is_valid = false;
+    }
+};
+
+struct TTEntry {
+    uint64_t key;
+    uint64_t data;
+    uint8_t  age;
+
+    TTEntry() {
+        this->key  = 0ULL;
+        this->data = 0ULL;
+        this->age  = 0;
     }
 };
 
@@ -59,7 +67,7 @@ class TranspositionTable {
                    const TTFlag               flag,
                    int32_t                    value,
                    const Move                 move);
-    bool     probe(std::unique_ptr<Position>& position, TTEntry* entry) const;
+    bool     probe(std::unique_ptr<Position>& position, TTData* ttdata) const;
     uint64_t get_size() const;
 };
 

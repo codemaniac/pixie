@@ -14,10 +14,9 @@
 #define PROGRAM_NAME "pixie"
 #define VERSION "0.7.1"
 
-SearchInfo info;
-
 static void uci_parse_setoption(const std::string&                   command,
-                                std::unique_ptr<TranspositionTable>& table) {
+                                std::unique_ptr<TranspositionTable>& table,
+                                std::unique_ptr<ThreadPool>&         pool) {
     std::istringstream iss(command);
     std::string        cmd, name, id, valuename, value;
 
@@ -26,14 +25,21 @@ static void uci_parse_setoption(const std::string&                   command,
     if (id == "Hash")
     {
         const int ttsize = std::stoi(value);
-        if (ttsize > 0)
+        if (ttsize >= 1 && ttsize <= 256)
             table = std::make_unique<TranspositionTable>(ttsize);
+    }
+    else if (id == "Threads")
+    {
+        const int threadpool_size = std::stoi(value);
+        if (threadpool_size >= 1 && threadpool_size <= 8)
+            pool = std::make_unique<ThreadPool>(threadpool_size);
     }
 }
 
 static std::future<void> uci_parse_go(const std::string&                   command,
                                       std::unique_ptr<Position>&           position,
                                       std::unique_ptr<TranspositionTable>& table,
+                                      std::unique_ptr<ThreadPool>&         pool,
                                       SearchInfo*                          info) {
     std::istringstream iss(command);
     std::string        token;
@@ -120,12 +126,11 @@ static std::future<void> uci_parse_go(const std::string&                   comma
     if (depth == -1)
         depth = 64;
 
-    info->depth         = (uint8_t) depth;
+    info->depth         = depth;
     info->timeset       = false;
     info->starttime     = utils_get_current_time_in_milliseconds();
     info->stoptime      = 0;
     info->stopped       = false;
-    info->nodes         = 0ULL;
     info->use_iterative = true;
     info->use_uci       = true;
 
@@ -137,9 +142,9 @@ static std::future<void> uci_parse_go(const std::string&                   comma
         info->stoptime = info->starttime + time + inc;
     }
 
-    std::future<void> f = std::async(std::launch::async, [&position, &table, &info] {
+    std::future<void> f = std::async(std::launch::async, [&position, &table, &pool, &info] {
         std::unique_ptr<Position> position_clone = std::make_unique<Position>(*position.get());
-        (void) search(position_clone, table, info);
+        (void) search(position_clone, table, pool, info);
     });
 
     return f;
@@ -195,6 +200,7 @@ void uci_loop(void) {
     position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(16);
+    std::unique_ptr<ThreadPool>         pool     = std::make_unique<ThreadPool>(2);
     SearchInfo                          info;
     std::future<void>                   uci_go_future;
 
@@ -207,7 +213,7 @@ void uci_loop(void) {
             std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
             std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
             std::cout << "option name Hash type spin default 16 min 1 max 256" << std::endl;
-            std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+            std::cout << "option name Threads type spin default 2 min 1 max 8" << std::endl;
             std::cout << "uciok" << std::endl;
         }
         else if (input == "isready")
@@ -229,11 +235,11 @@ void uci_loop(void) {
         else if (input.rfind("go", 0) == 0)
         {
             info          = SearchInfo();
-            uci_go_future = uci_parse_go(input, position, table, &info);
+            uci_go_future = uci_parse_go(input, position, table, pool, &info);
         }
         else if (input.rfind("setoption", 0) == 0)
         {
-            uci_parse_setoption(input, table);
+            uci_parse_setoption(input, table, pool);
         }
         else if (input == "display")
         {

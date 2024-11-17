@@ -4,7 +4,21 @@
 #include <cassert>
 #include <cstdint>
 
+#define INF_BOUND 52000
 #define SEARCH_MATE_SCORE 48000
+
+static constexpr uint64_t
+FOLD_DATA(const uint8_t depth, const TTFlag flag, const int32_t value, const uint64_t move_id) {
+    return ((move_id << 25) | ((value + INF_BOUND) << 8) | (flag << 6) | depth);
+}
+static constexpr uint8_t GET_DEPTH(const uint64_t data) { return (data & 0x3F); }
+static constexpr TTFlag  GET_FLAG(const uint64_t data) {
+    return (static_cast<TTFlag>((data >> 6) & 0x3));
+}
+static constexpr int32_t GET_VALUE(const uint64_t data) {
+    return (((data >> 8) & 0x1FFFF) - INF_BOUND);
+}
+static constexpr uint32_t GET_MOVE_ID(const uint64_t data) { return (data >> 25); }
 
 TranspositionTable::TranspositionTable(const uint8_t size_in_mb) {
     this->size = (size_in_mb * 0x100000) / sizeof(TTEntry);
@@ -42,7 +56,7 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
 
     bool replace = false;
 
-    if (this->entries[index].hash == 0ULL)
+    if (this->entries[index].key == 0ULL)
     {
         replace = true;
 #ifdef DEBUG
@@ -56,7 +70,7 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
         this->new_writes_age++;
 #endif
     }
-    else if (this->entries[index].depth <= depth)
+    else if (GET_DEPTH(this->entries[index].data) <= depth)
     {
         replace = true;
 #ifdef DEBUG
@@ -72,29 +86,30 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
     else if (value > SEARCH_MATE_SCORE)
         value += position->get_ply_count();
 
-    this->entries[index].hash     = position->get_hash();
-    this->entries[index].depth    = depth;
-    this->entries[index].age      = this->current_age;
-    this->entries[index].flag     = flag;
-    this->entries[index].value    = value;
-    this->entries[index].move     = move;
-    this->entries[index].is_valid = true;
+    const uint64_t data = FOLD_DATA(depth, flag, value, move.get_full_id());
+    const uint64_t key  = hash ^ data;
+
+    this->entries[index].key  = key;
+    this->entries[index].data = data;
+    this->entries[index].age  = this->current_age;
 }
 
-bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTEntry* entry) const {
+bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTData* ttdata) const {
     const uint64_t hash  = position->get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);
 
-    if (this->entries[index].hash == hash)
+    const uint64_t key  = this->entries[index].key;
+    const uint64_t data = this->entries[index].data;
+
+    if ((hash ^ data) == key)
     {
-        entry->hash     = this->entries[index].hash;
-        entry->depth    = this->entries[index].depth;
-        entry->age      = this->entries[index].age;
-        entry->flag     = this->entries[index].flag;
-        entry->value    = this->entries[index].value;
-        entry->move     = this->entries[index].move;
-        entry->is_valid = this->entries[index].is_valid;
+        ttdata->depth    = GET_DEPTH(data);
+        ttdata->flag     = GET_FLAG(data);
+        ttdata->value    = GET_VALUE(data);
+        ttdata->move     = Move(GET_MOVE_ID(data));
+        ttdata->is_valid = true;
+
         return true;
     }
 

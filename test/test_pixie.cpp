@@ -26,7 +26,7 @@ TEST_CASE("testing Transposition Table store and probe") {
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(2);
 
-    TTEntry entry;
+    TTData ttdata;
     Move    m;
     bool    tthit = false;
 
@@ -40,16 +40,14 @@ TEST_CASE("testing Transposition Table store and probe") {
 
     table->store(position, 1, EXACT, 0, m);
 
-    tthit = table->probe(position, &entry);
+    tthit = table->probe(position, &ttdata);
 
     CHECK(tthit == true);
-    CHECK(entry.hash == position->get_hash());
-    CHECK(entry.depth == 1);
-    CHECK(entry.age == 0);
-    CHECK(entry.flag == EXACT);
-    CHECK(entry.value == 0);
-    CHECK(entry.move == m);
-    CHECK(entry.is_valid == true);
+    CHECK(ttdata.depth == 1);
+    CHECK(ttdata.flag == EXACT);
+    CHECK(ttdata.value == 0);
+    CHECK(ttdata.move == m);
+    CHECK(ttdata.is_valid == true);
 
     tthit = false;
 
@@ -61,17 +59,15 @@ TEST_CASE("testing Transposition Table store and probe") {
 
     table->store(position, 1, EXACT, 100, m);
 
-    entry = TTEntry();
-    tthit = table->probe(position, &entry);
+    ttdata = TTData();
+    tthit = table->probe(position, &ttdata);
 
     CHECK(tthit == true);
-    CHECK(entry.hash == position->get_hash());
-    CHECK(entry.depth == 1);
-    CHECK(entry.age == 0);
-    CHECK(entry.flag == EXACT);
-    CHECK(entry.value == 100);
-    CHECK(entry.move == m);
-    CHECK(entry.is_valid == true);
+    CHECK(ttdata.depth == 1);
+    CHECK(ttdata.flag == EXACT);
+    CHECK(ttdata.value == 100);
+    CHECK(ttdata.move == m);
+    CHECK(ttdata.is_valid == true);
 }
 
 TEST_CASE("testing position repeat") {

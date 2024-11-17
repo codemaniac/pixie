@@ -66,7 +66,7 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
 
     table->clear();
 
-    int32_t eval = search(position, table, &info);
+    int32_t eval = search(position, table, pool, info);
 
     return PyLong_FromLong(eval);
 }

@@ -12,7 +12,8 @@ void bench() {
     position_init();
 
     std::unique_ptr<Position>           position;
-    std::unique_ptr<TranspositionTable> table = std::make_unique<TranspositionTable>(8);
+    std::unique_ptr<TranspositionTable> table = std::make_unique<TranspositionTable>(16);
+    std::unique_ptr<ThreadPool>         pool  = std::make_unique<ThreadPool>(1);
 
     const std::array<std::string, 50> fen_array = {
       "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
@@ -82,13 +83,12 @@ void bench() {
         info.starttime     = utils_get_current_time_in_milliseconds();
         info.stoptime      = 0;
         info.stopped       = false;
-        info.nodes         = 0ULL;
         info.use_iterative = true;
         info.use_uci       = false;
 
-        (void) search(position, table, &info);
+        const std::pair<int32_t, uint64_t> result = search(position, table, pool, &info);
 
-        total_nodes += info.nodes;
+        total_nodes += result.second;
     }
     const uint64_t stoptime = utils_get_current_time_in_milliseconds();
     const uint64_t time     = stoptime - starttime;
