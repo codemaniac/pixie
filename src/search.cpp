@@ -26,8 +26,11 @@ struct SearchData {
     int   tt_hit_success;
     int   tt_hit_fail;
     int   tt_hit_lowerbound;
+    int   tt_hit_lowerbound_ct;
     int   tt_hit_upperbound;
+    int   tt_hit_upperbound_ct;
     int   tt_hit_exact;
+    int   tt_hit_exact_ct;
     int   tt_hit_cut;
     float fh;
     float fhf;
@@ -46,17 +49,20 @@ struct SearchData {
                 this->history_moves[j][i] = 0;
         }
 #ifdef DEBUG
-        this->tt_hit_success    = 0;
-        this->tt_hit_fail       = 0;
-        this->tt_hit_lowerbound = 0;
-        this->tt_hit_upperbound = 0;
-        this->tt_hit_exact      = 0;
-        this->tt_hit_cut        = 0;
-        this->fh                = 0;
-        this->fhf               = 0;
-        this->lmr_cnt           = 0;
-        this->null_cnt          = 0;
-        this->null_cut_cnt      = 0;
+        this->tt_hit_success       = 0;
+        this->tt_hit_fail          = 0;
+        this->tt_hit_lowerbound    = 0;
+        this->tt_hit_lowerbound_ct = 0;
+        this->tt_hit_upperbound    = 0;
+        this->tt_hit_upperbound_ct = 0;
+        this->tt_hit_exact         = 0;
+        this->tt_hit_exact_ct      = 0;
+        this->tt_hit_cut           = 0;
+        this->fh                   = 0;
+        this->fhf                  = 0;
+        this->lmr_cnt              = 0;
+        this->null_cnt             = 0;
+        this->null_cut_cnt         = 0;
 #endif
     }
 };
@@ -69,11 +75,14 @@ static void search_check_up(SearchInfo* info) {
 static void search_score_moves(ArrayList<Move>*                     move_list,
                                std::unique_ptr<Position>&           position,
                                std::unique_ptr<TranspositionTable>& table,
-                               SearchData*                          data) {
-    Move       pvmove;
-    bool       pvmove_found = false;
-    TTData     ttdata;
-    const bool tt_hit = table->probe(position, &ttdata);
+                               SearchData*                          data,
+                               const int                            tid) {
+    Move   pvmove;
+    bool   pvmove_found = false;
+    TTData ttdata;
+    table->tt_mutex.lock();
+    const bool tt_hit = table->probe(position, &ttdata, tid);
+    table->tt_mutex.unlock();
     if (tt_hit && ttdata.is_valid)
     {
         if (ttdata.flag == EXACT)
@@ -149,7 +158,8 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
                                  int32_t                              beta,
                                  std::unique_ptr<TranspositionTable>& table,
                                  SearchInfo*                          info,
-                                 SearchData*                          data) {
+                                 SearchData*                          data,
+                                 const int                            tid) {
 
     if ((data->nodes & 2047) == 0)
         search_check_up(info);
@@ -168,7 +178,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
     ArrayList<Move> capture_moves;
     position->generate_pseudolegal_moves(&capture_moves, true);
     // Score moves for move ordering
-    search_score_moves(&capture_moves, position, table, data);
+    search_score_moves(&capture_moves, position, table, data, tid);
 
 #ifdef DEBUG
     uint32_t legal_moves_count = 0;
@@ -190,7 +200,7 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
 #ifdef DEBUG
         legal_moves_count++;
 #endif
-        const int32_t score = -search_quiescence(position, -beta, -alpha, table, info, data);
+        const int32_t score = -search_quiescence(position, -beta, -alpha, table, info, data, tid);
         position->move_undo();
         if (info->stopped)
             return 0;
@@ -218,7 +228,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                             std::unique_ptr<TranspositionTable>& table,
                             SearchInfo*                          info,
                             SearchData*                          data,
-                            const bool                           do_null) {
+                            const bool                           do_null,
+                            const int                            tid) {
     if ((data->nodes & 2047) == 0)
         search_check_up(info);
 
@@ -228,8 +239,10 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     if (position->get_ply_count() > 0 && !is_pv_node && do_null)
     {
-        TTData     ttdata;
-        const bool tt_hit = table->probe(position, &ttdata);
+        TTData ttdata;
+        table->tt_mutex.lock();
+        const bool tt_hit = table->probe(position, &ttdata, tid);
+        table->tt_mutex.unlock();
         if (tt_hit)
         {
 #ifdef DEBUG
@@ -248,6 +261,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 {
 #ifdef DEBUG
                     data->tt_hit_exact++;
+                    if (ttdata.tid != tid)
+                        data->tt_hit_exact_ct++;
 #endif
                     return ttdata_value;
                 }
@@ -255,6 +270,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 {
 #ifdef DEBUG
                     data->tt_hit_lowerbound++;
+                    if (ttdata.tid != tid)
+                        data->tt_hit_lowerbound_ct++;
 #endif
                     alpha = std::max(alpha, ttdata_value);
                 }
@@ -262,6 +279,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 {
 #ifdef DEBUG
                     data->tt_hit_upperbound++;
+                    if (ttdata.tid != tid)
+                        data->tt_hit_upperbound_ct++;
 #endif
                     beta = std::min(beta, ttdata_value);
                 }
@@ -290,7 +309,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (is_in_check)
         depth++;
     if (depth <= 0)
-        return search_quiescence(position, alpha, beta, table, info, data);
+        return search_quiescence(position, alpha, beta, table, info, data, tid);
 
 #ifdef DEBUG
     const uint64_t hash = position->get_hash();
@@ -313,7 +332,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             r += 1;
         position->move_do_null();
         const int32_t score =
-          -search_think(position, depth - 1 - r, -beta, -beta + 1, table, info, data, false);
+          -search_think(position, depth - 1 - r, -beta, -beta + 1, table, info, data, false, tid);
         position->move_undo_null();
         if (info->stopped)
             return 0;
@@ -341,13 +360,13 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         {
             if (depth == 1)
             {
-                new_score = search_quiescence(position, alpha, beta, table, info, data);
+                new_score = search_quiescence(position, alpha, beta, table, info, data, tid);
                 return std::max(new_score, score);
             }
             score += 175;
             if (score < beta && depth <= 3)
             {
-                new_score = search_quiescence(position, alpha, beta, table, info, data);
+                new_score = search_quiescence(position, alpha, beta, table, info, data, tid);
                 if (new_score < beta)
                     return std::max(new_score, score);
             }
@@ -358,7 +377,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     ArrayList<Move> candidate_moves;
     position->generate_pseudolegal_moves(&candidate_moves, false);
     // Score moves for move ordering
-    search_score_moves(&candidate_moves, position, table, data);
+    search_score_moves(&candidate_moves, position, table, data, tid);
 
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
@@ -383,7 +402,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
         // PVS + LMR
         if (moves_searched == 0)
-            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+            score =
+              -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null, tid);
         else
         {
             // clang-format off
@@ -397,7 +417,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 data->lmr_cnt++;
 #endif
                 score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data,
-                                      do_null);
+                                      do_null, tid);
             }
             else
                 score = alpha + 1;  // Hack to ensure that full-depth search is done
@@ -405,10 +425,10 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             if (score > alpha)
             {
                 score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data,
-                                      do_null);
+                                      do_null, tid);
                 if (score > alpha && score < beta)
-                    score =
-                      -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+                    score = -search_think(position, depth - 1, -beta, -alpha, table, info, data,
+                                          do_null, tid);
             }
         }
         moves_searched++;
@@ -469,7 +489,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         else
             flag = EXACT;
 
-        table->store(position, depth, flag, best_score, best_move_so_far);
+        table->tt_mutex.lock();
+        table->store(position, depth, flag, best_score, best_move_so_far, tid);
+        table->tt_mutex.unlock();
     }
 
     return best_score;
@@ -497,7 +519,9 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
             break;
 
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
-        score = search_think(position, currdepth, alpha, beta, table, info, &data, true);
+        score = search_think(position, currdepth, alpha, beta, table, info, &data, true, tid);
+        const uint64_t stoptime = utils_get_current_time_in_milliseconds();
+        const uint64_t time     = stoptime - starttime;
 
 #ifdef DEBUG
         assert(hash == position->get_hash());
@@ -521,15 +545,15 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
             alpha = score - 100;
             beta  = score + 100;
         }
-        const uint64_t stoptime = utils_get_current_time_in_milliseconds();
-        const uint64_t time     = stoptime - starttime;
 
         if (tid == 1 && info->use_uci && !info->stopped)
         {
             ArrayList<Move, SEARCH_DEPTH_MAX> pv_move_list;
             uint8_t                           pv_count = 0;
             TTData                            ttdata;
-            bool                              tthit = table->probe(position, &ttdata);
+            table->tt_mutex.lock();
+            bool tthit = table->probe(position, &ttdata, tid);
+            table->tt_mutex.unlock();
             while (pv_count++ < currdepth && tthit)
             {
                 if (ttdata.flag != EXACT)
@@ -539,7 +563,9 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
                 if (position->move_do(pv_move))
                 {
                     pv_move_list.push(pv_move);
-                    tthit = table->probe(position, &ttdata);
+                    table->tt_mutex.lock();
+                    tthit = table->probe(position, &ttdata, tid);
+                    table->tt_mutex.unlock();
                 }
                 else
                     break;
@@ -590,19 +616,26 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
     }
 
 #ifdef DEBUG
-    std::cout << std::endl << "THREAD ID = " << tid;
-    std::cout << "\n" << "New Writes Empty = " << table->new_writes_empty;
-    std::cout << "\n" << "New Writes Age = " << table->new_writes_age;
-    std::cout << "\n" << "New Writes Depth = " << table->new_writes_depth;
-    std::cout << "\n" << "TT Hit Success = " << data.tt_hit_success;
-    std::cout << "\n  " << "TT Hit Exact = " << data.tt_hit_exact;
-    std::cout << "\n  " << "TT Hit Lowerbound = " << data.tt_hit_lowerbound;
-    std::cout << "\n  " << "TT Hit Upperbound = " << data.tt_hit_upperbound;
-    std::cout << "\n  " << "TT Hit Cut = " << data.tt_hit_cut;
-    std::cout << "\n" << "TT Hit Fail = " << data.tt_hit_fail;
-    std::cout << "\n" << "LMR Searches = " << data.lmr_cnt;
-    std::cout << "\n" << "NMP = " << data.null_cnt;
-    std::cout << "\n" << "NMP Cuts = " << data.null_cut_cnt << "\n" << std::endl;
+    if (tid == 1)
+    {
+        std::cout << std::endl << "THREAD ID = " << tid;
+        std::cout << "\n" << "New Writes Empty = " << table->new_writes_empty;
+        std::cout << "\n" << "New Writes Age = " << table->new_writes_age;
+        std::cout << "\n" << "New Writes Depth = " << table->new_writes_depth;
+        std::cout << "\n" << "Cross-thread Hits = " << table->crossthread_hit;
+        std::cout << "\n" << "TT Hit Success = " << data.tt_hit_success;
+        std::cout << "\n  " << "TT Hit Exact = " << data.tt_hit_exact;
+        std::cout << "\n  " << "TT Hit Exact Cross-thread = " << data.tt_hit_exact_ct;
+        std::cout << "\n  " << "TT Hit Lowerbound = " << data.tt_hit_lowerbound;
+        std::cout << "\n  " << "TT Hit Lowerbound Cross-thread = " << data.tt_hit_lowerbound_ct;
+        std::cout << "\n  " << "TT Hit Upperbound = " << data.tt_hit_upperbound;
+        std::cout << "\n  " << "TT Hit Upperbound Cross-thread = " << data.tt_hit_upperbound_ct;
+        std::cout << "\n  " << "TT Hit Cut = " << data.tt_hit_cut;
+        std::cout << "\n" << "TT Hit Fail = " << data.tt_hit_fail;
+        std::cout << "\n" << "LMR Searches = " << data.lmr_cnt;
+        std::cout << "\n" << "NMP = " << data.null_cnt;
+        std::cout << "\n" << "NMP Cuts = " << data.null_cut_cnt << "\n" << std::endl;
+    }
 #endif
 
     return {score, data.nodes};
@@ -638,12 +671,14 @@ std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&           positio
     {
         SearchData data;
         int32_t    score = search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX,
-                                        table, info, &data, true);
+                                        table, info, &data, true, 0);
 
         if (info->use_uci)
         {
             TTData ttdata;
-            table->probe(position, &ttdata);
+            table->tt_mutex.lock();
+            table->probe(position, &ttdata, 0);
+            table->tt_mutex.unlock();
             Move bestmove = ttdata.move;
             std::cout << "bestmove ";
             bestmove.display();

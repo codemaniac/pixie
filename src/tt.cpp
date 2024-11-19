@@ -42,6 +42,7 @@ void TranspositionTable::reset_counters() {
     this->new_writes_empty = 0;
     this->new_writes_age   = 0;
     this->new_writes_depth = 0;
+    this->crossthread_hit  = 0;
 }
 #endif
 
@@ -49,7 +50,8 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
                                const uint8_t              depth,
                                const TTFlag               flag,
                                int32_t                    value,
-                               const Move                 move) {
+                               const Move                 move,
+                               const int                  tid) {
     const uint64_t hash  = position->get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);
@@ -92,9 +94,12 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
     this->entries[index].key  = key;
     this->entries[index].data = data;
     this->entries[index].age  = this->current_age;
+#ifdef DEBUG
+    this->entries[index].tid = tid;
+#endif
 }
 
-bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTData* ttdata) const {
+bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTData* ttdata, const int tid) {
     const uint64_t hash  = position->get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);
@@ -104,11 +109,21 @@ bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTData* ttda
 
     if ((hash ^ data) == key)
     {
+#ifdef DEBUG
+        const int tttid = this->entries[index].tid;
+        if (tttid != tid)
+        {
+            this->crossthread_hit++;
+        }
+#endif
         ttdata->depth    = GET_DEPTH(data);
         ttdata->flag     = GET_FLAG(data);
         ttdata->value    = GET_VALUE(data);
         ttdata->move     = Move(GET_MOVE_ID(data));
         ttdata->is_valid = true;
+#ifdef DEBUG
+        ttdata->tid = tttid;
+#endif
 
         return true;
     }

@@ -27,8 +27,8 @@ TEST_CASE("testing Transposition Table store and probe") {
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(2);
 
     TTData ttdata;
-    Move    m;
-    bool    tthit = false;
+    Move   m;
+    bool   tthit = false;
 
     CHECK(table->get_size() > 0);
 
@@ -38,9 +38,9 @@ TEST_CASE("testing Transposition Table store and probe") {
 
     m = Move(E2, E4, MOVE_QUIET_PAWN_DBL_PUSH, NO_PIECE, 0);
 
-    table->store(position, 1, EXACT, 0, m);
+    table->store(position, 1, EXACT, 0, m, 1);
 
-    tthit = table->probe(position, &ttdata);
+    tthit = table->probe(position, &ttdata, 1);
 
     CHECK(tthit == true);
     CHECK(ttdata.depth == 1);
@@ -57,10 +57,10 @@ TEST_CASE("testing Transposition Table store and probe") {
     m = Move(E2, A6, MOVE_CAPTURE, BLACK_BISHOP,
              MOVE_SCORE_MVV_LVA[MOVE_SCORE_MVV_LVA_IDX(BISHOP, BISHOP)]);
 
-    table->store(position, 1, EXACT, 100, m);
+    table->store(position, 1, EXACT, 100, m, 1);
 
     ttdata = TTData();
-    tthit = table->probe(position, &ttdata);
+    tthit  = table->probe(position, &ttdata, 1);
 
     CHECK(tthit == true);
     CHECK(ttdata.depth == 1);
