@@ -61,7 +61,6 @@ class TranspositionTable {
     uint32_t                   current_age;
 
    public:
-    std::mutex tt_mutex;
 #ifdef DEBUG
     int new_writes_empty;
     int new_writes_age;

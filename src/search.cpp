@@ -77,12 +77,10 @@ static void search_score_moves(ArrayList<Move>*                     move_list,
                                std::unique_ptr<TranspositionTable>& table,
                                SearchData*                          data,
                                const int                            tid) {
-    Move   pvmove;
-    bool   pvmove_found = false;
-    TTData ttdata;
-    table->tt_mutex.lock();
+    Move       pvmove;
+    bool       pvmove_found = false;
+    TTData     ttdata;
     const bool tt_hit = table->probe(position, &ttdata, tid);
-    table->tt_mutex.unlock();
     if (tt_hit && ttdata.is_valid)
     {
         if (ttdata.flag == EXACT)
@@ -239,10 +237,8 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     if (position->get_ply_count() > 0 && !is_pv_node && do_null)
     {
-        TTData ttdata;
-        table->tt_mutex.lock();
+        TTData     ttdata;
         const bool tt_hit = table->probe(position, &ttdata, tid);
-        table->tt_mutex.unlock();
         if (tt_hit)
         {
 #ifdef DEBUG
@@ -489,9 +485,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         else
             flag = EXACT;
 
-        table->tt_mutex.lock();
         table->store(position, depth, flag, best_score, best_move_so_far, tid);
-        table->tt_mutex.unlock();
     }
 
     return best_score;
@@ -551,9 +545,7 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
             ArrayList<Move, SEARCH_DEPTH_MAX> pv_move_list;
             uint8_t                           pv_count = 0;
             TTData                            ttdata;
-            table->tt_mutex.lock();
-            bool tthit = table->probe(position, &ttdata, tid);
-            table->tt_mutex.unlock();
+            bool                              tthit = table->probe(position, &ttdata, tid);
             while (pv_count++ < currdepth && tthit)
             {
                 if (ttdata.flag != EXACT)
@@ -563,9 +555,7 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
                 if (position->move_do(pv_move))
                 {
                     pv_move_list.push(pv_move);
-                    table->tt_mutex.lock();
                     tthit = table->probe(position, &ttdata, tid);
-                    table->tt_mutex.unlock();
                 }
                 else
                     break;
@@ -676,9 +666,7 @@ std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&           positio
         if (info->use_uci)
         {
             TTData ttdata;
-            table->tt_mutex.lock();
             table->probe(position, &ttdata, 0);
-            table->tt_mutex.unlock();
             Move bestmove = ttdata.move;
             std::cout << "bestmove ";
             bestmove.display();
