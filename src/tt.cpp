@@ -96,6 +96,8 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
     this->entries[index].age  = this->current_age;
 #ifdef DEBUG
     this->entries[index].tid = tid;
+#else
+    (void) tid;
 #endif
 }
 
@@ -115,6 +117,8 @@ bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTData* ttda
         {
             this->crossthread_hit++;
         }
+#else
+        (void) tid;
 #endif
         ttdata->depth    = GET_DEPTH(data);
         ttdata->flag     = GET_FLAG(data);
