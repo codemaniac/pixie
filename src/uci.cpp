@@ -12,12 +12,11 @@
 #include <string>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.7.1"
-
-SearchInfo info;
+#define VERSION "0.8.0"
 
 static void uci_parse_setoption(const std::string&                   command,
-                                std::unique_ptr<TranspositionTable>& table) {
+                                std::unique_ptr<TranspositionTable>& table,
+                                std::unique_ptr<ThreadPool>&         pool) {
     std::istringstream iss(command);
     std::string        cmd, name, id, valuename, value;
 
@@ -26,15 +25,26 @@ static void uci_parse_setoption(const std::string&                   command,
     if (id == "Hash")
     {
         const int ttsize = std::stoi(value);
-        if (ttsize > 0)
+        if (ttsize >= 1 && ttsize <= 256)
+        {
             table = std::make_unique<TranspositionTable>(ttsize);
+        }
+    }
+    else if (id == "Threads")
+    {
+        const int threadpool_size = std::stoi(value);
+        if (threadpool_size >= 1 && threadpool_size <= 8)
+        {
+            pool = std::make_unique<ThreadPool>(threadpool_size);
+        }
     }
 }
 
-static std::future<void> uci_parse_go(const std::string&                   command,
-                                      std::unique_ptr<Position>&           position,
-                                      std::unique_ptr<TranspositionTable>& table,
-                                      SearchInfo*                          info) {
+static std::future<void> uci_parse_go(const std::string&  command,
+                                      Position*           position,
+                                      TranspositionTable* table,
+                                      ThreadPool*         pool,
+                                      SearchInfo*         info) {
     std::istringstream iss(command);
     std::string        token;
 
@@ -52,10 +62,9 @@ static std::future<void> uci_parse_go(const std::string&                   comma
             depth = value;
 
             std::future<void> f = std::async(std::launch::async, [&position, depth] {
-                std::unique_ptr<Position> position_clone =
-                  std::make_unique<Position>(*position.get());
-                const uint64_t starttime = utils_get_current_time_in_milliseconds();
-                (void) divide(position, depth, true);
+                Position       position_clone = Position(*position);
+                const uint64_t starttime      = utils_get_current_time_in_milliseconds();
+                (void) divide(position_clone, depth, true);
                 const uint64_t stoptime = utils_get_current_time_in_milliseconds();
                 const uint64_t time     = stoptime - starttime;
                 std::cout << "Execution Time (in ms) = " << (unsigned long long) time << std::endl;
@@ -120,12 +129,11 @@ static std::future<void> uci_parse_go(const std::string&                   comma
     if (depth == -1)
         depth = 64;
 
-    info->depth         = (uint8_t) depth;
+    info->depth         = depth;
     info->timeset       = false;
     info->starttime     = utils_get_current_time_in_milliseconds();
     info->stoptime      = 0;
     info->stopped       = false;
-    info->nodes         = 0ULL;
     info->use_iterative = true;
     info->use_uci       = true;
 
@@ -137,15 +145,15 @@ static std::future<void> uci_parse_go(const std::string&                   comma
         info->stoptime = info->starttime + time + inc;
     }
 
-    std::future<void> f = std::async(std::launch::async, [&position, &table, &info] {
-        std::unique_ptr<Position> position_clone = std::make_unique<Position>(*position.get());
-        (void) search(position_clone, table, info);
+    std::future<void> f = std::async(std::launch::async, [&position, &table, &pool, &info] {
+        Position position_clone = Position(*position);
+        (void) search(position_clone, table, pool, info);
     });
 
     return f;
 }
 
-static void uci_parse_position(const std::string& command, std::unique_ptr<Position>& position) {
+static void uci_parse_position(const std::string& command, Position* position) {
     std::istringstream iss(command);
     std::string        token;
     iss >> token;
@@ -195,6 +203,7 @@ void uci_loop(void) {
     position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(16);
+    std::unique_ptr<ThreadPool>         pool     = std::make_unique<ThreadPool>(2);
     SearchInfo                          info;
     std::future<void>                   uci_go_future;
 
@@ -207,7 +216,7 @@ void uci_loop(void) {
             std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
             std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
             std::cout << "option name Hash type spin default 16 min 1 max 256" << std::endl;
-            std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+            std::cout << "option name Threads type spin default 2 min 1 max 8" << std::endl;
             std::cout << "uciok" << std::endl;
         }
         else if (input == "isready")
@@ -216,24 +225,24 @@ void uci_loop(void) {
         }
         else if (input == "ucinewgame")
         {
-            position = std::make_unique<Position>();  // TODO: Check if there is a better way
+            position = std::make_unique<Position>();
             table->clear();
         }
         else if (input.rfind("position", 0) == 0)
         {
-            position = std::make_unique<Position>();  // TODO: Check if there is a better way
-            uci_parse_position(input, position);
+            position = std::make_unique<Position>();
+            uci_parse_position(input, position.get());
             position->reset_ply_count();
             table->reset_for_search();
         }
         else if (input.rfind("go", 0) == 0)
         {
             info          = SearchInfo();
-            uci_go_future = uci_parse_go(input, position, table, &info);
+            uci_go_future = uci_parse_go(input, position.get(), table.get(), pool.get(), &info);
         }
         else if (input.rfind("setoption", 0) == 0)
         {
-            uci_parse_setoption(input, table);
+            uci_parse_setoption(input, table, pool);
         }
         else if (input == "display")
         {
@@ -242,12 +251,14 @@ void uci_loop(void) {
         else if (input == "stop")
         {
             info.stopped = true;
-            uci_go_future.wait();
+            if (uci_go_future.valid())
+                uci_go_future.wait();
         }
         else if (input == "quit")
         {
             info.stopped = true;
-            uci_go_future.wait();
+            if (uci_go_future.valid())
+                uci_go_future.wait();
             break;
         }
     }

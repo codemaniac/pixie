@@ -2,6 +2,7 @@
 #include "include/containers.h"
 #include "include/eval.h"
 #include "include/move.h"
+#include "include/threadpool.h"
 #include "include/tt.h"
 #include "include/utils.h"
 #include <cassert>
@@ -9,7 +10,6 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
-#include <memory>
 
 static const int LMR_FULL_DEPTH_MOVES = 4;
 static const int LMR_REDUCTION_LIMIT  = 3;
@@ -18,14 +18,18 @@ static const int NMP_REDUCTION_FACTOR = 2;
 constexpr uint8_t HISTORY_MOVES_PIECE_IDX(Piece p) { return ((p > 8) ? p - 3 : p - 1); }
 
 struct SearchData {
-    Move killer_moves[2][SEARCH_DEPTH_MAX];
-    int  history_moves[12][SEARCH_DEPTH_MAX];
+    uint64_t nodes;
+    Move     killer_moves[2][SEARCH_DEPTH_MAX];
+    int      history_moves[12][SEARCH_DEPTH_MAX];
 #ifdef DEBUG
     int   tt_hit_success;
     int   tt_hit_fail;
     int   tt_hit_lowerbound;
+    int   tt_hit_lowerbound_ct;
     int   tt_hit_upperbound;
+    int   tt_hit_upperbound_ct;
     int   tt_hit_exact;
+    int   tt_hit_exact_ct;
     int   tt_hit_cut;
     float fh;
     float fhf;
@@ -35,6 +39,7 @@ struct SearchData {
 #endif
 
     SearchData() {
+        nodes = 0ULL;
         for (int i = 0; i < SEARCH_DEPTH_MAX; i++)
         {
             this->killer_moves[0][i] = Move();
@@ -43,17 +48,20 @@ struct SearchData {
                 this->history_moves[j][i] = 0;
         }
 #ifdef DEBUG
-        this->tt_hit_success    = 0;
-        this->tt_hit_fail       = 0;
-        this->tt_hit_lowerbound = 0;
-        this->tt_hit_upperbound = 0;
-        this->tt_hit_exact      = 0;
-        this->tt_hit_cut        = 0;
-        this->fh                = 0;
-        this->fhf               = 0;
-        this->lmr_cnt           = 0;
-        this->null_cnt          = 0;
-        this->null_cut_cnt      = 0;
+        this->tt_hit_success       = 0;
+        this->tt_hit_fail          = 0;
+        this->tt_hit_lowerbound    = 0;
+        this->tt_hit_lowerbound_ct = 0;
+        this->tt_hit_upperbound    = 0;
+        this->tt_hit_upperbound_ct = 0;
+        this->tt_hit_exact         = 0;
+        this->tt_hit_exact_ct      = 0;
+        this->tt_hit_cut           = 0;
+        this->fh                   = 0;
+        this->fhf                  = 0;
+        this->lmr_cnt              = 0;
+        this->null_cnt             = 0;
+        this->null_cut_cnt         = 0;
 #endif
     }
 };
@@ -63,18 +71,20 @@ static void search_check_up(SearchInfo* info) {
         info->stopped = true;
 }
 
-static void search_score_moves(ArrayList<Move>*                     move_list,
-                               std::unique_ptr<Position>&           position,
-                               std::unique_ptr<TranspositionTable>& table,
-                               SearchData*                          data) {
-    Move    pvmove;
-    bool    pvmove_found = false;
-    TTEntry entry;
-    if (table->probe(position, &entry) && entry.is_valid)
+static void search_score_moves(ArrayList<Move>*    move_list,
+                               const Position&     position,
+                               TranspositionTable* table,
+                               const SearchData*   data,
+                               const int           tid) {
+    Move       pvmove;
+    bool       pvmove_found = false;
+    TTData     ttdata;
+    const bool tt_hit = table->probe(position, &ttdata, tid);
+    if (tt_hit && ttdata.is_valid)
     {
-        if (entry.flag == EXACT)
+        if (ttdata.flag == EXACT)
         {
-            pvmove       = entry.move;
+            pvmove       = ttdata.move;
             pvmove_found = true;
         }
     }
@@ -94,13 +104,13 @@ static void search_score_moves(ArrayList<Move>*                     move_list,
         }
         else
         {
-            if (move == data->killer_moves[0][position->get_ply_count()])
+            if (move == data->killer_moves[0][position.get_ply_count()])
                 move_list->at(i).set_score(9000);
-            else if (move == data->killer_moves[1][position->get_ply_count()])
+            else if (move == data->killer_moves[1][position.get_ply_count()])
                 move_list->at(i).set_score(8000);
             else
             {
-                const Piece    move_piece = position->get_piece(move.get_from());
+                const Piece    move_piece = position.get_piece(move.get_from());
                 const uint32_t score      = std::min(
                   7000, data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()]);
                 move_list->at(i).set_score(score);
@@ -117,7 +127,7 @@ static void search_sort_moves(ArrayList<Move>* move_list, const size_t index) {
     }
 }
 
-static bool search_lmr_ok_to_reduce(std::unique_ptr<Position>& position, const Move& move) {
+static bool search_lmr_ok_to_reduce(const Position& position, const Move& move) {
     // Capture move
     if (MOVE_IS_CAPTURE(move.get_flag()))
         return false;
@@ -127,11 +137,11 @@ static bool search_lmr_ok_to_reduce(std::unique_ptr<Position>& position, const M
     if (move.get_score() == 8000)
         return false;
     // Pawn move
-    if (PIECE_GET_TYPE(position->get_piece(move.get_from())) == PAWN)
+    if (PIECE_GET_TYPE(position.get_piece(move.get_from())) == PAWN)
         return false;
     // TODO: Bad Captures (SSE < 0)
     // Moves which give check
-    if (position->is_in_check())
+    if (position.is_in_check())
         return false;
     // Promotion move
     if (MOVE_IS_PROMOTION(move.get_flag()))
@@ -140,19 +150,20 @@ static bool search_lmr_ok_to_reduce(std::unique_ptr<Position>& position, const M
     return true;
 }
 
-static int32_t search_quiescence(std::unique_ptr<Position>&           position,
-                                 int32_t                              alpha,
-                                 int32_t                              beta,
-                                 std::unique_ptr<TranspositionTable>& table,
-                                 SearchInfo*                          info,
-                                 SearchData*                          data) {
+static int32_t search_quiescence(Position&           position,
+                                 int32_t             alpha,
+                                 int32_t             beta,
+                                 TranspositionTable* table,
+                                 SearchInfo*         info,
+                                 SearchData*         data,
+                                 const int           tid) {
 
-    if ((info->nodes & 2047) == 0)
+    if ((data->nodes & 2047) == 0)
         search_check_up(info);
 
-    if (position->get_ply_count() >= SEARCH_DEPTH_MAX - 1)
+    if (position.get_ply_count() >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
-    if (position->is_repeated() || position->get_half_move_clock() >= 100)
+    if (position.is_repeated() || position.get_half_move_clock() >= 100)
         return 0;
 
     int32_t stand_pat = eval_position(position);
@@ -162,9 +173,9 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
         alpha = stand_pat;
     // Generate capture moves
     ArrayList<Move> capture_moves;
-    position->generate_pseudolegal_moves(&capture_moves, true);
+    position.generate_pseudolegal_moves(&capture_moves, true);
     // Score moves for move ordering
-    search_score_moves(&capture_moves, position, table, data);
+    search_score_moves(&capture_moves, position, table, data, tid);
 
 #ifdef DEBUG
     uint32_t legal_moves_count = 0;
@@ -176,18 +187,18 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
         search_sort_moves(&capture_moves, i);
         // Pick top scoring move at i-th position
         const Move move          = capture_moves.at(i);
-        const bool is_valid_move = position->move_do(move);
+        const bool is_valid_move = position.move_do(move);
         if (!is_valid_move)
         {
-            position->move_undo();
+            position.move_undo();
             continue;
         }
-        info->nodes++;
+        data->nodes++;
 #ifdef DEBUG
         legal_moves_count++;
 #endif
-        const int32_t score = -search_quiescence(position, -beta, -alpha, table, info, data);
-        position->move_undo();
+        const int32_t score = -search_quiescence(position, -beta, -alpha, table, info, data, tid);
+        position.move_undo();
         if (info->stopped)
             return 0;
         if (score > alpha)
@@ -207,58 +218,66 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
     return alpha;
 }
 
-static int32_t search_think(std::unique_ptr<Position>&           position,
-                            int32_t                              depth,
-                            int32_t                              alpha,
-                            int32_t                              beta,
-                            std::unique_ptr<TranspositionTable>& table,
-                            SearchInfo*                          info,
-                            SearchData*                          data,
-                            const bool                           do_null) {
-    if ((info->nodes & 2047) == 0)
+static int32_t search_think(Position&           position,
+                            int32_t             depth,
+                            int32_t             alpha,
+                            int32_t             beta,
+                            TranspositionTable* table,
+                            SearchInfo*         info,
+                            SearchData*         data,
+                            const bool          do_null,
+                            const int           tid) {
+    if ((data->nodes & 2047) == 0)
         search_check_up(info);
 
     const int32_t alpha_orig = alpha;
 
     const bool is_pv_node = (beta - alpha) > 1;  // If true, then PV node
 
-    if (position->get_ply_count() > 0 && !is_pv_node && do_null)
+    if (position.get_ply_count() > 0 && !is_pv_node && do_null)
     {
-        TTEntry entry;
-        if (table->probe(position, &entry))
+        TTData     ttdata;
+        const bool tt_hit = table->probe(position, &ttdata, tid);
+        if (tt_hit)
         {
 #ifdef DEBUG
             data->tt_hit_success++;
 #endif
-            if (entry.is_valid && entry.depth >= depth)
+            if (ttdata.is_valid && ttdata.depth >= depth)
             {
-                int32_t ttentry_value = entry.value;
+                int32_t ttdata_value = ttdata.value;
 
-                if (ttentry_value < -SEARCH_MATE_SCORE)
-                    ttentry_value += position->get_ply_count();
-                else if (ttentry_value > SEARCH_MATE_SCORE)
-                    ttentry_value -= position->get_ply_count();
+                if (ttdata_value < -SEARCH_MATE_SCORE)
+                    ttdata_value += position.get_ply_count();
+                else if (ttdata_value > SEARCH_MATE_SCORE)
+                    ttdata_value -= position.get_ply_count();
 
-                if (entry.flag == EXACT)
+                if (ttdata.flag == EXACT)
                 {
 #ifdef DEBUG
                     data->tt_hit_exact++;
+                    if (ttdata.tid != tid)
+                        data->tt_hit_exact_ct++;
 #endif
-                    return ttentry_value;
+                    return ttdata_value;
                 }
-                else if (entry.flag == LOWERBOUND)
+                else if (ttdata.flag == LOWERBOUND)
                 {
 #ifdef DEBUG
                     data->tt_hit_lowerbound++;
+                    if (ttdata.tid != tid)
+                        data->tt_hit_lowerbound_ct++;
 #endif
-                    alpha = std::max(alpha, ttentry_value);
+                    alpha = std::max(alpha, ttdata_value);
                 }
-                else if (entry.flag == UPPERBOUND)
+                else if (ttdata.flag == UPPERBOUND)
                 {
 #ifdef DEBUG
                     data->tt_hit_upperbound++;
+                    if (ttdata.tid != tid)
+                        data->tt_hit_upperbound_ct++;
 #endif
-                    beta = std::min(beta, ttentry_value);
+                    beta = std::min(beta, ttdata_value);
                 }
 
                 if (alpha >= beta)
@@ -266,7 +285,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 #ifdef DEBUG
                     data->tt_hit_cut++;
 #endif
-                    return ttentry_value;
+                    return ttdata_value;
                 }
             }
         }
@@ -276,26 +295,26 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 #endif
     }
 
-    const bool is_in_check = position->is_in_check();
+    const bool is_in_check = position.is_in_check();
 
-    if (position->get_ply_count() >= SEARCH_DEPTH_MAX - 1)
+    if (position.get_ply_count() >= SEARCH_DEPTH_MAX - 1)
         return eval_position(position);
-    if (do_null & position->is_repeated() || position->get_half_move_clock() >= 100)
+    if (do_null & position.is_repeated() || position.get_half_move_clock() >= 100)
         return 0;
     if (is_in_check)
         depth++;
     if (depth <= 0)
-        return search_quiescence(position, alpha, beta, table, info, data);
+        return search_quiescence(position, alpha, beta, table, info, data, tid);
 
 #ifdef DEBUG
-    const uint64_t hash = position->get_hash();
+    const uint64_t hash = position.get_hash();
 #endif
 
     // Null move pruning
     // clang-format off
     if (do_null &&
         depth >= 3 &&
-        position->get_ply_count() > 0 &&
+        position.get_ply_count() > 0 &&
         !is_pv_node &&
         !is_in_check &&
         !eval_is_end_game(position))  // clang-format on
@@ -306,10 +325,10 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         uint8_t r = NMP_REDUCTION_FACTOR;
         if (depth > 6)
             r += 1;
-        position->move_do_null();
+        position.move_do_null();
         const int32_t score =
-          -search_think(position, depth - 1 - r, -beta, -beta + 1, table, info, data, false);
-        position->move_undo_null();
+          -search_think(position, depth - 1 - r, -beta, -beta + 1, table, info, data, false, tid);
+        position.move_undo_null();
         if (info->stopped)
             return 0;
         if (score >= beta)
@@ -322,7 +341,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     }
 
 #ifdef DEBUG
-    assert(hash == position->get_hash());
+    assert(hash == position.get_hash());
 #endif
 
     // Razoring
@@ -336,13 +355,13 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         {
             if (depth == 1)
             {
-                new_score = search_quiescence(position, alpha, beta, table, info, data);
+                new_score = search_quiescence(position, alpha, beta, table, info, data, tid);
                 return std::max(new_score, score);
             }
             score += 175;
             if (score < beta && depth <= 3)
             {
-                new_score = search_quiescence(position, alpha, beta, table, info, data);
+                new_score = search_quiescence(position, alpha, beta, table, info, data, tid);
                 if (new_score < beta)
                     return std::max(new_score, score);
             }
@@ -351,9 +370,9 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
 
     // Generate candidate moves
     ArrayList<Move> candidate_moves;
-    position->generate_pseudolegal_moves(&candidate_moves, false);
+    position.generate_pseudolegal_moves(&candidate_moves, false);
     // Score moves for move ordering
-    search_score_moves(&candidate_moves, position, table, data);
+    search_score_moves(&candidate_moves, position, table, data, tid);
 
     Move     best_move_so_far;
     int32_t  best_score        = -SEARCH_SCORE_MAX;
@@ -366,19 +385,20 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         search_sort_moves(&candidate_moves, i);
         // Pick top scoring move at i-th position
         const Move move          = candidate_moves.at(i);
-        const bool is_valid_move = position->move_do(move);
+        const bool is_valid_move = position.move_do(move);
         if (!is_valid_move)
         {
-            position->move_undo();
+            position.move_undo();
             continue;
         }
-        info->nodes++;
+        data->nodes++;
         legal_moves_count++;
         int32_t score = -SEARCH_SCORE_MAX;
 
         // PVS + LMR
         if (moves_searched == 0)
-            score = -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+            score =
+              -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null, tid);
         else
         {
             // clang-format off
@@ -392,7 +412,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 data->lmr_cnt++;
 #endif
                 score = -search_think(position, depth - 2, -alpha - 1, -alpha, table, info, data,
-                                      do_null);
+                                      do_null, tid);
             }
             else
                 score = alpha + 1;  // Hack to ensure that full-depth search is done
@@ -400,15 +420,15 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
             if (score > alpha)
             {
                 score = -search_think(position, depth - 1, -alpha - 1, -alpha, table, info, data,
-                                      do_null);
+                                      do_null, tid);
                 if (score > alpha && score < beta)
-                    score =
-                      -search_think(position, depth - 1, -beta, -alpha, table, info, data, do_null);
+                    score = -search_think(position, depth - 1, -beta, -alpha, table, info, data,
+                                          do_null, tid);
             }
         }
         moves_searched++;
 
-        position->move_undo();
+        position.move_undo();
         if (info->stopped)
             return 0;
         if (score > best_score)
@@ -428,7 +448,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                     // Store killer quite moves
                     if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
                     {
-                        const int32_t ply          = position->get_ply_count();
+                        const int32_t ply          = position.get_ply_count();
                         data->killer_moves[1][ply] = data->killer_moves[0][ply];
                         data->killer_moves[0][ply] = move;
                     }
@@ -438,7 +458,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
                 // Store history quite moves
                 if (MOVE_IS_CAPTURE(move.get_flag()) == 0)
                 {
-                    const Piece move_piece = position->get_piece(move.get_from());
+                    const Piece move_piece = position.get_piece(move.get_from());
                     data->history_moves[HISTORY_MOVES_PIECE_IDX(move_piece)][move.get_to()] +=
                       depth;
                 }
@@ -449,7 +469,7 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     if (legal_moves_count == 0)
     {
         if (is_in_check)
-            return -SEARCH_MATE_VALUE + position->get_ply_count();
+            return -SEARCH_MATE_VALUE + position.get_ply_count();
         else
             return 0;
     }
@@ -464,134 +484,118 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
         else
             flag = EXACT;
 
-        table->store(position, depth, flag, best_score, best_move_so_far);
+        table->store(position, depth, flag, best_score, best_move_so_far, tid);
     }
 
     return best_score;
 }
 
-int32_t search(std::unique_ptr<Position>&           position,
-               std::unique_ptr<TranspositionTable>& table,
-               SearchInfo*                          info) {
-#ifdef DEBUG
-    table->reset_counters();
-#endif
+static std::pair<int32_t, uint64_t>
+search_worker(Position& position, TranspositionTable* table, SearchInfo* info, const int tid) {
     SearchData data;
 
     int32_t score = -SEARCH_SCORE_MAX;
     Move    bestmove;
 
-    if (info->use_iterative)
-    {
-        int32_t alpha = -SEARCH_SCORE_MAX;
-        int32_t beta  = SEARCH_SCORE_MAX;
+    int32_t alpha = -SEARCH_SCORE_MAX;
+    int32_t beta  = SEARCH_SCORE_MAX;
 #ifdef DEBUG
-        int            researches = 0;
-        const uint64_t hash       = position->get_hash();
+    int            researches = 0;
+    const uint64_t hash       = position.get_hash();
 #endif
+
+    for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
+    {
+        if (info->stopped)
+            break;
 
         const uint64_t starttime = utils_get_current_time_in_milliseconds();
-        for (uint8_t currdepth = 1; currdepth <= info->depth; currdepth++)
+        score = search_think(position, currdepth, alpha, beta, table, info, &data, true, tid);
+        const uint64_t stoptime = utils_get_current_time_in_milliseconds();
+        const uint64_t time     = stoptime - starttime;
+
+#ifdef DEBUG
+        assert(hash == position.get_hash());
+#endif
+
+        // Aspiration Windows
+        if ((score <= alpha) || (score >= beta))
         {
-            score = search_think(position, currdepth, alpha, beta, table, info, &data, true);
-            const uint64_t stoptime = utils_get_current_time_in_milliseconds();
-            const uint64_t time     = stoptime - starttime;
-
-            if (info->stopped)
-                break;
-
+            // We fell outside the window
+            // Try again with a full-width window (and the same depth).
+            alpha = -SEARCH_SCORE_MAX;
+            beta  = SEARCH_SCORE_MAX;
+            currdepth--;
 #ifdef DEBUG
-            assert(hash == position->get_hash());
+            researches++;
 #endif
+            continue;
+        }
+        else
+        {
+            alpha = score - 100;
+            beta  = score + 100;
+        }
 
-            // Aspiration Windows
-            if ((score <= alpha) || (score >= beta))
+        if (tid == 1 && info->use_uci && !info->stopped)
+        {
+            ArrayList<Move, SEARCH_DEPTH_MAX> pv_move_list;
+            uint8_t                           pv_count = 0;
+            TTData                            ttdata;
+            bool                              tthit = table->probe(position, &ttdata, tid);
+            while (pv_count++ < currdepth && tthit)
             {
-                // We fell outside the window
-                // Try again with a full-width window (and the same depth).
-                alpha = -SEARCH_SCORE_MAX;
-                beta  = SEARCH_SCORE_MAX;
-                currdepth--;
-#ifdef DEBUG
-                researches++;
-#endif
-                continue;
+                if (ttdata.flag != EXACT)
+                    break;
+
+                const Move pv_move = ttdata.move;
+                if (position.move_do(pv_move))
+                {
+                    pv_move_list.push(pv_move);
+                    tthit = table->probe(position, &ttdata, tid);
+                }
+                else
+                    break;
             }
+
+            while (position.get_ply_count() > 0)
+                position.move_undo();
+
+#ifdef DEBUG
+            assert(hash == position.get_hash());
+#endif
+
+            if (pv_move_list.size() > 0)
+                bestmove = pv_move_list.at(0);
+
+            if (score > -SEARCH_MATE_VALUE && score < -SEARCH_MATE_SCORE)
+                std::cout << "info score mate " << (int) (-(score + SEARCH_MATE_VALUE) / 2 - 1);
+            else if (score > SEARCH_MATE_SCORE && score < SEARCH_MATE_VALUE)
+                std::cout << "info score mate " << (int) ((SEARCH_MATE_VALUE - score) / 2 + 1);
             else
-            {
-                alpha = score - 100;
-                beta  = score + 100;
-            }
+                std::cout << "info score cp " << (int) score;
 
-            if (!info->stopped)
-            {
-                ArrayList<Move, SEARCH_DEPTH_MAX> pv_move_list;
-                uint8_t                           pv_count = 0;
-                TTEntry                           entry;
-                while (pv_count++ < currdepth && table->probe(position, &entry))
-                {
-                    if (entry.flag != EXACT)
-                        break;
-
-                    const Move pv_move = entry.move;
-                    if (position->move_do(pv_move))
-                        pv_move_list.push(pv_move);
-                    else
-                        break;
-                }
-
-                while (position->get_ply_count() > 0)
-                    position->move_undo();
-
+            std::cout << " depth " << (unsigned int) currdepth;
+            std::cout << " nodes " << (unsigned long long) data.nodes;
+            std::cout << " time " << (unsigned long long) time;
+            std::cout << " nps " << (unsigned long long) (data.nodes * 1000 / (time + 1));
 #ifdef DEBUG
-                assert(hash == position->get_hash());
+            std::cout << " ord " << std::fixed << std::setprecision(4)
+                      << (float) (data.fhf / data.fh);
+            std::cout << " res " << (int) researches;
 #endif
+            std::cout << " pv ";
 
-                if (pv_move_list.size() > 0)
-                    bestmove = pv_move_list.at(0);
-
-                if (info->use_uci)
-                {
-                    if (score > -SEARCH_MATE_VALUE && score < -SEARCH_MATE_SCORE)
-                        std::cout << "info score mate "
-                                  << (int) (-(score + SEARCH_MATE_VALUE) / 2 - 1);
-                    else if (score > SEARCH_MATE_SCORE && score < SEARCH_MATE_VALUE)
-                        std::cout << "info score mate "
-                                  << (int) ((SEARCH_MATE_VALUE - score) / 2 + 1);
-                    else
-                        std::cout << "info score cp " << (int) score;
-
-                    std::cout << " depth " << (unsigned int) currdepth;
-                    std::cout << " nodes " << (unsigned long long) info->nodes;
-                    std::cout << " time " << (unsigned long long) time;
-                    std::cout << " nps " << (unsigned long long) (info->nodes * 1000 / (time + 1));
-#ifdef DEBUG
-                    std::cout << " ord " << std::fixed << std::setprecision(4)
-                              << (float) (data.fhf / data.fh);
-                    std::cout << " res " << (int) researches;
-#endif
-                    std::cout << " pv ";
-
-                    for (const Move& pv_move : pv_move_list)
-                    {
-                        pv_move.display();
-                        std::cout << " ";
-                    }
-                    std::cout << std::endl;
-                }
+            for (const Move& pv_move : pv_move_list)
+            {
+                pv_move.display();
+                std::cout << " ";
             }
+            std::cout << std::endl;
         }
     }
-    else
-    {
-        score = search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX, table,
-                             info, &data, true);
-        TTEntry entry;
-        table->probe(position, &entry);
-        bestmove = entry.move;
-    }
 
-    if (info->use_uci)
+    if (tid == 1 && info->use_uci)
     {
         std::cout << "bestmove ";
         bestmove.display();
@@ -599,19 +603,70 @@ int32_t search(std::unique_ptr<Position>&           position,
     }
 
 #ifdef DEBUG
-    std::cout << std::endl << "New Writes Empty = " << table->new_writes_empty;
-    std::cout << "\n" << "New Writes Age = " << table->new_writes_age;
-    std::cout << "\n" << "New Writes Depth = " << table->new_writes_depth;
-    std::cout << "\n" << "TT Hit Success = " << data.tt_hit_success;
-    std::cout << "\n  " << "TT Hit Exact = " << data.tt_hit_exact;
-    std::cout << "\n  " << "TT Hit Lowerbound = " << data.tt_hit_lowerbound;
-    std::cout << "\n  " << "TT Hit Upperbound = " << data.tt_hit_upperbound;
-    std::cout << "\n  " << "TT Hit Cut = " << data.tt_hit_cut;
-    std::cout << "\n" << "TT Hit Fail = " << data.tt_hit_fail;
-    std::cout << "\n" << "LMR Searches = " << data.lmr_cnt;
-    std::cout << "\n" << "NMP = " << data.null_cnt;
-    std::cout << "\n" << "NMP Cuts = " << data.null_cut_cnt << "\n" << std::endl;
+    if (tid == 1)
+    {
+        std::cout << std::endl << "THREAD ID = " << tid;
+        std::cout << "\n" << "New Writes Empty = " << table->new_writes_empty;
+        std::cout << "\n" << "New Writes Age = " << table->new_writes_age;
+        std::cout << "\n" << "New Writes Depth = " << table->new_writes_depth;
+        std::cout << "\n" << "Cross-thread Hits = " << table->crossthread_hit;
+        std::cout << "\n" << "TT Hit Success = " << data.tt_hit_success;
+        std::cout << "\n  " << "TT Hit Exact = " << data.tt_hit_exact;
+        std::cout << "\n  " << "TT Hit Exact Cross-thread = " << data.tt_hit_exact_ct;
+        std::cout << "\n  " << "TT Hit Lowerbound = " << data.tt_hit_lowerbound;
+        std::cout << "\n  " << "TT Hit Lowerbound Cross-thread = " << data.tt_hit_lowerbound_ct;
+        std::cout << "\n  " << "TT Hit Upperbound = " << data.tt_hit_upperbound;
+        std::cout << "\n  " << "TT Hit Upperbound Cross-thread = " << data.tt_hit_upperbound_ct;
+        std::cout << "\n  " << "TT Hit Cut = " << data.tt_hit_cut;
+        std::cout << "\n" << "TT Hit Fail = " << data.tt_hit_fail;
+        std::cout << "\n" << "LMR Searches = " << data.lmr_cnt;
+        std::cout << "\n" << "NMP = " << data.null_cnt;
+        std::cout << "\n" << "NMP Cuts = " << data.null_cut_cnt << "\n" << std::endl;
+    }
 #endif
 
-    return score;
+    return {score, data.nodes};
+}
+
+std::pair<int32_t, uint64_t>
+search(Position& position, TranspositionTable* table, ThreadPool* pool, SearchInfo* info) {
+
+#ifdef DEBUG
+    table->reset_counters();
+#endif
+
+    if (info->use_iterative)
+    {
+        std::vector<std::future<std::pair<int32_t, uint64_t>>> futures;
+        for (int i = 1; i <= (int) pool->size(); i++)
+        {
+            futures.push_back(pool->enqueue([&position, &table, &info, i] {
+                Position position_clone = Position(position);
+                return search_worker(position_clone, table, info, i);
+            }));
+        }
+
+        for (auto& future : futures)
+            future.wait();
+
+        return futures.at(0).get();
+    }
+    else
+    {
+        SearchData data;
+        int32_t    score = search_think(position, info->depth, -SEARCH_SCORE_MAX, SEARCH_SCORE_MAX,
+                                        table, info, &data, true, 0);
+
+        if (info->use_uci)
+        {
+            TTData ttdata;
+            table->probe(position, &ttdata, 0);
+            Move bestmove = ttdata.move;
+            std::cout << "bestmove ";
+            bestmove.display();
+            std::cout << std::endl;
+        }
+
+        return {score, data.nodes};
+    }
 }

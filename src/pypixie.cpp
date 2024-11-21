@@ -8,8 +8,8 @@
 #include <cstdint>
 #include <memory>
 
-static std::unique_ptr<ThreadPool>         pool;
 static std::unique_ptr<TranspositionTable> table;
+static std::unique_ptr<ThreadPool>         pool;
 
 static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
     const char* fen;
@@ -19,10 +19,10 @@ static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    std::unique_ptr<Position> position = std::make_unique<Position>();
-    fen_to_position(fen, position);
+    Position position;
+    fen_to_position(fen, &position);
 
-    uint64_t result = perft_multithreaded(position, depth, pool, false);
+    uint64_t result = perft_multithreaded(position, depth, *pool.get(), false);
 
     return PyLong_FromLong(result);
 }
@@ -35,10 +35,10 @@ static PyObject* pypixie_perft_captures(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    std::unique_ptr<Position> position = std::make_unique<Position>();
-    fen_to_position(fen, position);
+    Position position;
+    fen_to_position(fen, &position);
 
-    uint64_t result = perft_multithreaded(position, depth, pool, true);
+    uint64_t result = perft_multithreaded(position, depth, *pool.get(), true);
 
     return PyLong_FromLong(result);
 }
@@ -51,8 +51,8 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    std::unique_ptr<Position> position = std::make_unique<Position>();
-    fen_to_position(fen, position);
+    Position position = Position();
+    fen_to_position(fen, &position);
 
     SearchInfo info;
     info.depth         = (uint8_t) depth;
@@ -60,15 +60,14 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
     info.starttime     = utils_get_current_time_in_milliseconds();
     info.stoptime      = 0;
     info.stopped       = false;
-    info.nodes         = 0ULL;
     info.use_iterative = false;
     info.use_uci       = false;
 
     table->clear();
 
-    int32_t eval = search(position, table, &info);
+    std::pair<int32_t, uint64_t> result = search(position, table.get(), pool.get(), &info);
 
-    return PyLong_FromLong(eval);
+    return PyLong_FromLong(result.first);
 }
 
 static PyMethodDef PyPixieMethods[] = {

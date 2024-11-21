@@ -3,6 +3,7 @@
 // Constructor to initialize the thread pool with a given number of threads
 ThreadPool::ThreadPool(size_t threads) :
     stop(false) {
+    this->nthreads = threads;
     for (size_t i = 0; i < threads; ++i)
     {
         this->workers.emplace_back([this] { workerThread(); });
@@ -37,3 +38,5 @@ void ThreadPool::workerThread() {
         task();
     }
 }
+
+size_t ThreadPool::size() const { return this->nthreads; }

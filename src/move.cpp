@@ -57,6 +57,14 @@ Move::Move(const Square   from,
     this->score    = score;
 }
 
+Move::Move(const uint32_t id) {
+    this->from     = static_cast<Square>(id & 0x3F);
+    this->to       = static_cast<Square>((id >> 6) & 0x3F);
+    this->flag     = static_cast<MoveFlag>((id >> 12) & 0xF);
+    this->captured = static_cast<Piece>((id >> 16) & 0xF);
+    this->score    = (id >> 20);
+}
+
 void Move::set_score(const uint32_t score) { this->score = score; }
 
 Square Move::get_from() const { return this->from; }
@@ -71,6 +79,11 @@ uint32_t Move::get_score() const { return this->score; }
 
 uint32_t Move::get_id() const {
     return (this->captured << 16) | (this->flag << 12) | (this->to << 6) | (this->from);
+}
+
+uint64_t Move::get_full_id() const {
+    return ((uint64_t) this->score << 20) | (this->captured << 16) | (this->flag << 12)
+         | (this->to << 6) | (this->from);
 }
 
 Move& Move::operator=(const Move& move) {

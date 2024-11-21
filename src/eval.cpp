@@ -1,7 +1,6 @@
 #include "include/eval.h"
 #include "include/constants.h"
 #include "include/position.h"
-#include <memory>
 
 // clang-format off
 static const int8_t POSITIONAL_SCORE_PAWN[64] = {
@@ -93,24 +92,24 @@ static const int SQUARES_MIRRORED[64] = {
 };
 // clang-format on
 
-int32_t eval_position(std::unique_ptr<Position>& position) {
-    const uint8_t wK = position->get_piece_count(WHITE_KING);
-    const uint8_t bK = position->get_piece_count(BLACK_KING);
+int32_t eval_position(Position& position) {
+    const uint8_t wK = position.get_piece_count(WHITE_KING);
+    const uint8_t bK = position.get_piece_count(BLACK_KING);
 
-    const uint8_t wQ = position->get_piece_count(WHITE_QUEEN);
-    const uint8_t bQ = position->get_piece_count(BLACK_QUEEN);
+    const uint8_t wQ = position.get_piece_count(WHITE_QUEEN);
+    const uint8_t bQ = position.get_piece_count(BLACK_QUEEN);
 
-    const uint8_t wR = position->get_piece_count(WHITE_ROOK);
-    const uint8_t bR = position->get_piece_count(BLACK_ROOK);
+    const uint8_t wR = position.get_piece_count(WHITE_ROOK);
+    const uint8_t bR = position.get_piece_count(BLACK_ROOK);
 
-    const uint8_t wB = position->get_piece_count(WHITE_BISHOP);
-    const uint8_t bB = position->get_piece_count(BLACK_BISHOP);
+    const uint8_t wB = position.get_piece_count(WHITE_BISHOP);
+    const uint8_t bB = position.get_piece_count(BLACK_BISHOP);
 
-    const uint8_t wN = position->get_piece_count(WHITE_KNIGHT);
-    const uint8_t bN = position->get_piece_count(BLACK_KNIGHT);
+    const uint8_t wN = position.get_piece_count(WHITE_KNIGHT);
+    const uint8_t bN = position.get_piece_count(BLACK_KNIGHT);
 
-    const uint8_t wP = position->get_piece_count(WHITE_PAWN);
-    const uint8_t bP = position->get_piece_count(BLACK_PAWN);
+    const uint8_t wP = position.get_piece_count(WHITE_PAWN);
+    const uint8_t bP = position.get_piece_count(BLACK_PAWN);
 
     int32_t eval = (20000 * (wK - bK)) + (900 * (wQ - bQ)) + (500 * (wR - bR)) + (330 * (wB - bB))
                  + (320 * (wN - bN)) + (100 * (wP - bP));
@@ -127,7 +126,7 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
 
     for (uint8_t sq = 0; sq < 64; sq++)
     {
-        const Piece piece = position->get_piece(static_cast<Square>(sq));
+        const Piece piece = position.get_piece(static_cast<Square>(sq));
         switch (piece)
         {
             case WHITE_PAWN :
@@ -173,24 +172,24 @@ int32_t eval_position(std::unique_ptr<Position>& position) {
         }
     }
 
-    const int8_t side_to_move = 1 - (2 * position->get_active_color());
+    const int8_t side_to_move = 1 - (2 * position.get_active_color());
     eval *= side_to_move;
 
     return eval;
 }
 
-bool eval_is_end_game(std::unique_ptr<Position>& position) {
-    const uint8_t wQ = position->get_piece_count(WHITE_QUEEN);
-    const uint8_t bQ = position->get_piece_count(BLACK_QUEEN);
+bool eval_is_end_game(Position& position) {
+    const uint8_t wQ = position.get_piece_count(WHITE_QUEEN);
+    const uint8_t bQ = position.get_piece_count(BLACK_QUEEN);
 
-    const uint8_t wR = position->get_piece_count(WHITE_ROOK);
-    const uint8_t bR = position->get_piece_count(BLACK_ROOK);
+    const uint8_t wR = position.get_piece_count(WHITE_ROOK);
+    const uint8_t bR = position.get_piece_count(BLACK_ROOK);
 
-    const uint8_t wB = position->get_piece_count(WHITE_BISHOP);
-    const uint8_t bB = position->get_piece_count(BLACK_BISHOP);
+    const uint8_t wB = position.get_piece_count(WHITE_BISHOP);
+    const uint8_t bB = position.get_piece_count(BLACK_BISHOP);
 
-    const uint8_t wN = position->get_piece_count(WHITE_KNIGHT);
-    const uint8_t bN = position->get_piece_count(BLACK_KNIGHT);
+    const uint8_t wN = position.get_piece_count(WHITE_KNIGHT);
+    const uint8_t bN = position.get_piece_count(BLACK_KNIGHT);
 
     bool is_end_game = false;
 
