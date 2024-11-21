@@ -19,9 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### SPRT Results
 
 ```
-Score of pixie_dev vs pixie_v0.7.1: 279 - 207 - 335  [0.544] 821
-...      pixie_dev playing White: 152 - 76 - 183  [0.592] 411
-...      pixie_dev playing Black: 127 - 131 - 152  [0.495] 410
+Score of pixie_v0.8.0 vs pixie_v0.7.1: 279 - 207 - 335  [0.544] 821
+...      pixie_v0.8.0 playing White: 152 - 76 - 183  [0.592] 411
+...      pixie_v0.8.0 playing Black: 127 - 131 - 152  [0.495] 410
 ...      White vs Black: 283 - 203 - 335  [0.549] 821
 Elo difference: 30.5 +/- 18.3, LOS: 99.9 %, DrawRatio: 40.8 %
 SPRT: llr 2.94 (100.0%), lbound -2.94, ubound 2.94 - H1 was accepted
