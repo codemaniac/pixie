@@ -23,9 +23,9 @@ struct SearchInfo {
     bool     use_uci;
 };
 
-std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&           position,
-                                    std::unique_ptr<TranspositionTable>& table,
-                                    std::unique_ptr<ThreadPool>&         pool,
-                                    SearchInfo*                          info);
+std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&   position,
+                                    TranspositionTable*          table,
+                                    std::unique_ptr<ThreadPool>& pool,
+                                    SearchInfo*                  info);
 
 #endif

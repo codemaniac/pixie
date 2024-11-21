@@ -56,9 +56,9 @@ struct TTEntry {
 
 class TranspositionTable {
    private:
-    std::unique_ptr<TTEntry[]> entries;
-    size_t                     size;
-    uint32_t                   current_age;
+    std::vector<TTEntry> entries;
+    size_t               size;
+    uint32_t             current_age;
 
    public:
 #ifdef DEBUG

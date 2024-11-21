@@ -72,11 +72,11 @@ static void search_check_up(SearchInfo* info) {
         info->stopped = true;
 }
 
-static void search_score_moves(ArrayList<Move>*                     move_list,
-                               std::unique_ptr<Position>&           position,
-                               std::unique_ptr<TranspositionTable>& table,
-                               SearchData*                          data,
-                               const int                            tid) {
+static void search_score_moves(ArrayList<Move>*           move_list,
+                               std::unique_ptr<Position>& position,
+                               TranspositionTable*        table,
+                               SearchData*                data,
+                               const int                  tid) {
     Move       pvmove;
     bool       pvmove_found = false;
     TTData     ttdata;
@@ -151,13 +151,13 @@ static bool search_lmr_ok_to_reduce(std::unique_ptr<Position>& position, const M
     return true;
 }
 
-static int32_t search_quiescence(std::unique_ptr<Position>&           position,
-                                 int32_t                              alpha,
-                                 int32_t                              beta,
-                                 std::unique_ptr<TranspositionTable>& table,
-                                 SearchInfo*                          info,
-                                 SearchData*                          data,
-                                 const int                            tid) {
+static int32_t search_quiescence(std::unique_ptr<Position>& position,
+                                 int32_t                    alpha,
+                                 int32_t                    beta,
+                                 TranspositionTable*        table,
+                                 SearchInfo*                info,
+                                 SearchData*                data,
+                                 const int                  tid) {
 
     if ((data->nodes & 2047) == 0)
         search_check_up(info);
@@ -219,15 +219,15 @@ static int32_t search_quiescence(std::unique_ptr<Position>&           position,
     return alpha;
 }
 
-static int32_t search_think(std::unique_ptr<Position>&           position,
-                            int32_t                              depth,
-                            int32_t                              alpha,
-                            int32_t                              beta,
-                            std::unique_ptr<TranspositionTable>& table,
-                            SearchInfo*                          info,
-                            SearchData*                          data,
-                            const bool                           do_null,
-                            const int                            tid) {
+static int32_t search_think(std::unique_ptr<Position>& position,
+                            int32_t                    depth,
+                            int32_t                    alpha,
+                            int32_t                    beta,
+                            TranspositionTable*        table,
+                            SearchInfo*                info,
+                            SearchData*                data,
+                            const bool                 do_null,
+                            const int                  tid) {
     if ((data->nodes & 2047) == 0)
         search_check_up(info);
 
@@ -491,10 +491,10 @@ static int32_t search_think(std::unique_ptr<Position>&           position,
     return best_score;
 }
 
-static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&           position,
-                                                  std::unique_ptr<TranspositionTable>& table,
-                                                  SearchInfo*                          info,
-                                                  const int                            tid) {
+static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>& position,
+                                                  TranspositionTable*        table,
+                                                  SearchInfo*                info,
+                                                  const int                  tid) {
     SearchData data;
 
     int32_t score = -SEARCH_SCORE_MAX;
@@ -631,10 +631,10 @@ static std::pair<int32_t, uint64_t> search_worker(std::unique_ptr<Position>&    
     return {score, data.nodes};
 }
 
-std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&           position,
-                                    std::unique_ptr<TranspositionTable>& table,
-                                    std::unique_ptr<ThreadPool>&         pool,
-                                    SearchInfo*                          info) {
+std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&   position,
+                                    TranspositionTable*          table,
+                                    std::unique_ptr<ThreadPool>& pool,
+                                    SearchInfo*                  info) {
 
 #ifdef DEBUG
     table->reset_counters();

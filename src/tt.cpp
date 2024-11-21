@@ -23,7 +23,9 @@ static constexpr uint32_t GET_MOVE_ID(const uint64_t data) { return (data >> 25)
 TranspositionTable::TranspositionTable(const uint8_t size_in_mb) {
     this->size = (size_in_mb * 0x100000) / sizeof(TTEntry);
     this->size -= sizeof(TTEntry);
-    this->entries = std::make_unique<TTEntry[]>(this->size);
+    this->entries.clear();
+    this->entries.resize(this->size);
+    this->entries.shrink_to_fit();
     this->clear();
 }
 
