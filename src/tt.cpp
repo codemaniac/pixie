@@ -48,13 +48,13 @@ void TranspositionTable::reset_counters() {
 }
 #endif
 
-void TranspositionTable::store(std::unique_ptr<Position>& position,
-                               const uint8_t              depth,
-                               const TTFlag               flag,
-                               int32_t                    value,
-                               const Move                 move,
-                               const int                  tid) {
-    const uint64_t hash  = position->get_hash();
+void TranspositionTable::store(Position&     position,
+                               const uint8_t depth,
+                               const TTFlag  flag,
+                               int32_t       value,
+                               const Move    move,
+                               const int     tid) {
+    const uint64_t hash  = position.get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);
 
@@ -86,9 +86,9 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
         return;
 
     if (value < -SEARCH_MATE_SCORE)
-        value -= position->get_ply_count();
+        value -= position.get_ply_count();
     else if (value > SEARCH_MATE_SCORE)
-        value += position->get_ply_count();
+        value += position.get_ply_count();
 
     const uint64_t data = FOLD_DATA(depth, flag, value, move.get_full_id());
     const uint64_t key  = hash ^ data;
@@ -103,8 +103,8 @@ void TranspositionTable::store(std::unique_ptr<Position>& position,
 #endif
 }
 
-bool TranspositionTable::probe(std::unique_ptr<Position>& position, TTData* ttdata, const int tid) {
-    const uint64_t hash  = position->get_hash();
+bool TranspositionTable::probe(Position& position, TTData* ttdata, const int tid) {
+    const uint64_t hash  = position.get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);
 

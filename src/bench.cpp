@@ -6,14 +6,13 @@
 #include "include/utils.h"
 #include <cstdint>
 #include <iostream>
-#include <memory>
 
 void bench() {
     position_init();
 
-    std::unique_ptr<Position>   position;
-    TranspositionTable*         table = new TranspositionTable(16);
-    std::unique_ptr<ThreadPool> pool  = std::make_unique<ThreadPool>(1);
+    Position*           position;
+    TranspositionTable* table = new TranspositionTable(16);
+    ThreadPool*         pool  = new ThreadPool(1);
 
     const std::array<std::string, 50> fen_array = {
       "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
@@ -72,7 +71,7 @@ void bench() {
     const uint64_t starttime = utils_get_current_time_in_milliseconds();
     for (const std::string& fen : fen_array)
     {
-        position = std::make_unique<Position>();
+        position = new Position();
         fen_to_position(fen, position);
         position->reset_ply_count();
         table->clear();
@@ -86,7 +85,7 @@ void bench() {
         info.use_iterative = true;
         info.use_uci       = false;
 
-        const std::pair<int32_t, uint64_t> result = search(position, table, pool, &info);
+        const std::pair<int32_t, uint64_t> result = search(*position, table, pool, &info);
 
         total_nodes += result.second;
     }

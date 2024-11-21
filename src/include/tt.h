@@ -4,7 +4,6 @@
 #include "move.h"
 #include "position.h"
 #include <cstdint>
-#include <memory>
 #include <vector>
 
 enum TTFlag : uint8_t {
@@ -75,13 +74,13 @@ class TranspositionTable {
 #ifdef DEBUG
     void reset_counters();
 #endif
-    void     store(std::unique_ptr<Position>& position,
-                   const uint8_t              depth,
-                   const TTFlag               flag,
-                   int32_t                    value,
-                   const Move                 move,
-                   const int                  tid);
-    bool     probe(std::unique_ptr<Position>& position, TTData* ttdata, const int tid);
+    void     store(Position&     position,
+                   const uint8_t depth,
+                   const TTFlag  flag,
+                   int32_t       value,
+                   const Move    move,
+                   const int     tid);
+    bool     probe(Position& position, TTData* ttdata, const int tid);
     uint64_t get_size() const;
 };
 

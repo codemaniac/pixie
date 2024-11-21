@@ -1,10 +1,9 @@
 #include "include/fen.h"
 #include <iostream>
-#include <memory>
 #include <sstream>
 #include <string>
 
-void fen_to_position(std::string fen, std::unique_ptr<Position>& pos) {
+void fen_to_position(std::string fen, Position* pos) {
     std::string piece_placement;
     std::string active_color;
     std::string castling_rights;

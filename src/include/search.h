@@ -5,7 +5,6 @@
 #include "threadpool.h"
 #include "tt.h"
 #include <cstdint>
-#include <memory>
 
 #define SEARCH_SCORE_MAX 50000
 #define SEARCH_MATE_VALUE 49000
@@ -23,9 +22,7 @@ struct SearchInfo {
     bool     use_uci;
 };
 
-std::pair<int32_t, uint64_t> search(std::unique_ptr<Position>&   position,
-                                    TranspositionTable*          table,
-                                    std::unique_ptr<ThreadPool>& pool,
-                                    SearchInfo*                  info);
+std::pair<int32_t, uint64_t>
+search(Position& position, TranspositionTable* table, ThreadPool* pool, SearchInfo* info);
 
 #endif
