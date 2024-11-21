@@ -12,7 +12,7 @@
 #include <string>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.7.1"
+#define VERSION "0.8.0"
 
 static void uci_parse_setoption(const std::string&                   command,
                                 std::unique_ptr<TranspositionTable>& table,
