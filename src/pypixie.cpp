@@ -6,9 +6,10 @@
 #include "include/utils.h"
 #include <Python.h>
 #include <cstdint>
+#include <memory>
 
-static ThreadPool*         pool;
-static TranspositionTable* table;
+static std::unique_ptr<TranspositionTable> table;
+static std::unique_ptr<ThreadPool>         pool;
 
 static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
     const char* fen;
@@ -18,10 +19,10 @@ static PyObject* pypixie_perft(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    Position position = Position();
+    Position position;
     fen_to_position(fen, &position);
 
-    uint64_t result = perft_multithreaded(position, depth, *pool, false);
+    uint64_t result = perft_multithreaded(position, depth, *pool.get(), false);
 
     return PyLong_FromLong(result);
 }
@@ -34,10 +35,10 @@ static PyObject* pypixie_perft_captures(PyObject* self, PyObject* args) {
         return NULL;
     }
 
-    Position position = Position();
+    Position position;
     fen_to_position(fen, &position);
 
-    uint64_t result = perft_multithreaded(position, depth, *pool, true);
+    uint64_t result = perft_multithreaded(position, depth, *pool.get(), true);
 
     return PyLong_FromLong(result);
 }
@@ -64,7 +65,7 @@ static PyObject* pypixie_search(PyObject* self, PyObject* args) {
 
     table->clear();
 
-    std::pair<int32_t, uint64_t> result = search(position, table, pool, &info);
+    std::pair<int32_t, uint64_t> result = search(position, table.get(), pool.get(), &info);
 
     return PyLong_FromLong(result.first);
 }
@@ -79,7 +80,7 @@ static struct PyModuleDef pypixie = {PyModuleDef_HEAD_INIT, "pypixie", NULL, -1,
 
 PyMODINIT_FUNC PyInit_pypixie(void) {
     position_init();
-    pool  = new ThreadPool(4);
-    table = new TranspositionTable(64);
+    pool  = std::make_unique<ThreadPool>(4);
+    table = std::make_unique<TranspositionTable>(64);
     return PyModule_Create(&pypixie);
 }

@@ -7,14 +7,16 @@
 #include "include/utils.h"
 #include <future>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 
 #define PROGRAM_NAME "pixie"
 #define VERSION "0.7.1"
 
-static void
-uci_parse_setoption(const std::string& command, TranspositionTable** table, ThreadPool** pool) {
+static void uci_parse_setoption(const std::string&                   command,
+                                std::unique_ptr<TranspositionTable>& table,
+                                std::unique_ptr<ThreadPool>&         pool) {
     std::istringstream iss(command);
     std::string        cmd, name, id, valuename, value;
 
@@ -25,7 +27,7 @@ uci_parse_setoption(const std::string& command, TranspositionTable** table, Thre
         const int ttsize = std::stoi(value);
         if (ttsize >= 1 && ttsize <= 256)
         {
-            *table = new TranspositionTable(ttsize);
+            table = std::make_unique<TranspositionTable>(ttsize);
         }
     }
     else if (id == "Threads")
@@ -33,7 +35,7 @@ uci_parse_setoption(const std::string& command, TranspositionTable** table, Thre
         const int threadpool_size = std::stoi(value);
         if (threadpool_size >= 1 && threadpool_size <= 8)
         {
-            *pool = new ThreadPool(threadpool_size);
+            pool = std::make_unique<ThreadPool>(threadpool_size);
         }
     }
 }
@@ -199,11 +201,11 @@ static void uci_parse_position(const std::string& command, Position* position) {
 
 void uci_loop(void) {
     position_init();
-    Position*           position = new Position();
-    TranspositionTable* table    = new TranspositionTable(16);
-    ThreadPool*         pool     = new ThreadPool(2);
-    SearchInfo          info;
-    std::future<void>   uci_go_future;
+    std::unique_ptr<Position>           position = std::make_unique<Position>();
+    std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(16);
+    std::unique_ptr<ThreadPool>         pool     = std::make_unique<ThreadPool>(2);
+    SearchInfo                          info;
+    std::future<void>                   uci_go_future;
 
     std::string input;
 
@@ -223,24 +225,24 @@ void uci_loop(void) {
         }
         else if (input == "ucinewgame")
         {
-            position = new Position();
+            position = std::make_unique<Position>();
             table->clear();
         }
         else if (input.rfind("position", 0) == 0)
         {
-            position = new Position();
-            uci_parse_position(input, position);
+            position = std::make_unique<Position>();
+            uci_parse_position(input, position.get());
             position->reset_ply_count();
             table->reset_for_search();
         }
         else if (input.rfind("go", 0) == 0)
         {
             info          = SearchInfo();
-            uci_go_future = uci_parse_go(input, position, table, pool, &info);
+            uci_go_future = uci_parse_go(input, position.get(), table.get(), pool.get(), &info);
         }
         else if (input.rfind("setoption", 0) == 0)
         {
-            uci_parse_setoption(input, &table, &pool);
+            uci_parse_setoption(input, table, pool);
         }
         else if (input == "display")
         {
