@@ -48,12 +48,12 @@ void TranspositionTable::reset_counters() {
 }
 #endif
 
-void TranspositionTable::store(Position&     position,
-                               const uint8_t depth,
-                               const TTFlag  flag,
-                               int32_t       value,
-                               const Move    move,
-                               const int     tid) {
+void TranspositionTable::store(const Position& position,
+                               const uint8_t   depth,
+                               const TTFlag    flag,
+                               int32_t         value,
+                               const Move      move,
+                               const int       tid) {
     const uint64_t hash  = position.get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);
@@ -103,7 +103,7 @@ void TranspositionTable::store(Position&     position,
 #endif
 }
 
-bool TranspositionTable::probe(Position& position, TTData* ttdata, const int tid) {
+bool TranspositionTable::probe(const Position& position, TTData* ttdata, const int tid) {
     const uint64_t hash  = position.get_hash();
     const uint64_t index = hash % this->size;
     assert(index < this->size);

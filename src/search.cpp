@@ -72,9 +72,9 @@ static void search_check_up(SearchInfo* info) {
 }
 
 static void search_score_moves(ArrayList<Move>*    move_list,
-                               Position&           position,
+                               const Position&     position,
                                TranspositionTable* table,
-                               SearchData*         data,
+                               const SearchData*   data,
                                const int           tid) {
     Move       pvmove;
     bool       pvmove_found = false;

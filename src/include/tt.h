@@ -74,13 +74,13 @@ class TranspositionTable {
 #ifdef DEBUG
     void reset_counters();
 #endif
-    void     store(Position&     position,
-                   const uint8_t depth,
-                   const TTFlag  flag,
-                   int32_t       value,
-                   const Move    move,
-                   const int     tid);
-    bool     probe(Position& position, TTData* ttdata, const int tid);
+    void     store(const Position& position,
+                   const uint8_t   depth,
+                   const TTFlag    flag,
+                   int32_t         value,
+                   const Move      move,
+                   const int       tid);
+    bool     probe(const Position& position, TTData* ttdata, const int tid);
     uint64_t get_size() const;
 };
 

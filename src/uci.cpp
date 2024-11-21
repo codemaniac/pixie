@@ -251,7 +251,8 @@ void uci_loop(void) {
         else if (input == "stop")
         {
             info.stopped = true;
-            uci_go_future.wait();
+            if (uci_go_future.valid())
+                uci_go_future.wait();
         }
         else if (input == "quit")
         {
