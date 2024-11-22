@@ -67,7 +67,7 @@ class TranspositionTable {
     int crossthread_hit;
 #endif
 
-    TranspositionTable(const uint8_t size_in_mb);
+    TranspositionTable(const uint32_t size_in_mb);
     ~TranspositionTable();
     void clear();
     void reset_for_search();

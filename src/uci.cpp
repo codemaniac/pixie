@@ -12,7 +12,7 @@
 #include <string>
 
 #define PROGRAM_NAME "pixie"
-#define VERSION "0.8.0"
+#define VERSION "0.8.1"
 
 static void uci_parse_setoption(const std::string&                   command,
                                 std::unique_ptr<TranspositionTable>& table,
@@ -203,7 +203,7 @@ void uci_loop(void) {
     position_init();
     std::unique_ptr<Position>           position = std::make_unique<Position>();
     std::unique_ptr<TranspositionTable> table    = std::make_unique<TranspositionTable>(16);
-    std::unique_ptr<ThreadPool>         pool     = std::make_unique<ThreadPool>(2);
+    std::unique_ptr<ThreadPool>         pool     = std::make_unique<ThreadPool>(1);
     SearchInfo                          info;
     std::future<void>                   uci_go_future;
 
@@ -216,7 +216,7 @@ void uci_loop(void) {
             std::cout << "id name " << PROGRAM_NAME << " " << VERSION << std::endl;
             std::cout << "id author the pixie developers (see AUTHORS file)" << std::endl;
             std::cout << "option name Hash type spin default 16 min 1 max 256" << std::endl;
-            std::cout << "option name Threads type spin default 2 min 1 max 8" << std::endl;
+            std::cout << "option name Threads type spin default 1 min 1 max 8" << std::endl;
             std::cout << "uciok" << std::endl;
         }
         else if (input == "isready")
