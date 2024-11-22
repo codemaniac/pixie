@@ -20,7 +20,7 @@ static constexpr int32_t GET_VALUE(const uint64_t data) {
 }
 static constexpr uint32_t GET_MOVE_ID(const uint64_t data) { return (data >> 25); }
 
-TranspositionTable::TranspositionTable(const uint8_t size_in_mb) {
+TranspositionTable::TranspositionTable(const uint32_t size_in_mb) {
     this->size = (size_in_mb * 0x100000) / sizeof(TTEntry);
     this->size -= sizeof(TTEntry);
     this->entries.clear();
