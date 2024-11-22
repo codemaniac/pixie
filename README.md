@@ -59,3 +59,5 @@ python test/test_mate.py TestMate.test_mate_in_2
 - https://github.com/maksimKorzh/bbc for concepts and code snippets
 - https://github.com/AndyGrant/Ethereal for perft standard.epd file
 - https://github.com/TerjeKir/EngineTests for mate .epd files
+- https://github.com/kz04px/libchess for perft test cases
+- https://github.com/kz04px/rawr for perft test cases
