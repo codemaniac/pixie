@@ -34,6 +34,9 @@ perft(Position& position, const Move& move, const uint8_t depth, const bool capt
 
 uint64_t divide(Position& position, const uint8_t depth, const bool display) {
 
+    if (depth == 0)
+        return 1ULL;
+
     ArrayList<Move> candidate_moves;
     position.generate_pseudolegal_moves(&candidate_moves, false);
 
@@ -65,6 +68,9 @@ uint64_t perft_multithreaded(Position&     position,
                              const uint8_t depth,
                              ThreadPool&   pool,
                              const bool    captures_only) {
+
+    if (depth == 0)
+        return 1ULL;
 
     std::vector<std::future<uint64_t>> futures;
 

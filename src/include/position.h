@@ -64,6 +64,7 @@ class Position {
     void     set_enpassant_target(const Square enpassant_target);
     void     set_half_move_clock(const std::uint32_t half_move_clock);
     void     set_full_move_number(const std::uint32_t full_move_number);
+    void     reset();
     void     reset_ply_count();
     void     reset_hash();
     void     set_start_pos();

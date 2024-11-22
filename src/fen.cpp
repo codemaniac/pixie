@@ -16,6 +16,8 @@ void fen_to_position(std::string fen, Position* pos) {
     iss >> piece_placement >> active_color >> castling_rights >> ep_target >> halfmove_clock
       >> fullmove_number;
 
+    pos->reset();
+
     const std::string pieces_str = ".PNBRQKXXpnbrqk";
     uint8_t           rank       = RANK_8;
     uint8_t           file       = FILE_A;

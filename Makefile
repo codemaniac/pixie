@@ -17,15 +17,6 @@ else ifeq ($(config),debug_linux64)
 else ifeq ($(config),debug_windows64)
   pixie_config = debug_windows64
 
-else ifeq ($(config),unittest_macos64)
-  pixie_config = unittest_macos64
-
-else ifeq ($(config),unittest_linux64)
-  pixie_config = unittest_linux64
-
-else ifeq ($(config),unittest_windows64)
-  pixie_config = unittest_windows64
-
 else ifeq ($(config),test_macos64)
   pixie_config = test_macos64
 
@@ -34,6 +25,15 @@ else ifeq ($(config),test_linux64)
 
 else ifeq ($(config),test_windows64)
   pixie_config = test_windows64
+
+else ifeq ($(config),stage_macos64)
+  pixie_config = stage_macos64
+
+else ifeq ($(config),stage_linux64)
+  pixie_config = stage_linux64
+
+else ifeq ($(config),stage_windows64)
+  pixie_config = stage_windows64
 
 else ifeq ($(config),release_macos64)
   pixie_config = release_macos64
@@ -70,12 +70,12 @@ help:
 	@echo "  debug_macos64"
 	@echo "  debug_linux64"
 	@echo "  debug_windows64"
-	@echo "  unittest_macos64"
-	@echo "  unittest_linux64"
-	@echo "  unittest_windows64"
 	@echo "  test_macos64"
 	@echo "  test_linux64"
 	@echo "  test_windows64"
+	@echo "  stage_macos64"
+	@echo "  stage_linux64"
+	@echo "  stage_windows64"
 	@echo "  release_macos64"
 	@echo "  release_linux64"
 	@echo "  release_windows64"
