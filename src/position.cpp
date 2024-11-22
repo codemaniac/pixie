@@ -44,16 +44,7 @@ void position_init() {
     HASH_BLACK_TO_MOVE = utils_random_uint64();
 }
 
-Position::Position() {
-    this->board            = Board();
-    this->active_color     = WHITE;
-    this->casteling_rights = NOCA;
-    this->enpassant_target = NO_SQ;
-    this->half_move_clock  = 0;
-    this->full_move_number = 0;
-    this->ply_count        = 0;
-    this->hash             = 0ULL;
-}
+Position::Position() { this->reset(); }
 
 Position::Position(const Position& position) {
     this->board            = position.board;  // TODO: Optimize
@@ -88,6 +79,17 @@ void Position::set_half_move_clock(const uint32_t half_move_clock) {
 }
 void Position::set_full_move_number(const uint32_t full_move_number) {
     this->full_move_number = full_move_number;
+}
+
+void Position::reset() {
+    this->board            = Board();
+    this->active_color     = WHITE;
+    this->casteling_rights = NOCA;
+    this->enpassant_target = NO_SQ;
+    this->half_move_clock  = 0;
+    this->full_move_number = 0;
+    this->ply_count        = 0;
+    this->hash             = 0ULL;
 }
 
 void Position::reset_ply_count() { this->ply_count = 0; }

@@ -6,9 +6,8 @@
 #include "lib/doctest.h"
 #include <string.h>
 
-
 TEST_SUITE("Transposition Tables") {
-    TEST_CASE("testing Transposition Table store and probe") {
+    TEST_CASE("TT store and probe") {
         Position           position = Position();
         TranspositionTable table    = TranspositionTable(2);
 

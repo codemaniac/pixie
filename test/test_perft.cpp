@@ -4,9 +4,7 @@
 #include "../src/include/threadpool.h"
 #include "lib/doctest.h"
 
-
-using pair_type = std::pair<std::string, std::vector<std::uint64_t>>;
-
+using pair_type        = std::pair<std::string, std::vector<std::uint64_t>>;
 static ThreadPool pool = ThreadPool(2);
 
 TEST_SUITE("Perft") {
