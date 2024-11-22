@@ -409,33 +409,33 @@ static void init_attack_table_king(void) {
 * Movegen attack functions
 */
 
-static BitBoard movegen_get_pawn_attacks(const Square sq, const Color c, const BitBoard occupancy) {
+BitBoard movegen_get_pawn_attacks(const Square sq, const Color c, const BitBoard occupancy) {
     return ATTACK_TABLE_PAWN[c][sq] & occupancy;
 }
 
-static BitBoard movegen_get_knight_attacks(const Square sq, const BitBoard occupancy) {
+BitBoard movegen_get_knight_attacks(const Square sq, const BitBoard occupancy) {
     return ATTACK_TABLE_KNIGHT[sq] & occupancy;
 }
 
-static BitBoard movegen_get_bishop_attacks(const Square sq, BitBoard occupancy) {
+BitBoard movegen_get_bishop_attacks(const Square sq, BitBoard occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
     const int magic_index =
       magicbb_get_magic_index(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
     return ATTACK_TABLE_BISHOP[sq][magic_index];
 }
 
-static BitBoard movegen_get_rook_attacks(const Square sq, BitBoard occupancy) {
+BitBoard movegen_get_rook_attacks(const Square sq, BitBoard occupancy) {
     occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
     const int magic_index =
       magicbb_get_magic_index(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
     return ATTACK_TABLE_ROOK[sq][magic_index];
 }
 
-static BitBoard movegen_get_queen_attacks(const Square sq, BitBoard occupancy) {
+BitBoard movegen_get_queen_attacks(const Square sq, BitBoard occupancy) {
     return movegen_get_bishop_attacks(sq, occupancy) | movegen_get_rook_attacks(sq, occupancy);
 }
 
-static BitBoard movegen_get_king_attacks(const Square sq, const BitBoard occupancy) {
+BitBoard movegen_get_king_attacks(const Square sq, const BitBoard occupancy) {
     return ATTACK_TABLE_KING[sq] & occupancy;
 }
 
@@ -535,6 +535,8 @@ Piece Board::get_piece(const Square square) const {
 }
 
 uint8_t Board::get_piece_count(const Piece piece) const { return this->piece_count[piece]; }
+
+BitBoard Board::get_bitboard(const uint8_t index) const { return this->bitboards[index]; }
 
 bool Board::is_valid() const {
     if (this->piece_count[WHITE_KING] != 1)

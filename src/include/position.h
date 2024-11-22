@@ -79,6 +79,7 @@ class Position {
     uint32_t get_half_move_clock() const;
     uint32_t get_ply_count() const;
     uint64_t get_hash() const;
+    BitBoard get_bitboard(const uint8_t index) const;
     bool     is_valid() const;
     bool     is_in_check() const;
     bool     is_repeated() const;

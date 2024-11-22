@@ -1,6 +1,8 @@
 #include "include/eval.h"
+#include "include/board.h"
 #include "include/constants.h"
 #include "include/position.h"
+#include "include/utils.h"
 
 // clang-format off
 static const int8_t POSITIONAL_SCORE_PAWN[64] = {
@@ -124,6 +126,9 @@ int32_t eval_position(Position& position) {
             is_end_game = true;
     }
 
+    const BitBoard occupancy = ~position.get_bitboard(NO_PIECE);
+    BitBoard       attacks;
+
     for (uint8_t sq = 0; sq < 64; sq++)
     {
         const Piece piece = position.get_piece(static_cast<Square>(sq));
@@ -137,12 +142,18 @@ int32_t eval_position(Position& position) {
                 break;
             case WHITE_BISHOP :
                 eval += POSITIONAL_SCORE_BISHOP[SQUARES_MIRRORED[sq]];
+                attacks = movegen_get_bishop_attacks(static_cast<Square>(sq), occupancy);
+                eval += utils_bit_count1s(attacks);
                 break;
             case WHITE_ROOK :
                 eval += POSITIONAL_SCORE_ROOK[SQUARES_MIRRORED[sq]];
+                attacks = movegen_get_rook_attacks(static_cast<Square>(sq), occupancy);
+                eval += utils_bit_count1s(attacks);
                 break;
             case WHITE_QUEEN :
                 eval += POSITIONAL_SCORE_QUEEN[SQUARES_MIRRORED[sq]];
+                attacks = movegen_get_queen_attacks(static_cast<Square>(sq), occupancy);
+                eval += utils_bit_count1s(attacks);
                 break;
             case WHITE_KING :
                 eval += is_end_game ? POSITIONAL_SCORE_KING_ENDGAME[SQUARES_MIRRORED[sq]]
@@ -156,12 +167,18 @@ int32_t eval_position(Position& position) {
                 break;
             case BLACK_BISHOP :
                 eval -= POSITIONAL_SCORE_BISHOP[sq];
+                attacks = movegen_get_bishop_attacks(static_cast<Square>(sq), occupancy);
+                eval -= utils_bit_count1s(attacks);
                 break;
             case BLACK_ROOK :
                 eval -= POSITIONAL_SCORE_ROOK[sq];
+                attacks = movegen_get_rook_attacks(static_cast<Square>(sq), occupancy);
+                eval -= utils_bit_count1s(attacks);
                 break;
             case BLACK_QUEEN :
                 eval -= POSITIONAL_SCORE_QUEEN[sq];
+                attacks = movegen_get_queen_attacks(static_cast<Square>(sq), occupancy);
+                eval -= utils_bit_count1s(attacks);
                 break;
             case BLACK_KING :
                 eval -= is_end_game ? POSITIONAL_SCORE_KING_ENDGAME[sq]

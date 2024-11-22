@@ -502,6 +502,10 @@ uint32_t Position::get_ply_count() const { return this->ply_count; }
 
 uint64_t Position::get_hash() const { return this->hash; }
 
+BitBoard Position::get_bitboard(const uint8_t index) const {
+    return this->board.get_bitboard(index);
+}
+
 bool Position::is_valid() const { return this->board.is_valid(); }
 
 bool Position::is_in_check() const { return this->board.is_in_check(this->active_color); }

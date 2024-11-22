@@ -51,22 +51,29 @@ class Board {
 
    public:
     Board();
-    void    reset();
-    void    set_piece(const Piece piece, const Square square);
-    void    clear_piece(const Piece piece, const Square square);
-    void    set_start_pos();
-    Piece   get_piece(const Square square) const;
-    uint8_t get_piece_count(const Piece piece) const;
-    bool    is_valid() const;
-    bool    is_in_check(const Color active_color) const;
-    void    generate_pseudolegal_moves(const Color      active_color,
-                                       const uint8_t    casteling_rights,
-                                       const Square     ep_target,
-                                       const bool       only_captures,
-                                       ArrayList<Move>* move_list) const;
-    void    display() const;
+    void     reset();
+    void     set_piece(const Piece piece, const Square square);
+    void     clear_piece(const Piece piece, const Square square);
+    void     set_start_pos();
+    Piece    get_piece(const Square square) const;
+    uint8_t  get_piece_count(const Piece piece) const;
+    BitBoard get_bitboard(const uint8_t index) const;
+    bool     is_valid() const;
+    bool     is_in_check(const Color active_color) const;
+    void     generate_pseudolegal_moves(const Color      active_color,
+                                        const uint8_t    casteling_rights,
+                                        const Square     ep_target,
+                                        const bool       only_captures,
+                                        ArrayList<Move>* move_list) const;
+    void     display() const;
 };
 
-void board_init();
+void     board_init();
+BitBoard movegen_get_pawn_attacks(const Square sq, const Color c, const BitBoard occupancy);
+BitBoard movegen_get_knight_attacks(const Square sq, const BitBoard occupancy);
+BitBoard movegen_get_bishop_attacks(const Square sq, BitBoard occupancy);
+BitBoard movegen_get_rook_attacks(const Square sq, BitBoard occupancy);
+BitBoard movegen_get_queen_attacks(const Square sq, BitBoard occupancy);
+BitBoard movegen_get_king_attacks(const Square sq, const BitBoard occupancy);
 
 #endif
