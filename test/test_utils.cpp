@@ -11,6 +11,6 @@ TEST_SUITE("Utils") {
         CHECK(utils_bit_count1s(5) == 2);
         CHECK(utils_bit_count1s(6) == 2);
         CHECK(utils_bit_count1s(7) == 3);
-        CHECK(utils_bit_count1s(8) == 3);
+        CHECK(utils_bit_count1s(8) == 1);
     }
 }
