@@ -1,0 +1,20 @@
+name: Pixie-build-test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: pixie-build-test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: make
+      run: |
+        make config=test_linux64
+        ./bin/Test/pixie
