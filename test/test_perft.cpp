@@ -19,7 +19,7 @@ TEST_SUITE("Perft") {
         Position position;
         position.set_start_pos();
 
-        const uint64_t nodes = perft_multithreaded(position, 4, pool, false);
+        const uint64_t nodes = perft_multithreaded(position, 4, pool);
         CHECK(nodes == 197281);
     }
 
@@ -39,7 +39,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -67,7 +67,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -87,7 +87,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -105,7 +105,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -126,7 +126,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -144,7 +144,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -174,7 +174,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -202,7 +202,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -243,7 +243,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i + 1, pool, false);
+                const uint64_t result = perft_multithreaded(position, i + 1, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -261,7 +261,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -283,7 +283,7 @@ TEST_SUITE("Perft") {
             fen_to_position(fen, &position);
             for (std::size_t i = 0; i < nodes.size(); ++i)
             {
-                const uint64_t result = perft_multithreaded(position, i, pool, false);
+                const uint64_t result = perft_multithreaded(position, i, pool);
                 REQUIRE(result == nodes[i]);
             }
         }
@@ -329,52 +329,7 @@ TEST_SUITE("Perft Full") {
             {
                 SUBCASE("Perft - Full - Standard - FEN") {
                     const uint8_t  depth  = std::stoi(key);
-                    const uint64_t result = perft_multithreaded(position, depth, pool, false);
-                    REQUIRE(result == value);
-                }
-            }
-        }
-    }
-
-    TEST_CASE("Perft - Full - Captures") {
-        std::filesystem::path filepath = std::filesystem::current_path() / "data" / "captures.epd";
-        filepath                       = std::filesystem::canonical(filepath);
-
-        REQUIRE(std::filesystem::exists(filepath));
-
-        std::ifstream file(filepath);
-
-        REQUIRE(file.is_open());
-
-        const std::regex depth_perft_regex(R"(;D(\d+)\s+(\d+))");
-        std::smatch      match;
-
-        for (std::string line; std::getline(file, line);)
-        {
-            auto              first_semicolon_pos = line.find(';');
-            const std::string fen                 = line.substr(0, first_semicolon_pos);
-
-            std::map<std::string, uint64_t> extracted_perft_values;
-
-            std::string depth_perft_part = line.substr(first_semicolon_pos);
-            while (std::regex_search(depth_perft_part, match, depth_perft_regex))
-            {
-                const std::string depth_str   = match[1].str();
-                const uint64_t    perft_value = std::stoull(match[2].str());
-
-                extracted_perft_values[depth_str] = perft_value;
-
-                depth_perft_part = match.suffix().str();
-            }
-
-            Position position;
-            fen_to_position(fen, &position);
-
-            for (const auto& [key, value] : extracted_perft_values)
-            {
-                SUBCASE("Perft - Full - Captures - FEN") {
-                    const uint8_t  depth  = std::stoi(key);
-                    const uint64_t result = perft_multithreaded(position, depth, pool, true);
+                    const uint64_t result = perft_multithreaded(position, depth, pool);
                     REQUIRE(result == value);
                 }
             }

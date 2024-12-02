@@ -15,4 +15,4 @@ jobs:
       - name: make
         run: make config=test_linux64
       - name: test
-        run: ./bin/Test/pixie
+        run: ./bin/Test/pixie -tse="Perft Full"

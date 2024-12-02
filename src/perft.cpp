@@ -8,31 +8,26 @@
 #include <iostream>
 #include <vector>
 
-static uint64_t
-perft(Position& position, const Move& move, const uint8_t depth, const bool captures_only) {
+static uint64_t perft(Position& position, const uint8_t depth) {
     ArrayList<Move> candidate_moves;
     uint64_t        nodes = 0ULL;
 
     if (depth == 0)
-    {
-        if (captures_only && MOVE_IS_CAPTURE(move.get_flag()) == 0)
-            return 0ULL;
         return 1ULL;
-    }
 
     position.generate_pseudolegal_moves(&candidate_moves, false);
 
     for (const Move& move : candidate_moves)
     {
         if (position.move_do(move))
-            nodes += perft(position, move, depth - 1, captures_only);
+            nodes += perft(position, depth - 1);
         position.move_undo();
     }
 
     return nodes;
 }
 
-uint64_t divide(Position& position, const uint8_t depth, const bool display) {
+uint64_t divide(Position& position, const uint8_t depth) {
 
     if (depth == 0)
         return 1ULL;
@@ -47,27 +42,20 @@ uint64_t divide(Position& position, const uint8_t depth, const bool display) {
     {
         if (position.move_do(move))
         {
-            nodes = perft(position, move, depth - 1, false);
+            nodes = perft(position, depth - 1);
             total_nodes += nodes;
-            if (display)
-            {
-                move.display();
-                std::cout << " " << (unsigned long long) nodes << std::endl;
-            }
+            move.display();
+            std::cout << " " << (unsigned long long) nodes << std::endl;
         }
         position.move_undo();
     }
 
-    if (display)
-        std::cout << std::endl << "Perft = " << (unsigned long long) total_nodes << std::endl;
+    std::cout << std::endl << "Perft = " << (unsigned long long) total_nodes << std::endl;
 
     return total_nodes;
 }
 
-uint64_t perft_multithreaded(Position&     position,
-                             const uint8_t depth,
-                             ThreadPool&   pool,
-                             const bool    captures_only) {
+uint64_t perft_multithreaded(Position& position, const uint8_t depth, ThreadPool& pool) {
 
     if (depth == 0)
         return 1ULL;
@@ -81,11 +69,11 @@ uint64_t perft_multithreaded(Position&     position,
 
     for (const Move& move : candidate_moves)
     {
-        futures.push_back(pool.enqueue([&position, &move, depth, captures_only] {
+        futures.push_back(pool.enqueue([&position, &move, depth] {
             uint64_t nodes          = 0ULL;
             Position position_clone = Position(position);
             if (position_clone.move_do(move))
-                nodes = perft(position_clone, move, depth - 1, captures_only);
+                nodes = perft(position_clone, depth - 1);
             return nodes;
         }));
     }

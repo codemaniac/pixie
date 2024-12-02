@@ -64,7 +64,7 @@ static std::future<void> uci_parse_go(const std::string&  command,
             std::future<void> f = std::async(std::launch::async, [&position, depth] {
                 Position       position_clone = Position(*position);
                 const uint64_t starttime      = utils_get_current_time_in_milliseconds();
-                (void) divide(position_clone, depth, true);
+                (void) divide(position_clone, depth);
                 const uint64_t stoptime = utils_get_current_time_in_milliseconds();
                 const uint64_t time     = stoptime - starttime;
                 std::cout << "Execution Time (in ms) = " << (unsigned long long) time << std::endl;

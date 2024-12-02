@@ -5,11 +5,8 @@
 #include "threadpool.h"
 #include <cstdint>
 
-uint64_t perft_multithreaded(Position&     position,
-                             const uint8_t depth,
-                             ThreadPool&   pool,
-                             const bool    captures_only);
+uint64_t perft_multithreaded(Position& position, const uint8_t depth, ThreadPool& pool);
 
-uint64_t divide(Position& position, const uint8_t depth, const bool display);
+uint64_t divide(Position& position, const uint8_t depth);
 
 #endif
