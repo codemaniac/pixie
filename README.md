@@ -6,51 +6,9 @@ A free UCI chess engine
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![emoji-log](https://cdn.rawgit.com/ahmadawais/stuff/ca97874/emoji-log/flat-round.svg)](https://github.com/ahmadawais/Emoji-Log/)
 
-# Compiling pixie
+# Building Pixie
 
-## On MacOS 64-bit
-
-```
-premake5 gmake2
-make config=release_macos64
-```
-
-## On Linux 64-bit
-
-```
-premake5 gmake2
-make config=release_linux64
-```
-
-## On Windows 64-bit
-
-Requires MinGW 64-bit to be installed and added to `path` using [msys2](https://www.msys2.org)
-
-```
-premake5 gmake2
-make config=release_windows64
-```
-
-# Debugging
-
-## Checking for memory leaks on MacOS
-
-```
-export MallocStackLogging=1
-leaks -atExit --list -- ./bin/Debug/pixie > leaks.txt
-```
-
-# Running Tests
-
-## On Unix-like systems
-
-To run tests, run the following
-
-```
-python setup.py develop
-python test/test_perft.py
-python test/test_mate.py TestMate.test_mate_in_2
-```
+See [BUILDING.md](BUILDING.md) for instructions on how to build Pixie from source and a list of supported platforms.
 
 # Acknowledgements
 
