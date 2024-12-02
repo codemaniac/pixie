@@ -3,6 +3,13 @@
 #include "../src/include/position.h"
 #include "../src/include/threadpool.h"
 #include "lib/doctest.h"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <ranges>
+#include <regex>
+#include <string>
 
 using pair_type        = std::pair<std::string, std::vector<std::uint64_t>>;
 static ThreadPool pool = ThreadPool(2);
@@ -278,6 +285,98 @@ TEST_SUITE("Perft") {
             {
                 const uint64_t result = perft_multithreaded(position, i, pool, false);
                 REQUIRE(result == nodes[i]);
+            }
+        }
+    }
+}
+
+TEST_SUITE("Perft Full") {
+    TEST_CASE("Perft - Full - Standard") {
+        std::filesystem::path filepath = std::filesystem::current_path() / "data" / "standard.epd";
+        filepath                       = std::filesystem::canonical(filepath);
+
+        REQUIRE(std::filesystem::exists(filepath));
+
+        std::ifstream file(filepath);
+
+        REQUIRE(file.is_open());
+
+        const std::regex depth_perft_regex(R"(;D(\d+)\s+(\d+))");
+        std::smatch      match;
+
+        for (std::string line; std::getline(file, line);)
+        {
+            auto              first_semicolon_pos = line.find(';');
+            const std::string fen                 = line.substr(0, first_semicolon_pos);
+
+            std::map<std::string, uint64_t> extracted_perft_values;
+
+            std::string depth_perft_part = line.substr(first_semicolon_pos);
+            while (std::regex_search(depth_perft_part, match, depth_perft_regex))
+            {
+                const std::string depth_str   = match[1].str();
+                const uint64_t    perft_value = std::stoull(match[2].str());
+
+                extracted_perft_values[depth_str] = perft_value;
+
+                depth_perft_part = match.suffix().str();
+            }
+
+            Position position;
+            fen_to_position(fen, &position);
+
+            for (const auto& [key, value] : extracted_perft_values)
+            {
+                SUBCASE("Perft - Full - Standard - FEN") {
+                    const uint8_t  depth  = std::stoi(key);
+                    const uint64_t result = perft_multithreaded(position, depth, pool, false);
+                    REQUIRE(result == value);
+                }
+            }
+        }
+    }
+
+    TEST_CASE("Perft - Full - Captures") {
+        std::filesystem::path filepath = std::filesystem::current_path() / "data" / "captures.epd";
+        filepath                       = std::filesystem::canonical(filepath);
+
+        REQUIRE(std::filesystem::exists(filepath));
+
+        std::ifstream file(filepath);
+
+        REQUIRE(file.is_open());
+
+        const std::regex depth_perft_regex(R"(;D(\d+)\s+(\d+))");
+        std::smatch      match;
+
+        for (std::string line; std::getline(file, line);)
+        {
+            auto              first_semicolon_pos = line.find(';');
+            const std::string fen                 = line.substr(0, first_semicolon_pos);
+
+            std::map<std::string, uint64_t> extracted_perft_values;
+
+            std::string depth_perft_part = line.substr(first_semicolon_pos);
+            while (std::regex_search(depth_perft_part, match, depth_perft_regex))
+            {
+                const std::string depth_str   = match[1].str();
+                const uint64_t    perft_value = std::stoull(match[2].str());
+
+                extracted_perft_values[depth_str] = perft_value;
+
+                depth_perft_part = match.suffix().str();
+            }
+
+            Position position;
+            fen_to_position(fen, &position);
+
+            for (const auto& [key, value] : extracted_perft_values)
+            {
+                SUBCASE("Perft - Full - Captures - FEN") {
+                    const uint8_t  depth  = std::stoi(key);
+                    const uint64_t result = perft_multithreaded(position, depth, pool, true);
+                    REQUIRE(result == value);
+                }
             }
         }
     }
