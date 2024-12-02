@@ -1,8 +1,8 @@
 #include "include/utils.h"
-
 #include <bit>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 
 int utils_bit_bitscan_forward(uint64_t* x) {
     int position = std::countr_zero(*x);
