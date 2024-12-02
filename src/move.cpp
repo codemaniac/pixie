@@ -2,6 +2,7 @@
 #include "include/board.h"
 #include "include/constants.h"
 #include <cstdint>
+#include <iostream>
 #include <string>
 
 // clang-format off
@@ -106,13 +107,17 @@ void Move::display() const {
     if (this->get_flag() >= MOVE_PROMOTION_KNIGHT)
     {
         const std::string promotion_piece_str = "xxxxxxxxnbrqnbrq";
-        printf("%c%d%c%d%c", file_str[from_file], static_cast<int>(from_rank) + 1,
-               file_str[to_file], static_cast<int>(to_rank) + 1,
-               promotion_piece_str[this->get_flag()]);
+        std::cout << (char) file_str[from_file];
+        std::cout << (int) (static_cast<int>(from_rank) + 1);
+        std::cout << (char) file_str[to_file];
+        std::cout << (int) (static_cast<int>(to_rank) + 1);
+        std::cout << (char) promotion_piece_str[this->get_flag()] << std::flush;
     }
     else
     {
-        printf("%c%d%c%d", file_str[from_file], static_cast<int>(from_rank) + 1, file_str[to_file],
-               static_cast<int>(to_rank) + 1);
+        std::cout << (char) file_str[from_file];
+        std::cout << (int) (static_cast<int>(from_rank) + 1);
+        std::cout << (char) file_str[to_file];
+        std::cout << (int) (static_cast<int>(to_rank) + 1) << std::flush;
     }
 }

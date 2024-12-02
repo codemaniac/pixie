@@ -23,9 +23,21 @@ project "pixie"
         system "windows"
         architecture "x86_64"
 
-    filter { "configurations:Debug" }
+    filter { "platforms:macos64", "configurations:Debug" }
         buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
         linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
+        flags { "FatalWarnings" }
+        defines { "DEBUG" }
+        symbols "On"
+
+    filter { "platforms:linux64", "configurations:Debug" }
+        buildoptions { "-Wall", "-Wextra" }
+        flags { "FatalWarnings" }
+        defines { "DEBUG" }
+        symbols "On"
+
+    filter { "platforms:windows64", "configurations:Debug" }
+        buildoptions { "-Wall", "-Wextra" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
@@ -44,7 +56,7 @@ project "pixie"
         defines{"NDEBUG"}
         optimize "Speed"
 
-    filter { "configurations:Stage" }
+    filter { "platforms:macos64", "configurations:Stage" }
         buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
         linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
         flags { "FatalWarnings" }

@@ -805,8 +805,8 @@ void Board::display() const {
         for (std::int8_t file = FILE_A; file <= FILE_H; file++)
         {
             const Square sq = BOARD_RF_TO_SQ(static_cast<Rank>(rank), static_cast<File>(file));
-            printf("%c ", pieces_str[this->pieces[sq]]);
+            std::cout << (char) pieces_str[this->pieces[sq]] << " ";
         }
-        printf("\n");
+        std::cout << std::endl;
     }
 }

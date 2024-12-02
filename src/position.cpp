@@ -4,7 +4,6 @@
 #include "include/move.h"
 #include "include/utils.h"
 #include <cassert>
-#include <cinttypes>
 #include <cstdint>
 #include <iostream>
 
@@ -524,7 +523,11 @@ void Position::generate_pseudolegal_moves(ArrayList<Move>* move_list,
 void Position::display() const {
     this->board.display();
     const std::string color_str = "wb";
-    printf("\n%c %d %d %d %d %d\n%" PRIu64 "\n\n", color_str[this->active_color],
-           this->casteling_rights, this->enpassant_target, this->half_move_clock,
-           this->full_move_number, this->ply_count, this->hash);
+    std::cout << std::endl << (char) color_str[this->active_color];
+    std::cout << " " << (int) this->casteling_rights;
+    std::cout << " " << (int) this->enpassant_target;
+    std::cout << " " << (int) this->half_move_clock;
+    std::cout << " " << (int) this->full_move_number;
+    std::cout << " " << (int) this->ply_count;
+    std::cout << " " << (unsigned long long) this->hash << std::endl;
 }

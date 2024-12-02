@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Unit Tests
 
+### Changed
+
+- Build configurations
+
+### Fixed
+
+- Move print in GUIs [Issue #56](https://github.com/codemaniac/pixie/issues/56)
+
 ## [0.8.1]
 
 ### Fixed

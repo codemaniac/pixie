@@ -56,9 +56,9 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Debug
 DEFINES += -DDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -fsanitize=undefined -fsanitize=address
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 
 else ifeq ($(config),debug_windows64)
 RESCOMP = windres
@@ -66,9 +66,9 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/windows64/Debug
 DEFINES += -DDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -fsanitize=undefined -fsanitize=address
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
 
 else ifeq ($(config),test_macos64)
 ifeq ($(origin CC), default)
@@ -78,15 +78,15 @@ ifeq ($(origin CXX), default)
   CXX = clang++
 endif
 ifeq ($(origin AR), default)
-  AR = ar
+  AR = llvm-ar
 endif
 TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/macos64/Test
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -m64
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -m64 -flto
 
 else ifeq ($(config),test_linux64)
 RESCOMP = windres
@@ -94,9 +94,9 @@ TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Test
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
 
 else ifeq ($(config),test_windows64)
 RESCOMP = windres
@@ -104,9 +104,9 @@ TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/windows64/Test
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
 
 else ifeq ($(config),stage_macos64)
 ifeq ($(origin CC), default)
@@ -131,20 +131,20 @@ RESCOMP = windres
 TARGETDIR = bin/Stage
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Stage
-DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s -fsanitize=undefined -fsanitize=address
+DEFINES +=
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -std=c++20
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 
 else ifeq ($(config),stage_windows64)
 RESCOMP = windres
 TARGETDIR = bin/Stage
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/windows64/Stage
-DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s -fsanitize=undefined -fsanitize=address
+DEFINES +=
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -std=c++20
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 
 else ifeq ($(config),release_macos64)
 ifeq ($(origin CC), default)
