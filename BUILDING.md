@@ -22,7 +22,7 @@ This is the list of platforms currently supported.
 | ---------------- | ------------ |
 | GNU/Linux        | x64          |
 | Windows          | x64          |
-| macOS            | x64          |
+| MacOS            | x64          |
 
 ## Building Pixie on supported platforms
 
@@ -30,7 +30,7 @@ This is the list of platforms currently supported.
 
 * [Premake](https://premake.github.io) to auto generate build scripts
 * [ASan](https://github.com/google/sanitizers)
-* [UBSan] (https://github.com/google/sanitizers)
+* [UBSan](https://github.com/google/sanitizers)
 
 ### Autogenerating Makefile
 
@@ -44,22 +44,22 @@ premake5 gmake2
 
 The following configurations exist. To access the full list of available configurations, run `make help`.
 
-| Operating System    | debug         | test       | stage         | release   |
-| ------------------- | ------------- | ---------- | ------------- | --------- |
-| GNU/Linux (linux64) | Available     | Available  |               | Available |
-| Windows (windows64) | Available     | Available  |               | Available |
-| macOS (macos64)     | Available[^1] | Available  | Available[^1] | Available |
+| Operating System    | Platform Nomenclature | debug         | test       | stage         | release   |
+| ------------------- | ----------------------|-------------  | ---------- | ------------- | --------- |
+| Windows             | windows64             | Available     | Available  |               | Available |
+| GNU/Linux           | linux64               | Available     | Available  |               | Available |
+| MacOS               | macos64               | Available[^1] | Available  | Available[^1] | Available |
 
-[^1]: Requires [ASan](https://github.com/google/sanitizers) and [UBSan] (https://github.com/google/sanitizers)
+[^1]: Requires [ASan](https://github.com/google/sanitizers) and [UBSan](https://github.com/google/sanitizers)
 
 Below are the descriptions for each configuration:
 
-| Configuration | Description                                                      |
-|---------------| -----------------------------------------------------------------|
-| debug         | To be used during development only                               |
-| test          | Runs only the tests and not the engine                           |
-| stage         | To be used for checking memory leaks and undefined behavior only |
-| release       | To be used for building the engine for real-life use             |
+| Configuration Nomenclature | Description                                                      |
+|----------------------------| -----------------------------------------------------------------|
+| debug                      | To be used during development only                               |
+| test                       | Runs only the tests and not the engine                           |
+| stage                      | To be used for checking memory leaks and undefined behavior only |
+| release                    | To be used for building the engine for real-life use             |
 
 ### Windows
 
@@ -110,5 +110,10 @@ First, create the test build for Pixie. Below is an example of creating the test
 
 ```
 make config=test_macos64
+```
+
+Once the test build is created, run:
+
+```
 ./bin/Test/pixie
 ```
