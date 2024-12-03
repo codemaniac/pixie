@@ -40,21 +40,27 @@ Although `Makefile` is included in the repository, in case there is a need to re
 premake5 gmake2
 ```
 
+Alternatively, to create a build with ASan and UBSan, generate the `Makefile` using the `--enable-san` switch. This will enable ASan and UBSan on all of the [build configurations](#build-configurations). This is to be used only to perform memory error checks and undefined behavior checks.
+
+```
+premake5 gmake2 --enable-san
+```
+
 ### Build Configurations
 
 The following configurations exist. To access the full list of available configurations, run `make help`.
 
-| Configuration Nomenclature | Description                                                      |
-|----------------------------| -----------------------------------------------------------------|
-| debug                      | To be used during development only                               |
-| test                       | Runs only the tests and not the engine                           |
-| release                    | To be used for building the engine for real-life use             |
+| Configuration | Description                                                      |
+|---------------| -----------------------------------------------------------------|
+| debug         | To be used during development only                               |
+| test          | Runs only the tests and not the engine                           |
+| release       | To be used for building the engine for real-life use             |
 
 ### Windows
 
 #### Windows Prerequisites
 
-* Requires MinGW 64-bit to be installed and added to `path` using [msys2](https://www.msys2.org)
+* Requires `mingw-w64-ucrt-x86_64-gcc` to be installed and added to `path` using [msys2](https://www.msys2.org)
 
 #### Building on Windows
 
