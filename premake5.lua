@@ -1,5 +1,5 @@
 workspace "pixie"
-    configurations { "Debug", "Test", "Stage", "Release" }
+    configurations { "Debug", "Test", "Release" }
     platforms { "macos64", "linux64", "windows64" }
 
 project "pixie"
@@ -10,107 +10,61 @@ project "pixie"
     targetdir "bin/%{cfg.buildcfg}"
     entrypoint ("main()")
     files { "src/**.h", "src/**.cpp" }
+    flags { "FatalWarnings", "LinkTimeOptimization" }
+    buildoptions { "-Wall", "-Wextra", "-march=native", "-fsanitize=undefined", "-fsanitize=address" }
+    linkoptions { "-static", "-fsanitize=undefined", "-fsanitize=address" }
+
+    newoption {
+        trigger = "enable-san",
+        description = "Enable ASan and UBSan"
+     }
+
+    filter { "not options:enable-san" }
+        removebuildoptions { "-fsanitize=undefined", "-fsanitize=address" }
+        removelinkoptions { "-fsanitize=undefined", "-fsanitize=address" }
 
     filter { "platforms:macos64" }
         system "macosx"
         architecture "x86_64"
+        removelinkoptions { "-static" }
+        toolset ("clang")
 
     filter { "platforms:linux64" }
         system "linux"
         architecture "x86_64"
+        toolset ("gcc")
 
     filter { "platforms:windows64" }
         system "windows"
         architecture "x86_64"
+        toolset ("gcc")
 
-    filter { "platforms:macos64", "configurations:Debug" }
-        buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
-        linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
-        flags { "FatalWarnings" }
+    filter { "configurations:Debug" }
         defines { "DEBUG" }
         symbols "On"
+        removeflags { "LinkTimeOptimization" }
 
-    filter { "platforms:linux64", "configurations:Debug" }
-        buildoptions { "-Wall", "-Wextra" }
-        linkoptions { "-static" }
-        flags { "FatalWarnings" }
-        defines { "DEBUG" }
-        symbols "On"
-
-    filter { "platforms:windows64", "configurations:Debug" }
-        buildoptions { "-Wall", "-Wextra" }
-        linkoptions { "-static" }
-        flags { "FatalWarnings" }
-        defines { "DEBUG" }
-        symbols "On"
-
-    filter{ "platforms:macos64", "configurations:Test" }
-        files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
-        removefiles{
+    filter{ "configurations:Test" }
+        files { "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
+        removefiles {
             "src/main.cpp",
             "src/include/bench.h",
             "src/bench.cpp",
             "src/include/uci.h",
             "src/uci.cpp"
         }
-        buildoptions{ "-Wall", "-Wextra" }
-        flags{ "FatalWarnings", "LinkTimeOptimization" }
-        defines{ "NDEBUG" }
-        optimize "Speed"
-
-    filter{ "platforms:linux64", "configurations:Test" }
-        files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
-        removefiles{
-            "src/main.cpp",
-            "src/include/bench.h",
-            "src/bench.cpp",
-            "src/include/uci.h",
-            "src/uci.cpp"
-        }
-        buildoptions{ "-Wall", "-Wextra" }
-        linkoptions { "-static" }
-        flags{ "FatalWarnings", "LinkTimeOptimization" }
-        defines{ "NDEBUG" }
-        optimize "Speed"
-
-    filter{ "platforms:windows64", "configurations:Test" }
-        files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
-        removefiles{
-            "src/main.cpp",
-            "src/include/bench.h",
-            "src/bench.cpp",
-            "src/include/uci.h",
-            "src/uci.cpp"
-        }
-        buildoptions{ "-Wall", "-Wextra" }
-        linkoptions { "-static" }
-        flags{ "FatalWarnings", "LinkTimeOptimization" }
-        defines{ "NDEBUG" }
-        optimize "Speed"
-
-    filter { "platforms:macos64", "configurations:Stage" }
-        buildoptions { "-Wall", "-Wextra", "-march=native", "-fsanitize=undefined", "-fsanitize=address" }
-        linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
-        flags { "FatalWarnings" }
         defines { "NDEBUG" }
         optimize "Speed"
 
-    filter { "platforms:macos64", "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra", "-march=native" }
-        flags { "FatalWarnings", "LinkTimeOptimization" }
+    filter { "configurations:Release" }
         defines { "NDEBUG" }
         optimize "Speed"
 
-    filter { "platforms:linux64", "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra", "-march=native" }
-        linkoptions { "-static" }
-        flags { "FatalWarnings", "LinkTimeOptimization" }
-        defines { "NDEBUG" }
-        optimize "Speed"
-
-    filter { "platforms:windows64", "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra", "-march=native" }
-        linkoptions { "-static" }
-        flags { "FatalWarnings", "LinkTimeOptimization" }
-        defines { "NDEBUG" }
-        optimize "Speed"
+newaction {
+    trigger = "clean",
+    description = "Remove all binaries and build folders.",
+    execute = function()
+        os.rmdir("./bin")
+        os.rmdir("./obj")
+    end
+}
