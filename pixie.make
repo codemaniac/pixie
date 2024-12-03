@@ -46,9 +46,9 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/macos64/Debug
 DEFINES += -DDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_LDFLAGS += $(LDFLAGS) -m64 -fsanitize=undefined -fsanitize=address
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -march=native
+ALL_LDFLAGS += $(LDFLAGS) -m64
 
 else ifeq ($(config),debug_linux64)
 RESCOMP = windres
@@ -56,8 +56,8 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Debug
 DEFINES += -DDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -static
 
 else ifeq ($(config),debug_windows64)
@@ -66,8 +66,8 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/windows64/Debug
 DEFINES += -DDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -static
 
 else ifeq ($(config),test_macos64)
@@ -84,8 +84,8 @@ TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/macos64/Test
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -m64 -flto
 
 else ifeq ($(config),test_linux64)
@@ -94,8 +94,8 @@ TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Test
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 else ifeq ($(config),test_windows64)
@@ -104,47 +104,9 @@ TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/windows64/Test
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
-
-else ifeq ($(config),stage_macos64)
-ifeq ($(origin CC), default)
-  CC = clang
-endif
-ifeq ($(origin CXX), default)
-  CXX = clang++
-endif
-ifeq ($(origin AR), default)
-  AR = ar
-endif
-TARGETDIR = bin/Stage
-TARGET = $(TARGETDIR)/pixie
-OBJDIR = obj/macos64/Stage
-DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra -march=native -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra -march=native -fsanitize=undefined -fsanitize=address
-ALL_LDFLAGS += $(LDFLAGS) -m64 -fsanitize=undefined -fsanitize=address
-
-else ifeq ($(config),stage_linux64)
-RESCOMP = windres
-TARGETDIR = bin/Stage
-TARGET = $(TARGETDIR)/pixie
-OBJDIR = obj/linux64/Stage
-DEFINES +=
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -std=c++20
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
-
-else ifeq ($(config),stage_windows64)
-RESCOMP = windres
-TARGETDIR = bin/Stage
-TARGET = $(TARGETDIR)/pixie.exe
-OBJDIR = obj/windows64/Stage
-DEFINES +=
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -std=c++20
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -s
 
 else ifeq ($(config),release_macos64)
 ifeq ($(origin CC), default)
@@ -276,30 +238,6 @@ OBJECTS += $(OBJDIR)/test_perft.o
 OBJECTS += $(OBJDIR)/test_position.o
 OBJECTS += $(OBJDIR)/test_tt.o
 OBJECTS += $(OBJDIR)/test_utils.o
-
-else ifeq ($(config),stage_macos64)
-GENERATED += $(OBJDIR)/bench.o
-GENERATED += $(OBJDIR)/main.o
-GENERATED += $(OBJDIR)/uci.o
-OBJECTS += $(OBJDIR)/bench.o
-OBJECTS += $(OBJDIR)/main.o
-OBJECTS += $(OBJDIR)/uci.o
-
-else ifeq ($(config),stage_linux64)
-GENERATED += $(OBJDIR)/bench.o
-GENERATED += $(OBJDIR)/main.o
-GENERATED += $(OBJDIR)/uci.o
-OBJECTS += $(OBJDIR)/bench.o
-OBJECTS += $(OBJDIR)/main.o
-OBJECTS += $(OBJDIR)/uci.o
-
-else ifeq ($(config),stage_windows64)
-GENERATED += $(OBJDIR)/bench.o
-GENERATED += $(OBJDIR)/main.o
-GENERATED += $(OBJDIR)/uci.o
-OBJECTS += $(OBJDIR)/bench.o
-OBJECTS += $(OBJDIR)/main.o
-OBJECTS += $(OBJDIR)/uci.o
 
 else ifeq ($(config),release_macos64)
 GENERATED += $(OBJDIR)/bench.o
@@ -501,39 +439,6 @@ $(OBJDIR)/test_tt.o: test/test_tt.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_utils.o: test/test_utils.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-
-else ifeq ($(config),stage_macos64)
-$(OBJDIR)/bench.o: src/bench.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/main.o: src/main.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/uci.o: src/uci.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-
-else ifeq ($(config),stage_linux64)
-$(OBJDIR)/bench.o: src/bench.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/main.o: src/main.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/uci.o: src/uci.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-
-else ifeq ($(config),stage_windows64)
-$(OBJDIR)/bench.o: src/bench.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/main.o: src/main.cpp
-	@echo "$(notdir $<)"
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/uci.o: src/uci.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
