@@ -89,27 +89,27 @@ project "pixie"
         optimize "Speed"
 
     filter { "platforms:macos64", "configurations:Stage" }
-        buildoptions { "-Wall", "-Wextra", "-fsanitize=undefined", "-fsanitize=address" }
+        buildoptions { "-Wall", "-Wextra", "-march=native", "-fsanitize=undefined", "-fsanitize=address" }
         linkoptions { "-fsanitize=undefined", "-fsanitize=address" }
         flags { "FatalWarnings" }
         defines { "NDEBUG" }
         optimize "Speed"
 
     filter { "platforms:macos64", "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra" }
+        buildoptions { "-Wall", "-Wextra", "-march=native" }
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"
 
     filter { "platforms:linux64", "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra" }
+        buildoptions { "-Wall", "-Wextra", "-march=native" }
         linkoptions { "-static" }
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"
 
     filter { "platforms:windows64", "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra" }
+        buildoptions { "-Wall", "-Wextra", "-march=native" }
         linkoptions { "-static" }
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }

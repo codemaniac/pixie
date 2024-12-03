@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.3]
+
+### Added
+
+- `-march=native` compiler flag
+- Perft test case
+- Github Actions to run tests
+- [Building.md](BUILDING.md) for supported platforms and building documentation
+
+### Changed
+
+- `static` build for Windows and Linux [Issue #59](https://github.com/codemaniac/pixie/issues/59)
+
+### Removed
+
+- Captures perft
+
 ## [0.8.2]
 
 ### Added
@@ -329,3 +346,4 @@ SPRT: llr 2.97 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
 [0.8.0]: https://github.com/codemaniac/pixie/releases/tag/v0.8.0
 [0.8.1]: https://github.com/codemaniac/pixie/releases/tag/v0.8.1
 [0.8.2]: https://github.com/codemaniac/pixie/releases/tag/v0.8.2
+[0.8.3]: https://github.com/codemaniac/pixie/releases/tag/v0.8.3

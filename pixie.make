@@ -122,8 +122,8 @@ TARGETDIR = bin/Stage
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/macos64/Stage
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra -fsanitize=undefined -fsanitize=address
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra -fsanitize=undefined -fsanitize=address
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -Wall -Wextra -march=native -fsanitize=undefined -fsanitize=address
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -O3 -std=c++20 -Wall -Wextra -march=native -fsanitize=undefined -fsanitize=address
 ALL_LDFLAGS += $(LDFLAGS) -m64 -fsanitize=undefined -fsanitize=address
 
 else ifeq ($(config),stage_linux64)
@@ -160,8 +160,8 @@ TARGETDIR = bin/Release
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/macos64/Release
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -m64 -flto
 
 else ifeq ($(config),release_linux64)
@@ -170,8 +170,8 @@ TARGETDIR = bin/Release
 TARGET = $(TARGETDIR)/pixie
 OBJDIR = obj/linux64/Release
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 else ifeq ($(config),release_windows64)
@@ -180,8 +180,8 @@ TARGETDIR = bin/Release
 TARGET = $(TARGETDIR)/pixie.exe
 OBJDIR = obj/windows64/Release
 DEFINES += -DNDEBUG
-ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
-ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 endif
