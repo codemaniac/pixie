@@ -58,7 +58,7 @@ OBJDIR = obj/linux64/Debug
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -static
 
 else ifeq ($(config),debug_windows64)
 RESCOMP = windres
@@ -68,7 +68,7 @@ OBJDIR = obj/windows64/Debug
 DEFINES += -DDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -Wall -Wextra
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -g -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -static
 
 else ifeq ($(config),test_macos64)
 ifeq ($(origin CC), default)
@@ -96,7 +96,7 @@ OBJDIR = obj/linux64/Test
 DEFINES += -DNDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 else ifeq ($(config),test_windows64)
 RESCOMP = windres
@@ -106,7 +106,7 @@ OBJDIR = obj/windows64/Test
 DEFINES += -DNDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 else ifeq ($(config),stage_macos64)
 ifeq ($(origin CC), default)
@@ -172,7 +172,7 @@ OBJDIR = obj/linux64/Release
 DEFINES += -DNDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 else ifeq ($(config),release_windows64)
 RESCOMP = windres
@@ -182,7 +182,7 @@ OBJDIR = obj/windows64/Release
 DEFINES += -DNDEBUG
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra
-ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 endif
 

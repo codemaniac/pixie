@@ -32,17 +32,19 @@ project "pixie"
 
     filter { "platforms:linux64", "configurations:Debug" }
         buildoptions { "-Wall", "-Wextra" }
+        linkoptions { "-static" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
 
     filter { "platforms:windows64", "configurations:Debug" }
         buildoptions { "-Wall", "-Wextra" }
+        linkoptions { "-static" }
         flags { "FatalWarnings" }
         defines { "DEBUG" }
         symbols "On"
 
-    filter{"configurations:Test"}
+    filter{ "platforms:macos64", "configurations:Test" }
         files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
         removefiles{
             "src/main.cpp",
@@ -53,7 +55,37 @@ project "pixie"
         }
         buildoptions{ "-Wall", "-Wextra" }
         flags{ "FatalWarnings", "LinkTimeOptimization" }
-        defines{"NDEBUG"}
+        defines{ "NDEBUG" }
+        optimize "Speed"
+
+    filter{ "platforms:linux64", "configurations:Test" }
+        files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
+        removefiles{
+            "src/main.cpp",
+            "src/include/bench.h",
+            "src/bench.cpp",
+            "src/include/uci.h",
+            "src/uci.cpp"
+        }
+        buildoptions{ "-Wall", "-Wextra" }
+        linkoptions { "-static" }
+        flags{ "FatalWarnings", "LinkTimeOptimization" }
+        defines{ "NDEBUG" }
+        optimize "Speed"
+
+    filter{ "platforms:windows64", "configurations:Test" }
+        files{ "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
+        removefiles{
+            "src/main.cpp",
+            "src/include/bench.h",
+            "src/bench.cpp",
+            "src/include/uci.h",
+            "src/uci.cpp"
+        }
+        buildoptions{ "-Wall", "-Wextra" }
+        linkoptions { "-static" }
+        flags{ "FatalWarnings", "LinkTimeOptimization" }
+        defines{ "NDEBUG" }
         optimize "Speed"
 
     filter { "platforms:macos64", "configurations:Stage" }
@@ -63,8 +95,22 @@ project "pixie"
         defines { "NDEBUG" }
         optimize "Speed"
 
-    filter { "configurations:Release" }
-        buildoptions { "-Wall", "-Wextra"}
+    filter { "platforms:macos64", "configurations:Release" }
+        buildoptions { "-Wall", "-Wextra" }
+        flags { "FatalWarnings", "LinkTimeOptimization" }
+        defines { "NDEBUG" }
+        optimize "Speed"
+
+    filter { "platforms:linux64", "configurations:Release" }
+        buildoptions { "-Wall", "-Wextra" }
+        linkoptions { "-static" }
+        flags { "FatalWarnings", "LinkTimeOptimization" }
+        defines { "NDEBUG" }
+        optimize "Speed"
+
+    filter { "platforms:windows64", "configurations:Release" }
+        buildoptions { "-Wall", "-Wextra" }
+        linkoptions { "-static" }
         flags { "FatalWarnings", "LinkTimeOptimization" }
         defines { "NDEBUG" }
         optimize "Speed"

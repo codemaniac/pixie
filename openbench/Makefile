@@ -1,7 +1,7 @@
 EXE ?= pixie
 CXX ?= clang++
 CFLAGS := -MD -MP -DNDEBUG -m64 -Werror -flto -O3 -std=c++20
-LDFLAGS := -m64 -flto
+LDFLAGS := -m64 -static -flto
 
 BIN_DIR := .
 OBJ_DIR := ../obj
