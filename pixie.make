@@ -182,25 +182,31 @@ OBJECTS += $(OBJDIR)/utils.o
 ifeq ($(config),debug_macos64)
 GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/tune.o
 GENERATED += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/tune.o
 OBJECTS += $(OBJDIR)/uci.o
 
 else ifeq ($(config),debug_linux64)
 GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/tune.o
 GENERATED += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/tune.o
 OBJECTS += $(OBJDIR)/uci.o
 
 else ifeq ($(config),debug_windows64)
 GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/tune.o
 GENERATED += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/tune.o
 OBJECTS += $(OBJDIR)/uci.o
 
 else ifeq ($(config),test_macos64)
@@ -242,25 +248,31 @@ OBJECTS += $(OBJDIR)/test_utils.o
 else ifeq ($(config),release_macos64)
 GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/tune.o
 GENERATED += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/tune.o
 OBJECTS += $(OBJDIR)/uci.o
 
 else ifeq ($(config),release_linux64)
 GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/tune.o
 GENERATED += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/tune.o
 OBJECTS += $(OBJDIR)/uci.o
 
 else ifeq ($(config),release_windows64)
 GENERATED += $(OBJDIR)/bench.o
 GENERATED += $(OBJDIR)/main.o
+GENERATED += $(OBJDIR)/tune.o
 GENERATED += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/bench.o
 OBJECTS += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/tune.o
 OBJECTS += $(OBJDIR)/uci.o
 
 endif
@@ -365,6 +377,9 @@ $(OBJDIR)/bench.o: src/bench.cpp
 $(OBJDIR)/main.o: src/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/tune.o: src/tune.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/uci.o: src/uci.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -376,6 +391,9 @@ $(OBJDIR)/bench.o: src/bench.cpp
 $(OBJDIR)/main.o: src/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/tune.o: src/tune.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/uci.o: src/uci.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -385,6 +403,9 @@ $(OBJDIR)/bench.o: src/bench.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/tune.o: src/tune.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/uci.o: src/uci.cpp
@@ -449,6 +470,9 @@ $(OBJDIR)/bench.o: src/bench.cpp
 $(OBJDIR)/main.o: src/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/tune.o: src/tune.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/uci.o: src/uci.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -460,6 +484,9 @@ $(OBJDIR)/bench.o: src/bench.cpp
 $(OBJDIR)/main.o: src/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/tune.o: src/tune.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/uci.o: src/uci.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -469,6 +496,9 @@ $(OBJDIR)/bench.o: src/bench.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/tune.o: src/tune.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/uci.o: src/uci.cpp

@@ -1,5 +1,5 @@
-#ifndef CHESS_H
-#define CHESS_H
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
 #include <cstdint>
 
