@@ -1,6 +1,8 @@
 #ifndef TUNE_H
 #define TUNE_H
 
-void tune();
+#include <string>
+
+void tune(const std::string path);
 
 #endif

@@ -53,13 +53,13 @@ constexpr std::array<int32_t, 6> material = {
 };
 // clang-format on
 
-static double get_fen_wdl(const std::string& fen, const Color active_color) {
+static double get_fen_wdl(const std::string& fen) {
     double wdl = 0.5;
 
-    if (fen.find("[1-0]") != (size_t) std::string::npos)
-        wdl = 1.0 - static_cast<int>(active_color);
-    else if (fen.find("[0-1]") != (size_t) std::string::npos)
-        wdl = static_cast<int>(active_color);
+    if (fen.find("1-0") != (size_t) std::string::npos)
+        wdl = 1.0;
+    else if (fen.find("0-1") != (size_t) std::string::npos)
+        wdl = 0.0;
 
     return wdl;
 }
@@ -133,7 +133,7 @@ static void init_entries(std::vector<Entry>* entries, std::vector<std::string>& 
             continue;
 
         Entry entry;
-        entry.wdl          = get_fen_wdl(fen, position.get_active_color());
+        entry.wdl          = get_fen_wdl(fen);
         const double phase = get_phase(position);
         entry.phase        = phase;
         init_entry_coefficients(&entry, position);
@@ -235,13 +235,13 @@ static void print_parameters(const ArrayList<ParameterTuple, N_PARAMS>& paramete
     }
 }
 
-void tune() {
+void tune(const std::string path) {
     std::cout << "Starting tuning" << std::endl;
 
+    std::filesystem::path filepath = std::filesystem::canonical(path);
+    std::ifstream         file(filepath);
+
     std::vector<std::string> data;
-    std::filesystem::path    filepath = std::filesystem::current_path() / "data" / "data.epd";
-    filepath                          = std::filesystem::canonical(filepath);
-    std::ifstream file(filepath);
 
     for (std::string line; std::getline(file, line);)
     {
@@ -262,8 +262,10 @@ void tune() {
 
     std::cout << "Initial error = " << avg_error << std::endl;
 
-    double  learning_rate  = 0.01;
-    int32_t max_tune_epoch = 5000;
+    double        learning_rate               = 0.1;
+    const int32_t max_tune_epoch              = 10000;
+    const int32_t learning_rate_drop_interval = 1000;
+    const double  learning_rate_drop_ratio    = 0.5;
 
     const double beta1 = 0.9;
     const double beta2 = 0.999;
@@ -297,6 +299,11 @@ void tune() {
         {
             const double error = get_average_error(entries, parameters, K);
             std::cout << "Error = " << error << std::endl;
+        }
+
+        if (epoch % learning_rate_drop_interval == 0)
+        {
+            learning_rate *= learning_rate_drop_ratio;
         }
     }
 

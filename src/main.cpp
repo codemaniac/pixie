@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
     {
         uci_loop();
     }
-    else if (argc == 2)
+    else if (argc >= 2)
     {
         if (std::string(argv[1]) == "bench")
         {
@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
         }
         else if (std::string(argv[1]) == "tune")
         {
-            tune();
+            tune(std::string(argv[2]));
         }
     }
     return 0;
