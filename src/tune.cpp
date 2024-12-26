@@ -13,6 +13,7 @@
 #include <vector>
 
 #define N_PARAMS 6
+#define KPRECISION 10
 
 using Parameter      = double;
 using ParameterTuple = std::array<Parameter, 2>;
@@ -87,20 +88,23 @@ static double get_phase(const Position& position) {
 }
 
 static void init_entry_coefficients(Entry* entry, const Position& position) {
-    int param_index = 0;
+    entry->coefficients.push(position.get_piece_count(WHITE_PAWN)
+                             - position.get_piece_count(BLACK_PAWN));
 
-    entry->coefficients[param_index++] =
-      position.get_piece_count(WHITE_PAWN) - position.get_piece_count(BLACK_PAWN);
-    entry->coefficients[param_index++] =
-      position.get_piece_count(WHITE_KNIGHT) - position.get_piece_count(BLACK_KNIGHT);
-    entry->coefficients[param_index++] =
-      position.get_piece_count(WHITE_BISHOP) - position.get_piece_count(BLACK_BISHOP);
-    entry->coefficients[param_index++] =
-      position.get_piece_count(WHITE_ROOK) - position.get_piece_count(BLACK_ROOK);
-    entry->coefficients[param_index++] =
-      position.get_piece_count(WHITE_QUEEN) - position.get_piece_count(BLACK_QUEEN);
-    entry->coefficients[param_index++] =
-      position.get_piece_count(WHITE_KING) - position.get_piece_count(BLACK_KING);
+    entry->coefficients.push(position.get_piece_count(WHITE_KNIGHT)
+                             - position.get_piece_count(BLACK_KNIGHT));
+
+    entry->coefficients.push(position.get_piece_count(WHITE_BISHOP)
+                             - position.get_piece_count(BLACK_BISHOP));
+
+    entry->coefficients.push(position.get_piece_count(WHITE_ROOK)
+                             - position.get_piece_count(BLACK_ROOK));
+
+    entry->coefficients.push(position.get_piece_count(WHITE_QUEEN)
+                             - position.get_piece_count(BLACK_QUEEN));
+
+    entry->coefficients.push(position.get_piece_count(WHITE_KING)
+                             - position.get_piece_count(BLACK_KING));
 }
 
 static void init_parameters(ArrayList<ParameterTuple, N_PARAMS>* parameters) {
@@ -203,23 +207,25 @@ static void compute_gradient(ArrayList<std::array<double, 2>, N_PARAMS>* gradien
 static double find_optimal_k(const std::vector<Entry>&                  entries,
                              const ArrayList<ParameterTuple, N_PARAMS>& parameters) {
 
-    const double rate           = 10;
-    const double delta          = 1e-5;
-    const double deviation_goal = 1e-6;
-    double       K              = 2.5;
-    double       deviation      = 1;
+    double start = 0.0, end = 10, step = 1.0;
+    double curr = start, error;
+    double best = get_average_error(entries, parameters, start);
 
-    while (fabs(deviation) > deviation_goal)
+    for (int i = 0; i < KPRECISION; i++)
     {
-        const double up   = get_average_error(entries, parameters, K + delta);
-        const double down = get_average_error(entries, parameters, K - delta);
-        deviation         = (up - down) / (2 * delta);
-        std::cout << "Current K: " << K << ", up: " << up << ", down: " << down
-                  << ", deviation: " << deviation << std::endl;
-        K -= deviation * rate;
+        curr = start - step;
+        while (curr < end)
+        {
+            curr  = curr + step;
+            error = get_average_error(entries, parameters, curr);
+            if (error <= best)
+                best = error, start = curr;
+        }
+        end   = start + step;
+        start = start - step;
+        step  = step / 10.0;
     }
-
-    return K;
+    return start;
 }
 
 static void print_parameters(const ArrayList<ParameterTuple, N_PARAMS>& parameters) {
@@ -250,12 +256,14 @@ void tune() {
 
     const double K = find_optimal_k(entries, parameters);
 
+    std::cout << "Using K = " << K << std::endl;
+
     const double avg_error = get_average_error(entries, parameters, K);
 
     std::cout << "Initial error = " << avg_error << std::endl;
 
     double  learning_rate  = 0.01;
-    int32_t max_tune_epoch = 1000;
+    int32_t max_tune_epoch = 5000;
 
     const double beta1 = 0.9;
     const double beta2 = 0.999;
@@ -285,7 +293,7 @@ void tune() {
             }
         }
 
-        if (epoch % 10 == 0)
+        if (epoch % 100 == 0)
         {
             const double error = get_average_error(entries, parameters, K);
             std::cout << "Error = " << error << std::endl;
