@@ -497,6 +497,8 @@ Color Position::get_active_color() const { return this->active_color; }
 
 uint32_t Position::get_half_move_clock() const { return this->half_move_clock; }
 
+uint32_t Position::get_full_move_number() const { return this->full_move_number; }
+
 uint32_t Position::get_ply_count() const { return this->ply_count; }
 
 uint64_t Position::get_hash() const { return this->hash; }

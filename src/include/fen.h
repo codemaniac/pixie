@@ -3,6 +3,6 @@
 
 #include "position.h"
 
-void fen_to_position(std::string fen, Position* pos);
+void fen_to_position(std::string fen, Position* pos, const bool full = true);
 
 #endif

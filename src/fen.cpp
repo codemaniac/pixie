@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 
-void fen_to_position(std::string fen, Position* pos) {
+void fen_to_position(std::string fen, Position* pos, const bool full) {
     std::string piece_placement;
     std::string active_color;
     std::string castling_rights;
@@ -86,12 +86,12 @@ void fen_to_position(std::string fen, Position* pos) {
         pos->set_enpassant_target(ep_target_sq);
     }
 
-    if (halfmove_clock.empty())
+    if (halfmove_clock.empty() || !full)
         pos->set_half_move_clock(0);
     else
         pos->set_half_move_clock(std::stoi(halfmove_clock));
 
-    if (fullmove_number.empty())
+    if (fullmove_number.empty() || !full)
         pos->set_full_move_number(1);
     else
         pos->set_full_move_number(std::stoi(fullmove_number));
