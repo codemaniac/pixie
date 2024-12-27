@@ -28,6 +28,11 @@ struct Entry {
     double                      wdl, phase;
 };
 
+struct EvalTrace {
+    int32_t pieces[6][2];
+    int32_t psqt[6][64][2];
+};
+
 constexpr int32_t S(const int32_t mg, const int32_t eg) {
     return static_cast<int32_t>(static_cast<uint32_t>(eg) << 16) + mg;
 }
@@ -87,24 +92,26 @@ static double get_phase(const Position& position) {
     return phase;
 }
 
-static void init_entry_coefficients(Entry* entry, const Position& position) {
-    entry->coefficients.push(position.get_piece_count(WHITE_PAWN)
-                             - position.get_piece_count(BLACK_PAWN));
+static void init_eval_trace(EvalTrace* trace, const Position& position) {
+    for (int sq = A1; sq <= H8; sq++)
+    {
+        const Piece p = position.get_piece(static_cast<Square>(sq));
+        if (p == NO_PIECE)
+        {
+            continue;
+        }
+        const PieceType ptype  = PIECE_GET_TYPE(p);
+        const Color     pcolor = PIECE_GET_COLOR(p);
+        trace->pieces[ptype - 1][pcolor]++;
+        trace->psqt[ptype - 1][sq][pcolor]++;
+    }
+}
 
-    entry->coefficients.push(position.get_piece_count(WHITE_KNIGHT)
-                             - position.get_piece_count(BLACK_KNIGHT));
-
-    entry->coefficients.push(position.get_piece_count(WHITE_BISHOP)
-                             - position.get_piece_count(BLACK_BISHOP));
-
-    entry->coefficients.push(position.get_piece_count(WHITE_ROOK)
-                             - position.get_piece_count(BLACK_ROOK));
-
-    entry->coefficients.push(position.get_piece_count(WHITE_QUEEN)
-                             - position.get_piece_count(BLACK_QUEEN));
-
-    entry->coefficients.push(position.get_piece_count(WHITE_KING)
-                             - position.get_piece_count(BLACK_KING));
+static void init_entry_coefficients(Entry* entry, const EvalTrace& trace) {
+    for (int32_t p = 0; p < 6; p++)
+    {
+        entry->coefficients.push(trace.pieces[p][WHITE] - trace.pieces[p][BLACK]);
+    }
 }
 
 static void init_parameters(ArrayList<ParameterTuple, N_PARAMS>* parameters) {
@@ -136,7 +143,9 @@ static void init_entries(std::vector<Entry>* entries, std::vector<std::string>& 
         entry.wdl          = get_fen_wdl(fen);
         const double phase = get_phase(position);
         entry.phase        = phase;
-        init_entry_coefficients(&entry, position);
+        EvalTrace trace    = {};
+        init_eval_trace(&trace, position);
+        init_entry_coefficients(&entry, trace);
 
         entries->push_back(entry);
     }
