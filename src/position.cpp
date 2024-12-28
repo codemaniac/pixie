@@ -1,6 +1,7 @@
 #include "include/position.h"
 #include "include/board.h"
 #include "include/constants.h"
+#include "include/eval.h"
 #include "include/move.h"
 #include "include/utils.h"
 #include <cassert>
@@ -31,6 +32,7 @@ static const uint8_t CASTLE_RIGHTS_MODIFIERS[64] = {
 
 void position_init() {
     board_init();
+    init_eval();
     for (int p = 0; p < 12; p++)
     {
         for (int sq = 0; sq < 64; sq++)

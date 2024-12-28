@@ -1,101 +1,92 @@
 #include "include/eval.h"
 #include "include/constants.h"
+#include "include/containers.h"
 #include "include/position.h"
 
-// clang-format off
-static const int8_t POSITIONAL_SCORE_PAWN[64] = {
-      0,   0,   0,   0,   0,   0,   0,   0,
-     50,  50,  50,  50,  50,  50,  50,  50,
-     10,  10,  20,  30,  30,  20,  10,  10,
-      5,   5,  10,  25,  25,  10,   5,   5,
-      0,   0,   0,  20,  20,   0,   0,   0,
-      5,  -5, -10,   0,   0, -10,  -5,   5,
-      5,  10,  10, -20, -20,  10,  10,   5,
-      0,   0,   0,   0,   0,   0,   0,   0
-};
+static ArrayList<ParameterTuple, N_PARAMS> parameters;
 
-static const int8_t POSITIONAL_SCORE_KNIGHT[64] = {
-    -50, -40, -30, -30, -30, -30, -40, -50,
-    -40, -20,   0,   0,   0,   0, -20, -40,
-    -30,   0,  10,  15,  15,  10,   0, -30,
-    -30,   5,  15,  20,  20,  15,   5, -30,
-    -30,   0,  15,  20,  20,  15,   0, -30,
-    -30,   5,  10,  15,  15,  10,   5, -30,
-    -40, -20,   0,   5,   5,   0, -20, -40,
-    -50, -40, -30, -30, -30, -30, -40, -50,
-};
+void init_eval() {
 
-static const int8_t POSITIONAL_SCORE_BISHOP[64] = {
-    -20, -10, -10, -10, -10, -10, -10, -20,
-    -10,   0,   0,   0,   0,   0,   0, -10,
-    -10,   0,   5,  10,  10,   5,   0, -10,
-    -10,   5,   5,  10,  10,   5,   5, -10,
-    -10,   0,  10,  10,  10,  10,   0, -10,
-    -10,  10,  10,  10,  10,  10,  10, -10,
-    -10,   5,   0,   0,   0,   0,   5, -10,
-    -20, -10, -10, -10, -10, -10, -10, -20,
-};
+    for (const auto& p : pieces_scores)
+    {
+        ParameterTuple tuple;
+        tuple[MG] = mg_score(p);
+        tuple[EG] = eg_score(p);
 
-static const int8_t POSITIONAL_SCORE_ROOK[64] = {
-      0,   0,   0,   0,   0,   0,   0,   0,
-      5,  10,  10,  10,  10,  10,  10,   5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-     -5,   0,   0,   0,   0,   0,   0,  -5,
-      0,   0,   0,   5,   5,   0,   0,   0
-};
+        parameters.push(tuple);
+    }
 
-static const int8_t POSITIONAL_SCORE_QUEEN[64] = {
-    -20, -10, -10, -5, -5, -10, -10, -20,
-    -10,   0,   0,  0,  0,   0,   0, -10,
-    -10,   0,   5,  5,  5,   5,   0, -10,
-     -5,   0,   5,  5,  5,   5,   0,  -5,
-      0,   0,   5,  5,  5,   5,   0,  -5,
-    -10,   5,   5,  5,  5,   5,   0, -10,
-    -10,   0,   5,  0,  0,   0,   0, -10,
-    -20, -10, -10, -5, -5, -10, -10, -20
-};
+    for (const auto& x : pst_rank_scores)
+    {
+        ParameterTuple tuple;
+        tuple[MG] = mg_score(x);
+        tuple[EG] = eg_score(x);
 
-static const int8_t POSITIONAL_SCORE_KING_MIDDLEGAME[64] = {
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -30, -40, -40, -50, -50, -40, -40, -30,
-    -20, -30, -30, -40, -40, -30, -30, -20,
-    -10, -20, -20, -20, -20, -20, -20, -10,
-     20,  20,   0,   0,   0,   0,  20,  20,
-     20,  30,  10,   0,   0,  10,  30,  20
-};
+        parameters.push(tuple);
+    }
 
-static const int8_t POSITIONAL_SCORE_KING_ENDGAME[64] = {
-    -50, -40, -30, -20, -20, -30, -40, -50,
-    -30, -20, -10,   0,   0, -10, -20, -30,
-    -30, -10,  20,  30,  30,  20, -10, -30,
-    -30, -10,  30,  40,  40,  30, -10, -30,
-    -30, -10,  30,  40,  40,  30, -10, -30,
-    -30, -10,  20,  30,  30,  20, -10, -30,
-    -30, -30,   0,   0,   0,   0, -30, -30,
-    -50, -30, -30, -30, -30, -30, -30, -50
-};
+    for (const auto& x : pst_file_scores)
+    {
+        ParameterTuple tuple;
+        tuple[MG] = mg_score(x);
+        tuple[EG] = eg_score(x);
 
-static const int SQUARES_MIRRORED[64] = {
-    A8, B8, C8, D8, E8, F7, G8, H8,
-    A7, B7, C7, D7, E7, F7, G7, H7,
-    A6, B6, C6, D6, E6, F6, G6, H6,
-    A5, B5, C5, D5, E5, F5, G5, H5,
-    A4, B4, C4, D4, E4, F4, G4, H4,
-    A3, B3, C3, D3, E3, F3, G3, H3,
-    A2, B2, C2, D2, E2, F2, G2, H2,
-    A1, B1, C1, D1, E1, F1, G1, H1,
-};
-// clang-format on
+        parameters.push(tuple);
+    }
+}
 
-int32_t eval_position(Position& position) {
-    const uint8_t wK = position.get_piece_count(WHITE_KING);
-    const uint8_t bK = position.get_piece_count(BLACK_KING);
+void init_eval_trace(EvalTrace* trace, const Position& position) {
+    for (int sq = A1; sq <= H8; sq++)
+    {
+        const Square square = static_cast<Square>(sq);
+        const Piece  p      = position.get_piece(square);
 
+        if (p == NO_PIECE)
+        {
+            continue;
+        }
+
+        const Rank rank = BOARD_SQ_TO_RANK(square);
+        const File file = BOARD_SQ_TO_FILE(square);
+
+        const PieceType ptype  = PIECE_GET_TYPE(p);
+        const Color     pcolor = PIECE_GET_COLOR(p);
+
+        trace->pieces[ptype - 1][pcolor]++;
+
+        if (pcolor == WHITE)
+        {
+            trace->pst_rank[((ptype - 1) * 8) + rank][pcolor]++;
+        }
+        else
+        {
+            const Square msq   = static_cast<Square>(SQUARES_MIRRORED[sq]);
+            const Rank   mrank = BOARD_SQ_TO_RANK(msq);
+            trace->pst_rank[((ptype - 1) * 8) + mrank][pcolor]++;
+        }
+
+        trace->pst_file[((ptype - 1) * 8) + file][pcolor]++;
+    }
+}
+
+void init_coefficients(ArrayList<double, N_PARAMS>* coefficients, const EvalTrace& trace) {
+    for (int32_t p = 0; p < 6; p++)
+    {
+        coefficients->push(trace.pieces[p][WHITE] - trace.pieces[p][BLACK]);
+    }
+
+    for (int32_t i = 0; i < 48; i++)
+    {
+        coefficients->push(trace.pst_rank[i][WHITE] - trace.pst_rank[i][BLACK]);
+    }
+
+    for (int32_t i = 0; i < 48; i++)
+    {
+        coefficients->push(trace.pst_file[i][WHITE] - trace.pst_file[i][BLACK]);
+    }
+}
+
+int32_t get_phase(const Position& position) {
     const uint8_t wQ = position.get_piece_count(WHITE_QUEEN);
     const uint8_t bQ = position.get_piece_count(BLACK_QUEEN);
 
@@ -108,69 +99,36 @@ int32_t eval_position(Position& position) {
     const uint8_t wN = position.get_piece_count(WHITE_KNIGHT);
     const uint8_t bN = position.get_piece_count(BLACK_KNIGHT);
 
-    const uint8_t wP = position.get_piece_count(WHITE_PAWN);
-    const uint8_t bP = position.get_piece_count(BLACK_PAWN);
+    const uint8_t q = wQ + bQ;
+    const uint8_t r = wR + bR;
+    const uint8_t b = wB + bB;
+    const uint8_t n = wN + bN;
 
-    int32_t eval = (20000 * (wK - bK)) + (900 * (wQ - bQ)) + (500 * (wR - bR)) + (330 * (wB - bB))
-                 + (320 * (wN - bN)) + (100 * (wP - bP));
+    int32_t phase = 24 - (4 * q) - (2 * r) - (1 * b) - (1 * n);
 
-    bool is_end_game = false;
+    return phase;
+}
 
-    if (wQ == 0 && bQ == 0)
-        is_end_game = true;
-    else if (wQ == 1 && bQ == 1 && wR == 0 && bR == 0)
+int32_t eval_position(Position& position) {
+    EvalTrace trace = {};
+    init_eval_trace(&trace, position);
+
+    ArrayList<double, N_PARAMS> coefficients;
+    init_coefficients(&coefficients, trace);
+
+    int32_t phase = get_phase(position);
+
+    int32_t midgame = 0;
+    int32_t endgame = 0;
+
+    for (int i = 0; i < N_PARAMS; i++)
     {
-        if ((wN + wB) <= 1 && (bN + bB) <= 1)
-            is_end_game = true;
+        midgame += coefficients[i] * parameters[i][MG];
+        endgame += coefficients[i] * parameters[i][EG];
     }
 
-    for (uint8_t sq = 0; sq < 64; sq++)
-    {
-        const Piece piece = position.get_piece(static_cast<Square>(sq));
-        switch (piece)
-        {
-            case WHITE_PAWN :
-                eval += POSITIONAL_SCORE_PAWN[SQUARES_MIRRORED[sq]];
-                break;
-            case WHITE_KNIGHT :
-                eval += POSITIONAL_SCORE_KNIGHT[SQUARES_MIRRORED[sq]];
-                break;
-            case WHITE_BISHOP :
-                eval += POSITIONAL_SCORE_BISHOP[SQUARES_MIRRORED[sq]];
-                break;
-            case WHITE_ROOK :
-                eval += POSITIONAL_SCORE_ROOK[SQUARES_MIRRORED[sq]];
-                break;
-            case WHITE_QUEEN :
-                eval += POSITIONAL_SCORE_QUEEN[SQUARES_MIRRORED[sq]];
-                break;
-            case WHITE_KING :
-                eval += is_end_game ? POSITIONAL_SCORE_KING_ENDGAME[SQUARES_MIRRORED[sq]]
-                                    : POSITIONAL_SCORE_KING_MIDDLEGAME[SQUARES_MIRRORED[sq]];
-                break;
-            case BLACK_PAWN :
-                eval -= POSITIONAL_SCORE_PAWN[sq];
-                break;
-            case BLACK_KNIGHT :
-                eval -= POSITIONAL_SCORE_KNIGHT[sq];
-                break;
-            case BLACK_BISHOP :
-                eval -= POSITIONAL_SCORE_BISHOP[sq];
-                break;
-            case BLACK_ROOK :
-                eval -= POSITIONAL_SCORE_ROOK[sq];
-                break;
-            case BLACK_QUEEN :
-                eval -= POSITIONAL_SCORE_QUEEN[sq];
-                break;
-            case BLACK_KING :
-                eval -= is_end_game ? POSITIONAL_SCORE_KING_ENDGAME[sq]
-                                    : POSITIONAL_SCORE_KING_MIDDLEGAME[sq];
-                break;
-            default :
-                break;
-        }
-    }
+    // Linear interpolation for Tapered Evaluation
+    int32_t eval = (midgame * phase + endgame * (24 - phase)) / 24;
 
     const int8_t side_to_move = 1 - (2 * position.get_active_color());
     eval *= side_to_move;
