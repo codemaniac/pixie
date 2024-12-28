@@ -174,11 +174,11 @@ static void init_eval_trace(EvalTrace* trace, const Position& position) {
         trace->pieces[ptype - 1][pcolor]++;
         if (pcolor == WHITE)
         {
-            trace->psqt[ptype - 1][SQUARES_MIRRORED[sq]][pcolor]++;
+            trace->psqt[ptype - 1][sq][pcolor]++;
         }
         else
         {
-            trace->psqt[ptype - 1][sq][pcolor]++;
+            trace->psqt[ptype - 1][SQUARES_MIRRORED[sq]][pcolor]++;
         }
     }
 }
@@ -216,8 +216,8 @@ static void init_parameters(ArrayList<ParameterTuple, N_PARAMS>* parameters) {
     {
         for (int sq = A1; sq <= H8; sq++)
         {
-            double psqt_mg = mg_score(psqt[p][sq]);
-            double psqt_eg = eg_score(psqt[p][sq]);
+            double psqt_mg = mg_score(psqt[p][SQUARES_MIRRORED[sq]]);
+            double psqt_eg = eg_score(psqt[p][SQUARES_MIRRORED[sq]]);
 
             ParameterTuple tuple;
             tuple[MG] = psqt_mg;
@@ -369,10 +369,16 @@ static void print_psqt(std::stringstream&                         ss,
     int ptr = start;
     for (int p = 0; p < 6; p++)
     {
+        ParameterTuple psqr_params[64];
+        for (int sq = A1; sq <= H8; sq++)
+        {
+            psqr_params[sq] = parameters[ptr++];
+        }
+
         ss << "{";
         for (int sq = A1; sq <= H8; sq++)
         {
-            print_parameter(ss, parameters[ptr++]);
+            print_parameter(ss, psqr_params[SQUARES_MIRRORED[sq]]);
             if (sq != H8)
             {
                 ss << ", ";
