@@ -17,7 +17,7 @@ clean:
 dir:
 	@mkdir -p $(OBJ_DIR)
 
-pixie: main.o bench.o board.o eval.o fen.o move.o perft.o position.o search.o threadpool.o tt.o uci.o utils.o
+pixie: main.o bench.o board.o eval.o fen.o move.o perft.o position.o search.o threadpool.o tt.o tune.o uci.o utils.o
 	@echo "==== Building pixie ===="
 	@$(CXX) $(LDFLAGS) -o $(BIN_DIR)/$(EXE) $(OBJ_DIR)/main.o \
 		$(OBJ_DIR)/bench.o \
@@ -30,6 +30,7 @@ pixie: main.o bench.o board.o eval.o fen.o move.o perft.o position.o search.o th
 		$(OBJ_DIR)/search.o \
 		$(OBJ_DIR)/threadpool.o \
 		$(OBJ_DIR)/tt.o \
+		$(OBJ_DIR)/tune.o \
 		$(OBJ_DIR)/uci.o \
 		$(OBJ_DIR)/utils.o
 
@@ -65,6 +66,9 @@ threadpool.o: $(SRC_DIR)/threadpool.cpp $(INCLUDE_DIR)/threadpool.h
 
 tt.o: $(SRC_DIR)/tt.cpp $(INCLUDE_DIR)/tt.h
 	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/tt.cpp -o $(OBJ_DIR)/tt.o -MF $(OBJ_DIR)/tt.d
+
+tune.o: $(SRC_DIR)/tune.cpp $(INCLUDE_DIR)/tune.h
+	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/tune.cpp -o $(OBJ_DIR)/tune.o -MF $(OBJ_DIR)/tune.d
 
 uci.o: $(SRC_DIR)/uci.cpp $(INCLUDE_DIR)/uci.h
 	@$(CXX) $(CFLAGS) -c $(SRC_DIR)/uci.cpp -o $(OBJ_DIR)/uci.o -MF $(OBJ_DIR)/uci.d
