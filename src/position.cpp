@@ -32,7 +32,7 @@ static const uint8_t CASTLE_RIGHTS_MODIFIERS[64] = {
 
 void position_init() {
     board_init();
-    init_eval();
+    eval_init();
     for (int p = 0; p < 12; p++)
     {
         for (int sq = 0; sq < 64; sq++)

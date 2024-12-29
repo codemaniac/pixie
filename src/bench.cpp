@@ -78,7 +78,7 @@ void bench() {
         table->clear();
 
         SearchInfo info;
-        info.depth         = 5;
+        info.depth         = 7;
         info.timeset       = false;
         info.starttime     = utils_get_current_time_in_milliseconds();
         info.stoptime      = 0;

@@ -89,8 +89,23 @@ enum CastleFlag : uint8_t {
     BQCA = 8
 };
 
+enum Phase {
+    MG,
+    EG
+};
+
 constexpr PieceType PIECE_GET_TYPE(Piece p) { return static_cast<PieceType>(p & 0x7); }
 constexpr Color     PIECE_GET_COLOR(Piece p) { return static_cast<Color>((p & 0x8) / 8); }
 constexpr Piece     PIECE_CREATE(PieceType t, Color c) { return static_cast<Piece>((c << 3) | t); }
+
+constexpr int32_t S(const int32_t mg, const int32_t eg) {
+    return static_cast<int32_t>(static_cast<uint32_t>(eg) << 16) + mg;
+}
+
+constexpr int32_t mg_score(const int32_t score) { return static_cast<int16_t>(score); }
+
+constexpr int32_t eg_score(const int32_t score) {
+    return static_cast<int16_t>((score + 0x8000) >> 16);
+}
 
 #endif
