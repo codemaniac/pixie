@@ -1,8 +1,6 @@
 #include "include/tune.h"
-#include "include/board.h"
 #include "include/constants.h"
 #include "include/containers.h"
-#include "include/eval.h"
 #include "include/fen.h"
 #include "include/position.h"
 #include <array>
@@ -14,19 +12,97 @@
 #include <string>
 #include <vector>
 
+#define N_PARAMS 390
 #define KPRECISION 10
 
+using Parameter      = double;
+using ParameterTuple = std::array<Parameter, 2>;
+
 struct Entry {
-    ArrayList<double, N_PARAMS> coefficients;
-    double                      wdl, phase;
+    ArrayList<int, N_PARAMS> coefficients;
+    double                   wdl, phase;
+};
+
+struct EvalTrace {
+    int32_t pieces[6][2]{};
+    int32_t psqt[6][64][2]{};
 };
 
 constexpr double sigmoid(const double K, const double E) {
     return 1.0 / (1.0 + exp(-K * E / 400.0));
 }
 
+// clang-format off
+static const int32_t pieces[6] = {
+    S(100, 100),
+    S(310, 310),
+    S(320, 320),
+    S(500, 500),
+    S(900, 900),
+    S(0, 0)
+};
+
+static const int32_t psqt[6][64] = {
+    {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    }, {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    }, {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    }, {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    }, {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    }, {
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0),
+        S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0), S(0, 0)
+    }
+};
+// clang-format on
+
 static void init_parameters(ArrayList<ParameterTuple, N_PARAMS>* parameters) {
-    for (const auto& p : pieces_scores)
+    for (const auto& p : pieces)
     {
         ParameterTuple tuple;
         tuple[MG] = mg_score(p);
@@ -35,23 +111,82 @@ static void init_parameters(ArrayList<ParameterTuple, N_PARAMS>* parameters) {
         parameters->push(tuple);
     }
 
-    for (const auto& x : pst_rank_scores)
+    for (int p = 0; p < 6; p++)
     {
-        ParameterTuple tuple;
-        tuple[MG] = mg_score(x);
-        tuple[EG] = eg_score(x);
+        for (int sq = 0; sq < 64; sq++)
+        {
+            ParameterTuple tuple;
+            tuple[MG] = mg_score(psqt[p][sq]);
+            tuple[EG] = eg_score(psqt[p][sq]);
 
-        parameters->push(tuple);
+            parameters->push(tuple);
+        }
+    }
+}
+
+void init_eval_trace(EvalTrace* trace, const Position& position) {
+    for (int sq = A1; sq <= H8; sq++)
+    {
+        const Square square = static_cast<Square>(sq);
+        const Piece  p      = position.get_piece(square);
+
+        if (p == NO_PIECE)
+        {
+            continue;
+        }
+
+        const PieceType ptype  = PIECE_GET_TYPE(p);
+        const Color     pcolor = PIECE_GET_COLOR(p);
+
+        trace->pieces[ptype - 1][pcolor]++;
+
+        if (pcolor == WHITE)
+        {
+            trace->psqt[ptype - 1][SQUARES_MIRRORED[square]][pcolor]++;
+        }
+        else
+        {
+            trace->psqt[ptype - 1][square][pcolor]++;
+        }
+    }
+}
+
+void init_coefficients(ArrayList<int, N_PARAMS>* coefficients, const EvalTrace& trace) {
+    for (int32_t p = 0; p < 6; p++)
+    {
+        coefficients->push(trace.pieces[p][WHITE] - trace.pieces[p][BLACK]);
     }
 
-    for (const auto& x : pst_file_scores)
+    for (int32_t p = 0; p < 6; p++)
     {
-        ParameterTuple tuple;
-        tuple[MG] = mg_score(x);
-        tuple[EG] = eg_score(x);
-
-        parameters->push(tuple);
+        for (int32_t sq = A1; sq <= H8; sq++)
+        {
+            coefficients->push(trace.psqt[p][sq][WHITE] - trace.psqt[p][sq][BLACK]);
+        }
     }
+}
+
+int32_t get_phase(const Position& position) {
+    const uint8_t wQ = position.get_piece_count(WHITE_QUEEN);
+    const uint8_t bQ = position.get_piece_count(BLACK_QUEEN);
+
+    const uint8_t wR = position.get_piece_count(WHITE_ROOK);
+    const uint8_t bR = position.get_piece_count(BLACK_ROOK);
+
+    const uint8_t wB = position.get_piece_count(WHITE_BISHOP);
+    const uint8_t bB = position.get_piece_count(BLACK_BISHOP);
+
+    const uint8_t wN = position.get_piece_count(WHITE_KNIGHT);
+    const uint8_t bN = position.get_piece_count(BLACK_KNIGHT);
+
+    const uint8_t q = wQ + bQ;
+    const uint8_t r = wR + bR;
+    const uint8_t b = wB + bB;
+    const uint8_t n = wN + bN;
+
+    int32_t phase = 24 - (4 * q) - (2 * r) - (1 * b) - (1 * n);
+
+    return phase;
 }
 
 static double get_fen_wdl(const std::string& fen) {
@@ -199,11 +334,40 @@ static void print_array(std::stringstream&                         ss,
     ss << "};" << std::endl;
 }
 
+static void print_psqt(std::stringstream&                         ss,
+                       const ArrayList<ParameterTuple, N_PARAMS>& parameters,
+                       const int                                  start) {
+    int32_t ptr = start;
+
+    ss << "static const int32_t psqt[6][64] = {";
+    for (int p = 0; p < 6; p++)
+    {
+        ss << "{";
+        for (int sq = 0; sq < 64; sq++)
+        {
+            print_parameter(ss, parameters[ptr++]);
+            if (sq < 63)
+            {
+                ss << ", ";
+            }
+            if (sq % 8 == 7)
+            {
+                ss << std::endl;
+            }
+        }
+        ss << "}";
+        if (p < 5)
+        {
+            ss << ",";
+        }
+    }
+    ss << "};" << std::endl;
+}
+
 static void print_parameters(const ArrayList<ParameterTuple, N_PARAMS>& parameters) {
     std::stringstream ss;
-    print_array(ss, parameters, 0, 6, "pieces_scores");
-    print_array(ss, parameters, 6, 48, "pst_rank_scores");
-    print_array(ss, parameters, 54, 48, "pst_file_scores");
+    print_array(ss, parameters, 0, 6, "pieces");
+    print_psqt(ss, parameters, 6);
     std::cout << ss.str() << std::endl;
 }
 
@@ -222,6 +386,8 @@ void tune(const std::string path) {
 
     ArrayList<ParameterTuple, N_PARAMS> parameters;
     init_parameters(&parameters);
+    std::cout << "Initial Parameters: " << std::endl;
+    print_parameters(parameters);
 
     std::vector<Entry> entries;
     init_entries(&entries, data);
@@ -239,12 +405,12 @@ void tune(const std::string path) {
     const double  beta1                       = 0.9;
     const double  beta2                       = 0.999;
 
-    ArrayList<std::array<double, 2>, N_PARAMS> momentum;
-    ArrayList<std::array<double, 2>, N_PARAMS> velocity;
+    ArrayList<ParameterTuple, N_PARAMS> momentum;
+    ArrayList<ParameterTuple, N_PARAMS> velocity;
 
     for (int32_t epoch = 1; epoch < max_tune_epoch; epoch++)
     {
-        ArrayList<std::array<double, 2>, N_PARAMS> gradient;
+        ArrayList<ParameterTuple, N_PARAMS> gradient;
 
         compute_gradient(&gradient, entries, parameters, K);
 
