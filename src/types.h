@@ -86,20 +86,22 @@ namespace tejas {
     };
     // clang-format on
 
-    constexpr PieceType PIECE_TYPE(const Piece p) { return static_cast<PieceType>(p & 0x7); }
+    constexpr PieceType PieceTypeOf(const Piece p) { return static_cast<PieceType>(p & 0x7); }
 
-    constexpr Color PIECE_COLOR(const Piece p) { return static_cast<Color>((p & 0x8) / 8); }
+    constexpr Color PieceColorOf(const Piece p) { return static_cast<Color>((p & 0x8) / 8); }
 
-    constexpr Piece PIECE_CREATE(const PieceType t, Color c) {
+    constexpr Piece PieceCreate(const PieceType t, Color c) {
         return static_cast<Piece>((c << 3) | t);
     }
 
-    constexpr Square RF_TO_SQ(const Rank r, const File f) { return static_cast<Square>(8 * r + f); }
-    constexpr Square RF_TO_SQ(const u8 r, const u8 f) { return static_cast<Square>(8 * r + f); }
+    constexpr Color ColorFlip(const Color c) { return static_cast<Color>(c ^ 1); }
 
-    constexpr Rank SQ_TO_RANK(const Square sq) { return static_cast<Rank>(sq >> 3); }
-    constexpr Rank SQ_TO_RANK(const u8 sq) { return static_cast<Rank>(sq >> 3); }
+    constexpr Square RF2SQ(const Rank r, const File f) { return static_cast<Square>(8 * r + f); }
+    constexpr Square RF2SQ(const u8 r, const u8 f) { return static_cast<Square>(8 * r + f); }
 
-    constexpr File SQ_TO_FILE(const Square sq) { return static_cast<File>(sq & 7); }
-    constexpr File SQ_TO_FILE(const u8 sq) { return static_cast<File>(sq & 7); }
+    constexpr Rank SQ2Rank(const Square sq) { return static_cast<Rank>(sq >> 3); }
+    constexpr Rank SQ2Rank(const u8 sq) { return static_cast<Rank>(sq >> 3); }
+
+    constexpr File SQ2File(const Square sq) { return static_cast<File>(sq & 7); }
+    constexpr File SQ2File(const u8 sq) { return static_cast<File>(sq & 7); }
 }

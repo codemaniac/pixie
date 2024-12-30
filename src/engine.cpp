@@ -1,8 +1,9 @@
 #include "engine.h"
+#include "movegen.h"
 
 namespace tejas {
 
-    Engine::Engine() {}
+    Engine::Engine() { movegen::Initialize(); }
 
     Engine::~Engine() {}
 

@@ -1,4 +1,5 @@
 #include "board.h"
+#include "utils.h"
 
 #ifdef DEBUG
     #include <cassert>
@@ -32,7 +33,7 @@ namespace tejas {
             const BitBoard bit_inverted = ~(bit);
             bitboards[piece] |= bit;
             bitboards[Piece::NO_PIECE] &= bit_inverted;
-            bitboards[BOARD_PIECE_COLOR_IDX(piece)] |= bit;
+            bitboards[PieceColorIndex(piece)] |= bit;
             pieces[square] = piece;
         }
 
@@ -41,7 +42,7 @@ namespace tejas {
             const BitBoard bit_inverted = ~(bit);
             bitboards[piece] &= bit_inverted;
             bitboards[Piece::NO_PIECE] |= bit;
-            bitboards[BOARD_PIECE_COLOR_IDX(piece)] &= bit_inverted;
+            bitboards[PieceColorIndex(piece)] &= bit_inverted;
             pieces[square] = Piece::NO_PIECE;
         }
 
@@ -99,8 +100,8 @@ namespace tejas {
                 const Piece captured = GetPiece(to);
 #ifdef DEBUG
                 assert(captured != Piece::NO_PIECE);
-                assert(PIECE_COLOR(piece) != PIECE_COLOR(captured));
-                assert(PIECE_TYPE(captured) != PieceType::KING);
+                assert(PieceColorOf(piece) != PieceColorOf(captured));
+                assert(PieceTypeOf(captured) != PieceType::KING);
 #endif
                 ClearPiece(captured, to);
             }
@@ -108,21 +109,21 @@ namespace tejas {
             if (is_promotion)
             {
 #ifdef DEBUG
-                assert(PIECE_TYPE(piece) == PieceType::PAWN);
-                if (PIECE_COLOR(piece) == Color::WHITE)
+                assert(PieceTypeOf(piece) == PieceType::PAWN);
+                if (PieceColorOf(piece) == Color::WHITE)
                 {
-                    assert(SQ_TO_RANK(from) == Rank::RANK_7);
-                    assert(SQ_TO_RANK(to) == Rank::RANK_8);
+                    assert(SQ2Rank(from) == Rank::RANK_7);
+                    assert(SQ2Rank(to) == Rank::RANK_8);
                 }
                 else
                 {
-                    assert(SQ_TO_RANK(from) == Rank::RANK_2);
-                    assert(SQ_TO_RANK(to) == Rank::RANK_1);
+                    assert(SQ2Rank(from) == Rank::RANK_2);
+                    assert(SQ2Rank(to) == Rank::RANK_1);
                 }
                 assert(promoted != Piece::NO_PIECE);
-                assert(PIECE_TYPE(promoted) != PieceType::PAWN);
-                assert(PIECE_TYPE(promoted) != PieceType::KING);
-                assert(PIECE_COLOR(piece) == PIECE_COLOR(promoted));
+                assert(PieceTypeOf(promoted) != PieceType::PAWN);
+                assert(PieceTypeOf(promoted) != PieceType::KING);
+                assert(PieceColorOf(piece) == PieceColorOf(promoted));
 #endif
                 SetPiece(promoted, to);
             }
@@ -143,21 +144,21 @@ namespace tejas {
             if (is_promotion)
             {
 #ifdef DEBUG
-                assert(PIECE_TYPE(piece) == PieceType::PAWN);
-                if (PIECE_COLOR(piece) == Color::WHITE)
+                assert(PieceTypeOf(piece) == PieceType::PAWN);
+                if (PieceColorOf(piece) == Color::WHITE)
                 {
-                    assert(SQ_TO_RANK(from) == Rank::RANK_7);
-                    assert(SQ_TO_RANK(to) == Rank::RANK_8);
+                    assert(SQ2Rank(from) == Rank::RANK_7);
+                    assert(SQ2Rank(to) == Rank::RANK_8);
                 }
                 else
                 {
-                    assert(SQ_TO_RANK(from) == Rank::RANK_2);
-                    assert(SQ_TO_RANK(to) == Rank::RANK_1);
+                    assert(SQ2Rank(from) == Rank::RANK_2);
+                    assert(SQ2Rank(to) == Rank::RANK_1);
                 }
                 assert(promoted != Piece::NO_PIECE);
-                assert(PIECE_TYPE(promoted) != PieceType::PAWN);
-                assert(PIECE_TYPE(promoted) != PieceType::KING);
-                assert(PIECE_COLOR(piece) == PIECE_COLOR(promoted));
+                assert(PieceTypeOf(promoted) != PieceType::PAWN);
+                assert(PieceTypeOf(promoted) != PieceType::KING);
+                assert(PieceColorOf(piece) == PieceColorOf(promoted));
 #endif
                 ClearPiece(promoted, to);
             }
@@ -170,8 +171,8 @@ namespace tejas {
             {
 #ifdef DEBUG
                 assert(captured != Piece::NO_PIECE);
-                assert(PIECE_COLOR(piece) != PIECE_COLOR(captured));
-                assert(PIECE_TYPE(captured) != PieceType::KING);
+                assert(PieceColorOf(piece) != PieceColorOf(captured));
+                assert(PieceTypeOf(captured) != PieceType::KING);
 #endif
                 SetPiece(captured, to);
             }
@@ -179,19 +180,21 @@ namespace tejas {
             SetPiece(piece, from);
         }
 
+        BitBoard Board::GetBitboard(const u8 index) const { return bitboards[index]; }
+
         Piece Board::GetPiece(const Square square) const { return pieces[square]; }
 
         u8 Board::GetPieceCount(const Piece piece) const {
-            return __builtin_popcountll(bitboards[piece]);
+            return utils::BitCount1s(bitboards[piece]);
         }
 
         bool Board::IsValid() const {
             const bool check = (GetPieceCount(Piece::WHITE_KING) == 1)
                             && (GetPieceCount(Piece::BLACK_KING) == 1)
-                            && (!(bitboards[Piece::WHITE_PAWN] & BOARD_MASK_RANK_1()))
-                            && (!(bitboards[Piece::WHITE_PAWN] & BOARD_MASK_RANK_8()))
-                            && (!(bitboards[Piece::BLACK_PAWN] & BOARD_MASK_RANK_1()))
-                            && (!(bitboards[Piece::BLACK_PAWN] & BOARD_MASK_RANK_8()));
+                            && (!(bitboards[Piece::WHITE_PAWN] & MASK_RANK_1))
+                            && (!(bitboards[Piece::WHITE_PAWN] & MASK_RANK_8))
+                            && (!(bitboards[Piece::BLACK_PAWN] & MASK_RANK_1))
+                            && (!(bitboards[Piece::BLACK_PAWN] & MASK_RANK_8));
             return check;
         }
 
@@ -202,7 +205,7 @@ namespace tejas {
             {
                 for (u8 file = File::FILE_A; file <= File::FILE_H; file++)
                 {
-                    const Square sq = RF_TO_SQ(rank, file);
+                    const Square sq = RF2SQ(rank, file);
                     std::cout << (char) pieces_str[this->pieces[sq]] << " ";
                 }
                 std::cout << std::endl;

@@ -1,7 +1,10 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "doctest/doctest.h"
+#include "movegen.h"
 
 int main(int argc, char** argv) {
+
+    tejas::movegen::Initialize();
 
     doctest::Context context;
     context.applyCommandLine(argc, argv);
