@@ -82,7 +82,10 @@ namespace tejas {
             Square   getEnpassantTarget() const;
             u8       getHalfmoveClock() const;
             u8       getFullmoveNumber() const;
+            i8       getPlyCount() const;
+            u64      getHash() const;
             bool     isValid() const;
+            bool     operator==(Board const& rhs) const;
 #ifdef DEBUG
             void display() const;
 #endif

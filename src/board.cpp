@@ -303,6 +303,10 @@ namespace tejas {
 
         u8 Board::getFullmoveNumber() const { return full_move_number; }
 
+        i8 Board::getPlyCount() const { return ply_count; }
+
+        u64 Board::getHash() const { return hash; }
+
         bool Board::isValid() const {
             const bool check = (getPieceCount(Piece::WHITE_KING) == 1)
                             && (getPieceCount(Piece::BLACK_KING) == 1)
@@ -312,6 +316,8 @@ namespace tejas {
                             && (!(bitboards[Piece::BLACK_PAWN] & MASK_RANK_8));
             return check;
         }
+
+        bool Board::operator==(Board const& rhs) const { return hash == rhs.getHash(); }
 
 #ifdef DEBUG
         void Board::display() const {
