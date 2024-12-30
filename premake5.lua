@@ -1,8 +1,8 @@
-workspace "pixie"
-    configurations { "Debug", "Test", "Release" }
+workspace "tejas"
+    configurations { "Debug", "Release" }
     platforms { "macos64", "linux64", "windows64" }
 
-project "pixie"
+project "tejas"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++20"
@@ -43,20 +43,6 @@ project "pixie"
         defines { "DEBUG" }
         symbols "On"
         removeflags { "LinkTimeOptimization" }
-
-    filter { "configurations:Test" }
-        files { "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
-        removefiles {
-            "src/main.cpp",
-            "src/include/bench.h",
-            "src/bench.cpp",
-            "src/include/tune.h",
-            "src/tune.cpp",
-            "src/include/uci.h",
-            "src/uci.cpp"
-        }
-        defines { "NDEBUG" }
-        optimize "Speed"
 
     filter { "configurations:Release" }
         defines { "NDEBUG" }
