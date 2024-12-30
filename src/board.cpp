@@ -1,8 +1,8 @@
 #include "board.h"
-#include <iostream>
 
 #ifdef DEBUG
     #include <cassert>
+    #include <iostream>
 #endif
 
 namespace tejas {
