@@ -282,7 +282,7 @@ namespace tejas {
                 mask = ATTACK_MASK_TABLE_BISHOP[sq].mask;
                 n    = ATTACK_MASK_TABLE_BISHOP[sq].mask_bits;
 
-                for (u32 i = 0; i < (1 << n); i++)
+                for (i32 i = 0; i < (1 << n); i++)
                 {
                     b           = GetVariant(i, n, mask);
                     magic_index = Transform(b, MAGIC_BISHOP[sq], n);
@@ -302,7 +302,7 @@ namespace tejas {
                 mask = ATTACK_MASK_TABLE_ROOK[sq].mask;
                 n    = ATTACK_MASK_TABLE_ROOK[sq].mask_bits;
 
-                for (u32 i = 0; i < (1 << n); i++)
+                for (i32 i = 0; i < (1 << n); i++)
                 {
                     b                                  = GetVariant(i, n, mask);
                     magic_index                        = Transform(b, MAGIC_ROOK[sq], n);

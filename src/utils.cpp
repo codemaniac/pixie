@@ -4,7 +4,7 @@ namespace tejas {
 
     namespace utils {
 
-        u8 BitScanForward(u64* x) {
+        [[nodiscard]] u8 BitScanForward(u64* x) {
             u8 position = __builtin_ctzll(*x);
             *x &= *x - 1;
             return position;
