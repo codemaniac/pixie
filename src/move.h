@@ -50,9 +50,9 @@ namespace tejas {
             bool     operator==(Move const& rhs);
         };
 
-        constexpr bool IsCapture(const MoveFlag m) { return (m & 0x4); }
+        constexpr bool isCapture(const MoveFlag m) { return (m & 0x4); }
 
-        constexpr bool IsPromotion(const MoveFlag m) { return (m & 0x8); }
+        constexpr bool isPromotion(const MoveFlag m) { return (m & 0x8); }
 
     }
 
