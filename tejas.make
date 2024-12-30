@@ -194,30 +194,36 @@ GENERATED += $(OBJDIR)/test_board.o
 GENERATED += $(OBJDIR)/test_main.o
 GENERATED += $(OBJDIR)/test_move.o
 GENERATED += $(OBJDIR)/test_movegen.o
+GENERATED += $(OBJDIR)/test_utils.o
 OBJECTS += $(OBJDIR)/test_board.o
 OBJECTS += $(OBJDIR)/test_main.o
 OBJECTS += $(OBJDIR)/test_move.o
 OBJECTS += $(OBJDIR)/test_movegen.o
+OBJECTS += $(OBJDIR)/test_utils.o
 
 else ifeq ($(config),test_linux64)
 GENERATED += $(OBJDIR)/test_board.o
 GENERATED += $(OBJDIR)/test_main.o
 GENERATED += $(OBJDIR)/test_move.o
 GENERATED += $(OBJDIR)/test_movegen.o
+GENERATED += $(OBJDIR)/test_utils.o
 OBJECTS += $(OBJDIR)/test_board.o
 OBJECTS += $(OBJDIR)/test_main.o
 OBJECTS += $(OBJDIR)/test_move.o
 OBJECTS += $(OBJDIR)/test_movegen.o
+OBJECTS += $(OBJDIR)/test_utils.o
 
 else ifeq ($(config),test_windows64)
 GENERATED += $(OBJDIR)/test_board.o
 GENERATED += $(OBJDIR)/test_main.o
 GENERATED += $(OBJDIR)/test_move.o
 GENERATED += $(OBJDIR)/test_movegen.o
+GENERATED += $(OBJDIR)/test_utils.o
 OBJECTS += $(OBJDIR)/test_board.o
 OBJECTS += $(OBJDIR)/test_main.o
 OBJECTS += $(OBJDIR)/test_move.o
 OBJECTS += $(OBJDIR)/test_movegen.o
+OBJECTS += $(OBJDIR)/test_utils.o
 
 else ifeq ($(config),release_macos64)
 GENERATED += $(OBJDIR)/main.o
@@ -339,6 +345,9 @@ $(OBJDIR)/test_move.o: test/test_move.cpp
 $(OBJDIR)/test_movegen.o: test/test_movegen.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_utils.o: test/test_utils.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
 else ifeq ($(config),test_linux64)
 $(OBJDIR)/test_board.o: test/test_board.cpp
@@ -353,6 +362,9 @@ $(OBJDIR)/test_move.o: test/test_move.cpp
 $(OBJDIR)/test_movegen.o: test/test_movegen.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_utils.o: test/test_utils.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
 else ifeq ($(config),test_windows64)
 $(OBJDIR)/test_board.o: test/test_board.cpp
@@ -365,6 +377,9 @@ $(OBJDIR)/test_move.o: test/test_move.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_movegen.o: test/test_movegen.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_utils.o: test/test_utils.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 
