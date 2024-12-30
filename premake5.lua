@@ -42,7 +42,7 @@ project "tejas"
     filter { "configurations:Debug" }
         defines { "DEBUG" }
         symbols "On"
-        removeflags { "LinkTimeOptimization" }
+        removeflags { "FatalWarnings", "LinkTimeOptimization" }
 
     filter { "configurations:Release" }
         defines { "NDEBUG" }
