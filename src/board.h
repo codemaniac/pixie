@@ -24,16 +24,17 @@ namespace tejas {
             void  set_piece(const Piece, const Square);
             void  clear_piece(const Piece, const Square);
             void  set_startpos();
-            void  move_piece(const Piece,
+            void  move_piece(const Piece  piece,
                              const Square from,
                              const Square to,
                              const bool   is_capture,
                              const bool   is_promotion,
                              const Piece  promoted);
-            void  undo_move_piece(const Piece,
+            void  undo_move_piece(const Piece  piece,
                                   const Square from,
                                   const Square to,
                                   const bool   is_capture,
+                                  const Piece  captured,
                                   const bool   is_promotion,
                                   const Piece  promoted);
             Piece get_piece(const Square) const;

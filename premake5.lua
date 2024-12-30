@@ -49,7 +49,7 @@ project "tejas"
         removefiles { "src/main.cpp" }
         includedirs { "src",  "test/lib/doctest" }
         removeflags { "FatalWarnings" }
-        defines { "NDEBUG" }
+        defines { "DEBUG" }
         optimize "Speed"
 
     filter { "configurations:Release" }

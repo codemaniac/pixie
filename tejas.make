@@ -85,7 +85,7 @@ endif
 TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/tejas
 OBJDIR = obj/macos64/Test
-DEFINES += -DNDEBUG
+DEFINES += -DDEBUG
 INCLUDES += -Isrc -Itest/lib/doctest
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -std=c++20 -Wall -Wextra -march=native
@@ -96,7 +96,7 @@ RESCOMP = windres
 TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/tejas
 OBJDIR = obj/linux64/Test
-DEFINES += -DNDEBUG
+DEFINES += -DDEBUG
 INCLUDES += -Isrc -Itest/lib/doctest
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -std=c++20 -Wall -Wextra -march=native
@@ -107,7 +107,7 @@ RESCOMP = windres
 TARGETDIR = bin/Test
 TARGET = $(TARGETDIR)/tejas.exe
 OBJDIR = obj/windows64/Test
-DEFINES += -DNDEBUG
+DEFINES += -DDEBUG
 INCLUDES += -Isrc -Itest/lib/doctest
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -std=c++20 -Wall -Wextra -march=native

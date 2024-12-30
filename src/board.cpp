@@ -1,6 +1,10 @@
 #include "board.h"
 #include <iostream>
 
+#ifdef DEBUG
+    #include <cassert>
+#endif
+
 namespace tejas {
 
     namespace board {
@@ -81,19 +85,99 @@ namespace tejas {
             set_piece(Piece::BLACK_PAWN, Square::H7);
         }
 
-        void Board::move_piece(const Piece,
+        void Board::move_piece(const Piece  piece,
                                const Square from,
                                const Square to,
                                const bool   is_capture,
                                const bool   is_promotion,
-                               const Piece  promoted) {}
+                               const Piece  promoted) {
 
-        void Board::undo_move_piece(const Piece,
+            clear_piece(piece, from);
+
+            if (is_capture)
+            {
+                const Piece captured = get_piece(to);
+#ifdef DEBUG
+                assert(captured != Piece::NO_PIECE);
+                assert(PIECE_COLOR(piece) != PIECE_COLOR(captured));
+                assert(PIECE_TYPE(captured) != PieceType::KING);
+#endif
+                clear_piece(captured, to);
+            }
+
+            if (is_promotion)
+            {
+#ifdef DEBUG
+                assert(PIECE_TYPE(piece) == PieceType::PAWN);
+                if (PIECE_COLOR(piece) == Color::WHITE)
+                {
+                    assert(SQ_TO_RANK(from) == Rank::RANK_7);
+                    assert(SQ_TO_RANK(to) == Rank::RANK_8);
+                }
+                else
+                {
+                    assert(SQ_TO_RANK(from) == Rank::RANK_2);
+                    assert(SQ_TO_RANK(to) == Rank::RANK_1);
+                }
+                assert(promoted != Piece::NO_PIECE);
+                assert(PIECE_TYPE(promoted) != PieceType::PAWN);
+                assert(PIECE_TYPE(promoted) != PieceType::KING);
+                assert(PIECE_COLOR(piece) == PIECE_COLOR(promoted));
+#endif
+                set_piece(promoted, to);
+            }
+            else
+            {
+                set_piece(piece, to);
+            }
+        }
+
+        void Board::undo_move_piece(const Piece  piece,
                                     const Square from,
                                     const Square to,
                                     const bool   is_capture,
+                                    const Piece  captured,
                                     const bool   is_promotion,
-                                    const Piece  promoted) {}
+                                    const Piece  promoted) {
+
+            if (is_promotion)
+            {
+#ifdef DEBUG
+                assert(PIECE_TYPE(piece) == PieceType::PAWN);
+                if (PIECE_COLOR(piece) == Color::WHITE)
+                {
+                    assert(SQ_TO_RANK(from) == Rank::RANK_7);
+                    assert(SQ_TO_RANK(to) == Rank::RANK_8);
+                }
+                else
+                {
+                    assert(SQ_TO_RANK(from) == Rank::RANK_2);
+                    assert(SQ_TO_RANK(to) == Rank::RANK_1);
+                }
+                assert(promoted != Piece::NO_PIECE);
+                assert(PIECE_TYPE(promoted) != PieceType::PAWN);
+                assert(PIECE_TYPE(promoted) != PieceType::KING);
+                assert(PIECE_COLOR(piece) == PIECE_COLOR(promoted));
+#endif
+                clear_piece(promoted, to);
+            }
+            else
+            {
+                clear_piece(piece, to);
+            }
+
+            if (is_capture)
+            {
+#ifdef DEBUG
+                assert(captured != Piece::NO_PIECE);
+                assert(PIECE_COLOR(piece) != PIECE_COLOR(captured));
+                assert(PIECE_TYPE(captured) != PieceType::KING);
+#endif
+                set_piece(captured, to);
+            }
+
+            set_piece(piece, from);
+        }
 
         Piece Board::get_piece(const Square square) const { return pieces[square]; }
 
