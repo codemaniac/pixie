@@ -86,9 +86,7 @@ namespace tejas {
             u64      getHash() const;
             bool     isValid() const;
             bool     operator==(Board const& rhs) const;
-#ifdef DEBUG
-            void display() const;
-#endif
+            void     display() const;
         };
 
     }

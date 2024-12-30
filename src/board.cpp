@@ -1,10 +1,9 @@
 #include "board.h"
 #include "utils.h"
-
+#include <iostream>
+#include <sstream>
 #ifdef DEBUG
     #include <cassert>
-    #include <iostream>
-    #include <sstream>
 #endif
 
 namespace tejas {
@@ -319,7 +318,6 @@ namespace tejas {
 
         bool Board::operator==(Board const& rhs) const { return hash == rhs.getHash(); }
 
-#ifdef DEBUG
         void Board::display() const {
             const char* pieces_str = ".PNBRQKXXpnbrqk";
             const char* color_str  = "wb";
@@ -346,7 +344,6 @@ namespace tejas {
 
             std::cout << ss.str() << std::endl;
         }
-#endif
 
     }
 

@@ -12,8 +12,6 @@ namespace tejas {
 
     void Engine::setStartpos() { board.setStartpos(); }
 
-#ifdef DEBUG
     void Engine::displayBoard() { board.display(); }
-#endif
 
 }

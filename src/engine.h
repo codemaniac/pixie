@@ -12,9 +12,7 @@ namespace tejas {
         Engine();
         ~Engine();
         void setStartpos();
-#ifdef DEBUG
         void displayBoard();
-#endif
     };
 
 }
