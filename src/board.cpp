@@ -101,7 +101,15 @@ namespace tejas {
             return __builtin_popcountll(bitboards[piece]);
         }
 
-        bool Board::is_valid() const { return false; }
+        bool Board::is_valid() const {
+            const bool check = (get_piece_count(Piece::WHITE_KING) == 1)
+                            && (get_piece_count(Piece::BLACK_KING) == 1)
+                            && (!(bitboards[Piece::WHITE_PAWN] & BOARD_MASK_RANK_1()))
+                            && (!(bitboards[Piece::WHITE_PAWN] & BOARD_MASK_RANK_8()))
+                            && (!(bitboards[Piece::BLACK_PAWN] & BOARD_MASK_RANK_1()))
+                            && (!(bitboards[Piece::BLACK_PAWN] & BOARD_MASK_RANK_8()));
+            return check;
+        }
 
 #ifdef DEBUG
         void Board::display() const {
