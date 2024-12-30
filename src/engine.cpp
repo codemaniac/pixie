@@ -6,10 +6,10 @@ namespace tejas {
 
     Engine::~Engine() {}
 
-    void Engine::set_startpos() { board.set_startpos(); }
+    void Engine::SetStartpos() { board.SetStartpos(); }
 
 #ifdef DEBUG
-    void Engine::display_board() { board.display(); }
+    void Engine::DisplayBoard() { board.Display(); }
 #endif
 
 }

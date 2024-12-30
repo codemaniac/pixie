@@ -9,11 +9,11 @@ namespace tejas {
 
     namespace board {
 
-        Board::Board() { reset(); }
+        Board::Board() { Reset(); }
 
         Board::~Board() {}
 
-        void Board::reset() {
+        void Board::Reset() {
             for (auto& bb : bitboards)
             {
                 bb = 0ULL;
@@ -27,7 +27,7 @@ namespace tejas {
             bitboards[Piece::NO_PIECE] = 0xFFFFFFFFFFFFFFFF;
         }
 
-        void Board::set_piece(const Piece piece, const Square square) {
+        void Board::SetPiece(const Piece piece, const Square square) {
             const BitBoard bit          = 1ULL << square;
             const BitBoard bit_inverted = ~(bit);
             bitboards[piece] |= bit;
@@ -36,7 +36,7 @@ namespace tejas {
             pieces[square] = piece;
         }
 
-        void Board::clear_piece(const Piece piece, const Square square) {
+        void Board::ClearPiece(const Piece piece, const Square square) {
             const BitBoard bit          = 1ULL << square;
             const BitBoard bit_inverted = ~(bit);
             bitboards[piece] &= bit_inverted;
@@ -45,64 +45,64 @@ namespace tejas {
             pieces[square] = Piece::NO_PIECE;
         }
 
-        void Board::set_startpos() {
-            reset();
+        void Board::SetStartpos() {
+            Reset();
 
-            set_piece(Piece::WHITE_ROOK, Square::A1);
-            set_piece(Piece::WHITE_KNIGHT, Square::B1);
-            set_piece(Piece::WHITE_BISHOP, Square::C1);
-            set_piece(Piece::WHITE_QUEEN, Square::D1);
-            set_piece(Piece::WHITE_KING, Square::E1);
-            set_piece(Piece::WHITE_BISHOP, Square::F1);
-            set_piece(Piece::WHITE_KNIGHT, Square::G1);
-            set_piece(Piece::WHITE_ROOK, Square::H1);
+            SetPiece(Piece::WHITE_ROOK, Square::A1);
+            SetPiece(Piece::WHITE_KNIGHT, Square::B1);
+            SetPiece(Piece::WHITE_BISHOP, Square::C1);
+            SetPiece(Piece::WHITE_QUEEN, Square::D1);
+            SetPiece(Piece::WHITE_KING, Square::E1);
+            SetPiece(Piece::WHITE_BISHOP, Square::F1);
+            SetPiece(Piece::WHITE_KNIGHT, Square::G1);
+            SetPiece(Piece::WHITE_ROOK, Square::H1);
 
-            set_piece(Piece::WHITE_PAWN, Square::A2);
-            set_piece(Piece::WHITE_PAWN, Square::B2);
-            set_piece(Piece::WHITE_PAWN, Square::C2);
-            set_piece(Piece::WHITE_PAWN, Square::D2);
-            set_piece(Piece::WHITE_PAWN, Square::E2);
-            set_piece(Piece::WHITE_PAWN, Square::F2);
-            set_piece(Piece::WHITE_PAWN, Square::G2);
-            set_piece(Piece::WHITE_PAWN, Square::H2);
+            SetPiece(Piece::WHITE_PAWN, Square::A2);
+            SetPiece(Piece::WHITE_PAWN, Square::B2);
+            SetPiece(Piece::WHITE_PAWN, Square::C2);
+            SetPiece(Piece::WHITE_PAWN, Square::D2);
+            SetPiece(Piece::WHITE_PAWN, Square::E2);
+            SetPiece(Piece::WHITE_PAWN, Square::F2);
+            SetPiece(Piece::WHITE_PAWN, Square::G2);
+            SetPiece(Piece::WHITE_PAWN, Square::H2);
 
-            set_piece(Piece::BLACK_ROOK, Square::A8);
-            set_piece(Piece::BLACK_KNIGHT, Square::B8);
-            set_piece(Piece::BLACK_BISHOP, Square::C8);
-            set_piece(Piece::BLACK_QUEEN, Square::D8);
-            set_piece(Piece::BLACK_KING, Square::E8);
-            set_piece(Piece::BLACK_BISHOP, Square::F8);
-            set_piece(Piece::BLACK_KNIGHT, Square::G8);
-            set_piece(Piece::BLACK_ROOK, Square::H8);
+            SetPiece(Piece::BLACK_ROOK, Square::A8);
+            SetPiece(Piece::BLACK_KNIGHT, Square::B8);
+            SetPiece(Piece::BLACK_BISHOP, Square::C8);
+            SetPiece(Piece::BLACK_QUEEN, Square::D8);
+            SetPiece(Piece::BLACK_KING, Square::E8);
+            SetPiece(Piece::BLACK_BISHOP, Square::F8);
+            SetPiece(Piece::BLACK_KNIGHT, Square::G8);
+            SetPiece(Piece::BLACK_ROOK, Square::H8);
 
-            set_piece(Piece::BLACK_PAWN, Square::A7);
-            set_piece(Piece::BLACK_PAWN, Square::B7);
-            set_piece(Piece::BLACK_PAWN, Square::C7);
-            set_piece(Piece::BLACK_PAWN, Square::D7);
-            set_piece(Piece::BLACK_PAWN, Square::E7);
-            set_piece(Piece::BLACK_PAWN, Square::F7);
-            set_piece(Piece::BLACK_PAWN, Square::G7);
-            set_piece(Piece::BLACK_PAWN, Square::H7);
+            SetPiece(Piece::BLACK_PAWN, Square::A7);
+            SetPiece(Piece::BLACK_PAWN, Square::B7);
+            SetPiece(Piece::BLACK_PAWN, Square::C7);
+            SetPiece(Piece::BLACK_PAWN, Square::D7);
+            SetPiece(Piece::BLACK_PAWN, Square::E7);
+            SetPiece(Piece::BLACK_PAWN, Square::F7);
+            SetPiece(Piece::BLACK_PAWN, Square::G7);
+            SetPiece(Piece::BLACK_PAWN, Square::H7);
         }
 
-        void Board::move_piece(const Piece  piece,
-                               const Square from,
-                               const Square to,
-                               const bool   is_capture,
-                               const bool   is_promotion,
-                               const Piece  promoted) {
+        void Board::MovePiece(const Piece  piece,
+                              const Square from,
+                              const Square to,
+                              const bool   is_capture,
+                              const bool   is_promotion,
+                              const Piece  promoted) {
 
-            clear_piece(piece, from);
+            ClearPiece(piece, from);
 
             if (is_capture)
             {
-                const Piece captured = get_piece(to);
+                const Piece captured = GetPiece(to);
 #ifdef DEBUG
                 assert(captured != Piece::NO_PIECE);
                 assert(PIECE_COLOR(piece) != PIECE_COLOR(captured));
                 assert(PIECE_TYPE(captured) != PieceType::KING);
 #endif
-                clear_piece(captured, to);
+                ClearPiece(captured, to);
             }
 
             if (is_promotion)
@@ -124,21 +124,21 @@ namespace tejas {
                 assert(PIECE_TYPE(promoted) != PieceType::KING);
                 assert(PIECE_COLOR(piece) == PIECE_COLOR(promoted));
 #endif
-                set_piece(promoted, to);
+                SetPiece(promoted, to);
             }
             else
             {
-                set_piece(piece, to);
+                SetPiece(piece, to);
             }
         }
 
-        void Board::undo_move_piece(const Piece  piece,
-                                    const Square from,
-                                    const Square to,
-                                    const bool   is_capture,
-                                    const Piece  captured,
-                                    const bool   is_promotion,
-                                    const Piece  promoted) {
+        void Board::UndoMovePiece(const Piece  piece,
+                                  const Square from,
+                                  const Square to,
+                                  const bool   is_capture,
+                                  const Piece  captured,
+                                  const bool   is_promotion,
+                                  const Piece  promoted) {
 
             if (is_promotion)
             {
@@ -159,11 +159,11 @@ namespace tejas {
                 assert(PIECE_TYPE(promoted) != PieceType::KING);
                 assert(PIECE_COLOR(piece) == PIECE_COLOR(promoted));
 #endif
-                clear_piece(promoted, to);
+                ClearPiece(promoted, to);
             }
             else
             {
-                clear_piece(piece, to);
+                ClearPiece(piece, to);
             }
 
             if (is_capture)
@@ -173,21 +173,21 @@ namespace tejas {
                 assert(PIECE_COLOR(piece) != PIECE_COLOR(captured));
                 assert(PIECE_TYPE(captured) != PieceType::KING);
 #endif
-                set_piece(captured, to);
+                SetPiece(captured, to);
             }
 
-            set_piece(piece, from);
+            SetPiece(piece, from);
         }
 
-        Piece Board::get_piece(const Square square) const { return pieces[square]; }
+        Piece Board::GetPiece(const Square square) const { return pieces[square]; }
 
-        u8 Board::get_piece_count(const Piece piece) const {
+        u8 Board::GetPieceCount(const Piece piece) const {
             return __builtin_popcountll(bitboards[piece]);
         }
 
-        bool Board::is_valid() const {
-            const bool check = (get_piece_count(Piece::WHITE_KING) == 1)
-                            && (get_piece_count(Piece::BLACK_KING) == 1)
+        bool Board::IsValid() const {
+            const bool check = (GetPieceCount(Piece::WHITE_KING) == 1)
+                            && (GetPieceCount(Piece::BLACK_KING) == 1)
                             && (!(bitboards[Piece::WHITE_PAWN] & BOARD_MASK_RANK_1()))
                             && (!(bitboards[Piece::WHITE_PAWN] & BOARD_MASK_RANK_8()))
                             && (!(bitboards[Piece::BLACK_PAWN] & BOARD_MASK_RANK_1()))
@@ -196,7 +196,7 @@ namespace tejas {
         }
 
 #ifdef DEBUG
-        void Board::display() const {
+        void Board::Display() const {
             const char* pieces_str = ".PNBRQKXXpnbrqk";
             for (i8 rank = Rank::RANK_8; rank >= Rank::RANK_1; rank--)
             {

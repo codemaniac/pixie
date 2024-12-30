@@ -25,22 +25,22 @@ namespace tejas {
             flag(flag),
             score(0) {}
 
-        void Move::set_score(const u32 s) { score = s; }
+        void Move::SetScore(const u32 s) { score = s; }
 
-        Piece Move::get_piece() const { return piece; }
+        Piece Move::GetPiece() const { return piece; }
 
-        Square Move::get_from() const { return from; }
+        Square Move::GetFrom() const { return from; }
 
-        Square Move::get_to() const { return to; }
+        Square Move::GetTo() const { return to; }
 
-        Piece Move::get_captured() const { return captured; }
+        Piece Move::GetCaptured() const { return captured; }
 
-        MoveFlag Move::get_flag() const { return flag; }
+        MoveFlag Move::GetFlag() const { return flag; }
 
-        u32 Move::get_score() const { return score; }
+        u32 Move::GetScore() const { return score; }
 
-        u32 Move::id() const { return (flag << 16) | (captured << 12) | (to << 6) | from; }
+        u32 Move::Id() const { return (flag << 16) | (captured << 12) | (to << 6) | from; }
 
-        bool Move::operator==(Move const& rhs) { return id() == rhs.id(); }
+        bool Move::operator==(Move const& rhs) { return Id() == rhs.Id(); }
     }
 }

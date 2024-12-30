@@ -20,28 +20,28 @@ namespace tejas {
            public:
             Board();
             ~Board();
-            void  reset();
-            void  set_piece(const Piece, const Square);
-            void  clear_piece(const Piece, const Square);
-            void  set_startpos();
-            void  move_piece(const Piece  piece,
-                             const Square from,
-                             const Square to,
-                             const bool   is_capture,
-                             const bool   is_promotion,
-                             const Piece  promoted);
-            void  undo_move_piece(const Piece  piece,
-                                  const Square from,
-                                  const Square to,
-                                  const bool   is_capture,
-                                  const Piece  captured,
-                                  const bool   is_promotion,
-                                  const Piece  promoted);
-            Piece get_piece(const Square) const;
-            u8    get_piece_count(const Piece) const;
-            bool  is_valid() const;
+            void  Reset();
+            void  SetPiece(const Piece, const Square);
+            void  ClearPiece(const Piece, const Square);
+            void  SetStartpos();
+            void  MovePiece(const Piece  piece,
+                            const Square from,
+                            const Square to,
+                            const bool   is_capture,
+                            const bool   is_promotion,
+                            const Piece  promoted);
+            void  UndoMovePiece(const Piece  piece,
+                                const Square from,
+                                const Square to,
+                                const bool   is_capture,
+                                const Piece  captured,
+                                const bool   is_promotion,
+                                const Piece  promoted);
+            Piece GetPiece(const Square) const;
+            u8    GetPieceCount(const Piece) const;
+            bool  IsValid() const;
 #ifdef DEBUG
-            void display() const;
+            void Display() const;
 #endif
         };
 

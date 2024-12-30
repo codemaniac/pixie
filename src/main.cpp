@@ -2,9 +2,9 @@
 
 int main() {
     tejas::Engine engine;
-    engine.set_startpos();
+    engine.SetStartpos();
 #ifdef DEBUG
-    engine.display_board();
+    engine.DisplayBoard();
 #endif
     return 0;
 }

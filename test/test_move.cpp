@@ -10,24 +10,24 @@ TEST_SUITE("Move") {
 
         SUBCASE("Default") {
             const move::Move m;
-            CHECK(m.get_piece() == Piece::NO_PIECE);
-            CHECK(m.get_from() == Square::NO_SQ);
-            CHECK(m.get_to() == Square::NO_SQ);
-            CHECK(m.get_captured() == Piece::NO_PIECE);
-            CHECK(m.get_flag() == move::MoveFlag::MOVE_QUIET);
-            CHECK(m.get_score() == 0);
+            CHECK(m.GetPiece() == Piece::NO_PIECE);
+            CHECK(m.GetFrom() == Square::NO_SQ);
+            CHECK(m.GetTo() == Square::NO_SQ);
+            CHECK(m.GetCaptured() == Piece::NO_PIECE);
+            CHECK(m.GetFlag() == move::MoveFlag::MOVE_QUIET);
+            CHECK(m.GetScore() == 0);
         }
 
         SUBCASE("Comparison") {
             move::Move e2e4 = move::Move(Piece::WHITE_PAWN, Square::E2, Square::E4, Piece::NO_PIECE,
                                          move::MoveFlag::MOVE_QUIET_PAWN_DBL_PUSH);
 
-            CHECK(e2e4.get_piece() == Piece::WHITE_PAWN);
-            CHECK(e2e4.get_from() == Square::E2);
-            CHECK(e2e4.get_to() == Square::E4);
-            CHECK(e2e4.get_captured() == Piece::NO_PIECE);
-            CHECK(e2e4.get_flag() == move::MoveFlag::MOVE_QUIET_PAWN_DBL_PUSH);
-            CHECK(e2e4.get_score() == 0);
+            CHECK(e2e4.GetPiece() == Piece::WHITE_PAWN);
+            CHECK(e2e4.GetFrom() == Square::E2);
+            CHECK(e2e4.GetTo() == Square::E4);
+            CHECK(e2e4.GetCaptured() == Piece::NO_PIECE);
+            CHECK(e2e4.GetFlag() == move::MoveFlag::MOVE_QUIET_PAWN_DBL_PUSH);
+            CHECK(e2e4.GetScore() == 0);
 
             const move::Move e2e4_again =
               move::Move(Piece::WHITE_PAWN, Square::E2, Square::E4, Piece::NO_PIECE,
