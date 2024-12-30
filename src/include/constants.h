@@ -1,5 +1,5 @@
-#ifndef CHESS_H
-#define CHESS_H
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
 
 #include <cstdint>
 
@@ -68,6 +68,17 @@ enum Square : uint8_t {
     A8, B8, C8, D8, E8, F8, G8, H8,
     NO_SQ = 99
 };
+
+const int SQUARES_MIRRORED[64] = {
+    A8, B8, C8, D8, E8, F7, G8, H8,
+    A7, B7, C7, D7, E7, F7, G7, H7,
+    A6, B6, C6, D6, E6, F6, G6, H6,
+    A5, B5, C5, D5, E5, F5, G5, H5,
+    A4, B4, C4, D4, E4, F4, G4, H4,
+    A3, B3, C3, D3, E3, F3, G3, H3,
+    A2, B2, C2, D2, E2, F2, G2, H2,
+    A1, B1, C1, D1, E1, F1, G1, H1,
+};
 // clang-format on
 
 enum CastleFlag : uint8_t {
@@ -78,8 +89,23 @@ enum CastleFlag : uint8_t {
     BQCA = 8
 };
 
+enum Phase {
+    MG,
+    EG
+};
+
 constexpr PieceType PIECE_GET_TYPE(Piece p) { return static_cast<PieceType>(p & 0x7); }
 constexpr Color     PIECE_GET_COLOR(Piece p) { return static_cast<Color>((p & 0x8) / 8); }
 constexpr Piece     PIECE_CREATE(PieceType t, Color c) { return static_cast<Piece>((c << 3) | t); }
+
+constexpr int32_t S(const int32_t mg, const int32_t eg) {
+    return static_cast<int32_t>(static_cast<uint32_t>(eg) << 16) + mg;
+}
+
+constexpr int32_t mg_score(const int32_t score) { return static_cast<int16_t>(score); }
+
+constexpr int32_t eg_score(const int32_t score) {
+    return static_cast<int16_t>((score + 0x8000) >> 16);
+}
 
 #endif

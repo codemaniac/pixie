@@ -44,12 +44,14 @@ project "pixie"
         symbols "On"
         removeflags { "LinkTimeOptimization" }
 
-    filter{ "configurations:Test" }
+    filter { "configurations:Test" }
         files { "src/**.h", "src/**.cpp", "test/**.h", "test/**.cpp" }
         removefiles {
             "src/main.cpp",
             "src/include/bench.h",
             "src/bench.cpp",
+            "src/include/tune.h",
+            "src/tune.cpp",
             "src/include/uci.h",
             "src/uci.cpp"
         }

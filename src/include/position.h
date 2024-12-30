@@ -77,6 +77,7 @@ class Position {
     uint8_t  get_piece_count(const Piece piece) const;
     Color    get_active_color() const;
     uint32_t get_half_move_clock() const;
+    uint32_t get_full_move_number() const;
     uint32_t get_ply_count() const;
     uint64_t get_hash() const;
     bool     is_valid() const;

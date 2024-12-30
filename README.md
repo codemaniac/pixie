@@ -16,7 +16,10 @@ See [BUILDING.md](BUILDING.md) for instructions on how to build Pixie from sourc
 - https://www.chessprogramming.org for concepts
 - https://github.com/bluefeversoft/vice for concepts and code snippets
 - https://github.com/maksimKorzh/bbc for concepts and code snippets
-- https://github.com/AndyGrant/Ethereal for perft standard.epd file
+- https://github.com/AndyGrant/Ethereal for perft standard.epd file, tuner concepts, and code snippets
 - https://github.com/TerjeKir/EngineTests for mate .epd files
 - https://github.com/kz04px/libchess for perft test cases
 - https://github.com/kz04px/rawr for perft test cases
+- https://github.com/GediminasMasaitis/texel-tuner for tuner concepts and code snippets
+- https://github.com/TerjeKir/weiss for tuner code snippets
+- https://github.com/KierenP/ChessTrainingSets for training dataset

@@ -1,6 +1,7 @@
 #include "include/position.h"
 #include "include/board.h"
 #include "include/constants.h"
+#include "include/eval.h"
 #include "include/move.h"
 #include "include/utils.h"
 #include <cassert>
@@ -31,6 +32,7 @@ static const uint8_t CASTLE_RIGHTS_MODIFIERS[64] = {
 
 void position_init() {
     board_init();
+    eval_init();
     for (int p = 0; p < 12; p++)
     {
         for (int sq = 0; sq < 64; sq++)
@@ -496,6 +498,8 @@ uint8_t Position::get_piece_count(const Piece piece) const {
 Color Position::get_active_color() const { return this->active_color; }
 
 uint32_t Position::get_half_move_clock() const { return this->half_move_clock; }
+
+uint32_t Position::get_full_move_number() const { return this->full_move_number; }
 
 uint32_t Position::get_ply_count() const { return this->ply_count; }
 
