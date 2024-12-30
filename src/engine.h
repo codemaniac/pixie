@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.h"
+#include <string>
 
 namespace tejas {
 
@@ -12,6 +13,7 @@ namespace tejas {
         Engine();
         ~Engine();
         void setStartpos();
+        void setPositionFromFEN(std::string&);
         void displayBoard();
     };
 

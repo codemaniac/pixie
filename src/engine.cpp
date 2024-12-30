@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "fen.h"
 #include "movegen.h"
 
 namespace tejas {
@@ -11,6 +12,8 @@ namespace tejas {
     Engine::~Engine() {}
 
     void Engine::setStartpos() { board.setStartpos(); }
+
+    void Engine::setPositionFromFEN(std::string& fen) { fen::parseFEN(&board, fen); }
 
     void Engine::displayBoard() { board.display(); }
 

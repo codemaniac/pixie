@@ -1,7 +1,4 @@
 #include "movegen.h"
-
-#include "board.h"
-#include "types.h"
 #include "utils.h"
 
 namespace tejas {

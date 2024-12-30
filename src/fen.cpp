@@ -1,8 +1,6 @@
 #include "fen.h"
-#include "board.h"
 #include "types.h"
 #include <sstream>
-#include <string>
 
 namespace tejas {
 
