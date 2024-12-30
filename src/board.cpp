@@ -100,7 +100,7 @@ namespace tejas {
                 const Piece captured = getPiece(to);
 #ifdef DEBUG
                 assert(captured != Piece::NO_PIECE);
-                assert(pieceColorOf(piece) != pieceColorOf(captured));
+                assert(pieceColorOf(piece) == colorFlip(pieceColorOf(captured)));
                 assert(pieceTypeOf(captured) != PieceType::KING);
 #endif
                 clearPiece(captured, to);
@@ -171,7 +171,7 @@ namespace tejas {
             {
 #ifdef DEBUG
                 assert(captured != Piece::NO_PIECE);
-                assert(pieceColorOf(piece) != pieceColorOf(captured));
+                assert(pieceColorOf(piece) == colorFlip(pieceColorOf(captured)));
                 assert(pieceTypeOf(captured) != PieceType::KING);
 #endif
                 setPiece(captured, to);
