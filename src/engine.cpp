@@ -3,7 +3,10 @@
 
 namespace tejas {
 
-    Engine::Engine() { movegen::initialize(); }
+    Engine::Engine() {
+        board::Board::initialize();
+        movegen::initialize();
+    }
 
     Engine::~Engine() {}
 

@@ -10,6 +10,8 @@ namespace tejas {
 
         u8 bitCount1s(const u64 x);
 
+        u64 prng();
+
     }
 
 }

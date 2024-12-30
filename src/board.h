@@ -26,15 +26,32 @@ namespace tejas {
 
         constexpr u8 bitboardColorSlot(const Piece p) { return (7 + pieceColorOf(p)); }
 
+        enum CastleFlag : u8 {
+            NOCA = 0,
+            WKCA = 1,
+            WQCA = 2,
+            BKCA = 4,
+            BQCA = 8
+        };
+
         class Board {
            private:
             BitBoard bitboards[15];
             Piece    pieces[64];
+            Color    active_color;
+            u8       casteling_rights;
+            Square   enpassant_target;
+            u8       half_move_clock;
+            u8       full_move_number;
+            i8       ply_count;
+            u64      hash;
 
            public:
+            static void initialize();
             Board();
             ~Board();
             void     reset();
+            void     resetHash();
             void     setPiece(const Piece, const Square);
             void     clearPiece(const Piece, const Square);
             void     setStartpos();
@@ -51,9 +68,20 @@ namespace tejas {
                                    const Piece  captured     = Piece::NO_PIECE,
                                    const bool   is_promotion = false,
                                    const Piece  promoted     = Piece::NO_PIECE);
+            void     setActiveColor(const Color);
+            void     addCastelingRights(const CastleFlag);
+            void     setEnpassantTarget(const Square);
+            void     setHalfmoveClock(const u8);
+            void     setFullmoveNumber(const u8);
+            void     resetPlyCount();
             BitBoard getBitboard(const u8 index) const;
             Piece    getPiece(const Square) const;
             u8       getPieceCount(const Piece) const;
+            Color    getActiveColor() const;
+            u8       getCastelingRights() const;
+            Square   getEnpassantTarget() const;
+            u8       getHalfmoveClock() const;
+            u8       getFullmoveNumber() const;
             bool     isValid() const;
 #ifdef DEBUG
             void display() const;
