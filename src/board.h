@@ -41,16 +41,16 @@ namespace tejas {
             void     MovePiece(const Piece  piece,
                                const Square from,
                                const Square to,
-                               const bool   is_capture,
-                               const bool   is_promotion,
-                               const Piece  promoted);
+                               const bool   is_capture   = false,
+                               const bool   is_promotion = false,
+                               const Piece  promoted     = Piece::NO_PIECE);
             void     UndoMovePiece(const Piece  piece,
                                    const Square from,
                                    const Square to,
-                                   const bool   is_capture,
-                                   const Piece  captured,
-                                   const bool   is_promotion,
-                                   const Piece  promoted);
+                                   const bool   is_capture   = false,
+                                   const Piece  captured     = Piece::NO_PIECE,
+                                   const bool   is_promotion = false,
+                                   const Piece  promoted     = Piece::NO_PIECE);
             BitBoard GetBitboard(const u8 index) const;
             Piece    GetPiece(const Square) const;
             u8       GetPieceCount(const Piece) const;

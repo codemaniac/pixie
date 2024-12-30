@@ -73,23 +73,19 @@ TEST_SUITE("Board") {
         SUBCASE("Quite Move") {
             board.SetStartpos();
 
-            board.MovePiece(Piece::WHITE_PAWN, Square::E2, Square::E4, false, false,
-                            Piece::NO_PIECE);
+            board.MovePiece(Piece::WHITE_PAWN, Square::E2, Square::E4);
             CHECK(board.GetPiece(Square::E2) == Piece::NO_PIECE);
             CHECK(board.GetPiece(Square::E4) == Piece::WHITE_PAWN);
 
-            board.UndoMovePiece(Piece::WHITE_PAWN, Square::E2, Square::E4, false, Piece::NO_PIECE,
-                                false, Piece::NO_PIECE);
+            board.UndoMovePiece(Piece::WHITE_PAWN, Square::E2, Square::E4);
             CHECK(board.GetPiece(Square::E4) == Piece::NO_PIECE);
             CHECK(board.GetPiece(Square::E2) == Piece::WHITE_PAWN);
 
-            board.MovePiece(Piece::WHITE_KNIGHT, Square::G1, Square::F3, false, false,
-                            Piece::NO_PIECE);
+            board.MovePiece(Piece::WHITE_KNIGHT, Square::G1, Square::F3);
             CHECK(board.GetPiece(Square::G1) == Piece::NO_PIECE);
             CHECK(board.GetPiece(Square::F3) == Piece::WHITE_KNIGHT);
 
-            board.UndoMovePiece(Piece::WHITE_KNIGHT, Square::G1, Square::F3, false, Piece::NO_PIECE,
-                                false, Piece::NO_PIECE);
+            board.UndoMovePiece(Piece::WHITE_KNIGHT, Square::G1, Square::F3);
             CHECK(board.GetPiece(Square::G1) == Piece::WHITE_KNIGHT);
             CHECK(board.GetPiece(Square::F3) == Piece::NO_PIECE);
         }
