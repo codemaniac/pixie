@@ -23,3 +23,5 @@ See [BUILDING.md](BUILDING.md) for instructions on how to build Pixie from sourc
 - https://github.com/GediminasMasaitis/texel-tuner for tuner concepts and code snippets
 - https://github.com/TerjeKir/weiss for tuner code snippets
 - https://github.com/KierenP/ChessTrainingSets for training dataset
+- [Engine Programming Discord](https://discord.com/invite/F6W6mMsTGN) for support and guidance on development
+- [OpenBench Discord](https://discord.com/invite/9MVg7fBTpM) for support and guidance on OpenBench
