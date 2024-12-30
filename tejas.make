@@ -18,7 +18,6 @@ endif
 # Configurations
 # #############################################
 
-INCLUDES +=
 FORCE_INCLUDE +=
 ALL_CPPFLAGS += $(CPPFLAGS) -MD -MP $(DEFINES) $(INCLUDES)
 ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
@@ -46,6 +45,7 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/tejas
 OBJDIR = obj/macos64/Debug
 DEFINES += -DDEBUG
+INCLUDES +=
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -m64
@@ -56,6 +56,7 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/tejas
 OBJDIR = obj/linux64/Debug
 DEFINES += -DDEBUG
+INCLUDES +=
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -static
@@ -66,9 +67,51 @@ TARGETDIR = bin/Debug
 TARGET = $(TARGETDIR)/tejas.exe
 OBJDIR = obj/windows64/Debug
 DEFINES += -DDEBUG
+INCLUDES +=
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -static
+
+else ifeq ($(config),test_macos64)
+ifeq ($(origin CC), default)
+  CC = clang
+endif
+ifeq ($(origin CXX), default)
+  CXX = clang++
+endif
+ifeq ($(origin AR), default)
+  AR = llvm-ar
+endif
+TARGETDIR = bin/Test
+TARGET = $(TARGETDIR)/tejas
+OBJDIR = obj/macos64/Test
+DEFINES += -DNDEBUG
+INCLUDES += -Isrc -Itest/lib/doctest
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -std=c++20 -Wall -Wextra -march=native
+ALL_LDFLAGS += $(LDFLAGS) -m64 -flto
+
+else ifeq ($(config),test_linux64)
+RESCOMP = windres
+TARGETDIR = bin/Test
+TARGET = $(TARGETDIR)/tejas
+OBJDIR = obj/linux64/Test
+DEFINES += -DNDEBUG
+INCLUDES += -Isrc -Itest/lib/doctest
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -std=c++20 -Wall -Wextra -march=native
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
+
+else ifeq ($(config),test_windows64)
+RESCOMP = windres
+TARGETDIR = bin/Test
+TARGET = $(TARGETDIR)/tejas.exe
+OBJDIR = obj/windows64/Test
+DEFINES += -DNDEBUG
+INCLUDES += -Isrc -Itest/lib/doctest
+ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -Wall -Wextra -march=native
+ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -flto -O3 -std=c++20 -Wall -Wextra -march=native
+ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
 
 else ifeq ($(config),release_macos64)
 ifeq ($(origin CC), default)
@@ -84,6 +127,7 @@ TARGETDIR = bin/Release
 TARGET = $(TARGETDIR)/tejas
 OBJDIR = obj/macos64/Release
 DEFINES += -DNDEBUG
+INCLUDES +=
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -m64 -flto
@@ -94,6 +138,7 @@ TARGETDIR = bin/Release
 TARGET = $(TARGETDIR)/tejas
 OBJDIR = obj/linux64/Release
 DEFINES += -DNDEBUG
+INCLUDES +=
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
@@ -104,6 +149,7 @@ TARGETDIR = bin/Release
 TARGET = $(TARGETDIR)/tejas.exe
 OBJDIR = obj/windows64/Release
 DEFINES += -DNDEBUG
+INCLUDES +=
 ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -Wall -Wextra -march=native
 ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -Werror -flto -O3 -std=c++20 -Wall -Wextra -march=native
 ALL_LDFLAGS += $(LDFLAGS) -L/usr/lib64 -m64 -flto -s -static
@@ -122,10 +168,52 @@ OBJECTS :=
 
 GENERATED += $(OBJDIR)/board.o
 GENERATED += $(OBJDIR)/engine.o
-GENERATED += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/board.o
 OBJECTS += $(OBJDIR)/engine.o
+
+ifeq ($(config),debug_macos64)
+GENERATED += $(OBJDIR)/main.o
 OBJECTS += $(OBJDIR)/main.o
+
+else ifeq ($(config),debug_linux64)
+GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/main.o
+
+else ifeq ($(config),debug_windows64)
+GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/main.o
+
+else ifeq ($(config),test_macos64)
+GENERATED += $(OBJDIR)/test_board.o
+GENERATED += $(OBJDIR)/test_main.o
+OBJECTS += $(OBJDIR)/test_board.o
+OBJECTS += $(OBJDIR)/test_main.o
+
+else ifeq ($(config),test_linux64)
+GENERATED += $(OBJDIR)/test_board.o
+GENERATED += $(OBJDIR)/test_main.o
+OBJECTS += $(OBJDIR)/test_board.o
+OBJECTS += $(OBJDIR)/test_main.o
+
+else ifeq ($(config),test_windows64)
+GENERATED += $(OBJDIR)/test_board.o
+GENERATED += $(OBJDIR)/test_main.o
+OBJECTS += $(OBJDIR)/test_board.o
+OBJECTS += $(OBJDIR)/test_main.o
+
+else ifeq ($(config),release_macos64)
+GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/main.o
+
+else ifeq ($(config),release_linux64)
+GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/main.o
+
+else ifeq ($(config),release_windows64)
+GENERATED += $(OBJDIR)/main.o
+OBJECTS += $(OBJDIR)/main.o
+
+endif
 
 # Rules
 # #############################################
@@ -195,9 +283,62 @@ $(OBJDIR)/board.o: src/board.cpp
 $(OBJDIR)/engine.o: src/engine.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+ifeq ($(config),debug_macos64)
 $(OBJDIR)/main.o: src/main.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),debug_linux64)
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),debug_windows64)
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),test_macos64)
+$(OBJDIR)/test_board.o: test/test_board.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_main.o: test/test_main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),test_linux64)
+$(OBJDIR)/test_board.o: test/test_board.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_main.o: test/test_main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),test_windows64)
+$(OBJDIR)/test_board.o: test/test_board.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_main.o: test/test_main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),release_macos64)
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),release_linux64)
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+else ifeq ($(config),release_windows64)
+$(OBJDIR)/main.o: src/main.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+
+endif
 
 -include $(OBJECTS:%.o=%.d)
 ifneq (,$(PCH))

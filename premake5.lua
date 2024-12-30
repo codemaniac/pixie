@@ -1,5 +1,5 @@
 workspace "tejas"
-    configurations { "Debug", "Release" }
+    configurations { "Debug", "Test", "Release" }
     platforms { "macos64", "linux64", "windows64" }
 
 project "tejas"
@@ -43,6 +43,14 @@ project "tejas"
         defines { "DEBUG" }
         symbols "On"
         removeflags { "FatalWarnings", "LinkTimeOptimization" }
+
+    filter { "configurations:Test" }
+        files { "src/**.h", "src/**.cpp", "test/*.h", "test/*.cpp" }
+        removefiles { "src/main.cpp" }
+        includedirs { "src",  "test/lib/doctest" }
+        removeflags { "FatalWarnings" }
+        defines { "NDEBUG" }
+        optimize "Speed"
 
     filter { "configurations:Release" }
         defines { "NDEBUG" }

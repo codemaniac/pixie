@@ -97,7 +97,9 @@ namespace tejas {
 
         Piece Board::get_piece(const Square square) const { return pieces[square]; }
 
-        u8 Board::get_piece_count(const Piece) const { return 0; }
+        u8 Board::get_piece_count(const Piece piece) const {
+            return __builtin_popcountll(bitboards[piece]);
+        }
 
         bool Board::is_valid() const { return false; }
 
