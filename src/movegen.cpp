@@ -72,46 +72,46 @@ namespace tejas {
         static board::BitBoard ATTACK_TABLE_ROOK[64][4096];
         static board::BitBoard ATTACK_TABLE_KING[64];
 
-        static board::BitBoard BishopMask(const Square sq) {
+        static board::BitBoard bishopMask(const Square sq) {
             i8 r, f;
 
-            const u8 tr = SQ2Rank(sq);
-            const u8 tf = SQ2File(sq);
+            const u8 tr = sq2rank(sq);
+            const u8 tf = sq2file(sq);
 
             board::BitBoard attack_mask = 0ULL;
 
             for (r = tr + 1, f = tf + 1; r <= 6 && f <= 6; r++, f++)
             {
-                attack_mask |= (1ULL << RF2SQ(r, f));
+                attack_mask |= (1ULL << rf2sq(r, f));
             }
             for (r = tr + 1, f = tf - 1; r <= 6 && f >= 1; r++, f--)
             {
-                attack_mask |= (1ULL << RF2SQ(r, f));
+                attack_mask |= (1ULL << rf2sq(r, f));
             }
             for (r = tr - 1, f = tf + 1; r >= 1 && f <= 6; r--, f++)
             {
-                attack_mask |= (1ULL << RF2SQ(r, f));
+                attack_mask |= (1ULL << rf2sq(r, f));
             }
             for (r = tr - 1, f = tf - 1; r >= 1 && f >= 1; r--, f--)
             {
-                attack_mask |= (1ULL << RF2SQ(r, f));
+                attack_mask |= (1ULL << rf2sq(r, f));
             }
 
             return attack_mask;
         }
 
-        static board::BitBoard BishopAttacks(const Square sq, const board::BitBoard blockers) {
+        static board::BitBoard bishopAttacks(const Square sq, const board::BitBoard blockers) {
             i8 r, f;
 
-            const u8 tr = SQ2Rank(sq);
-            const u8 tf = SQ2File(sq);
+            const u8 tr = sq2rank(sq);
+            const u8 tf = sq2file(sq);
 
             board::BitBoard attack_mask = 0ULL;
             board::BitBoard sqb;
 
             for (r = tr + 1, f = tf + 1; r <= 7 && f <= 7; r++, f++)
             {
-                sqb = 1ULL << RF2SQ(r, f);
+                sqb = 1ULL << rf2sq(r, f);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -120,7 +120,7 @@ namespace tejas {
             }
             for (r = tr + 1, f = tf - 1; r <= 7 && f >= 0; r++, f--)
             {
-                sqb = 1ULL << RF2SQ(r, f);
+                sqb = 1ULL << rf2sq(r, f);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -129,7 +129,7 @@ namespace tejas {
             }
             for (r = tr - 1, f = tf + 1; r >= 0 && f <= 7; r--, f++)
             {
-                sqb = 1ULL << RF2SQ(r, f);
+                sqb = 1ULL << rf2sq(r, f);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -138,7 +138,7 @@ namespace tejas {
             }
             for (r = tr - 1, f = tf - 1; r >= 0 && f >= 0; r--, f--)
             {
-                sqb = 1ULL << RF2SQ(r, f);
+                sqb = 1ULL << rf2sq(r, f);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -149,60 +149,60 @@ namespace tejas {
             return attack_mask;
         }
 
-        static void InitAttackMaskTableBishop(void) {
+        static void initAttackMaskTableBishop(void) {
             board::BitBoard mask;
             u8              mask_bits;
 
             for (u8 sq = 0; sq < 64; sq++)
             {
-                mask      = BishopMask(static_cast<Square>(sq));
-                mask_bits = utils::BitCount1s(mask);
+                mask      = bishopMask(static_cast<Square>(sq));
+                mask_bits = utils::bitCount1s(mask);
 
                 ATTACK_MASK_TABLE_BISHOP[sq].mask      = mask;
                 ATTACK_MASK_TABLE_BISHOP[sq].mask_bits = mask_bits;
             }
         }
 
-        static board::BitBoard RookMask(const Square sq) {
+        static board::BitBoard rookMask(const Square sq) {
             i8 r, f;
 
-            const u8 tr = SQ2Rank(sq);
-            const u8 tf = SQ2File(sq);
+            const u8 tr = sq2rank(sq);
+            const u8 tf = sq2file(sq);
 
             board::BitBoard attack_mask = 0ULL;
 
             for (r = tr + 1; r <= 6; r++)
             {
-                attack_mask |= (1ULL << RF2SQ(r, tf));
+                attack_mask |= (1ULL << rf2sq(r, tf));
             }
             for (r = tr - 1; r >= 1; r--)
             {
-                attack_mask |= (1ULL << RF2SQ(r, tf));
+                attack_mask |= (1ULL << rf2sq(r, tf));
             }
             for (f = tf + 1; f <= 6; f++)
             {
-                attack_mask |= (1ULL << RF2SQ(tr, f));
+                attack_mask |= (1ULL << rf2sq(tr, f));
             }
             for (f = tf - 1; f >= 1; f--)
             {
-                attack_mask |= (1ULL << RF2SQ(tr, f));
+                attack_mask |= (1ULL << rf2sq(tr, f));
             }
 
             return attack_mask;
         }
 
-        static board::BitBoard RookAttacks(const Square sq, const board::BitBoard blockers) {
+        static board::BitBoard rookAttacks(const Square sq, const board::BitBoard blockers) {
             i8 r, f;
 
-            const u8 tr = SQ2Rank(sq);
-            const u8 tf = SQ2File(sq);
+            const u8 tr = sq2rank(sq);
+            const u8 tf = sq2file(sq);
 
             board::BitBoard attack_mask = 0ULL;
             board::BitBoard sqb;
 
             for (r = tr + 1; r <= 7; r++)
             {
-                sqb = 1ULL << RF2SQ(r, tf);
+                sqb = 1ULL << rf2sq(r, tf);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -211,7 +211,7 @@ namespace tejas {
             }
             for (r = tr - 1; r >= 0; r--)
             {
-                sqb = 1ULL << RF2SQ(r, tf);
+                sqb = 1ULL << rf2sq(r, tf);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -220,7 +220,7 @@ namespace tejas {
             }
             for (f = tf + 1; f <= 7; f++)
             {
-                sqb = 1ULL << RF2SQ(tr, f);
+                sqb = 1ULL << rf2sq(tr, f);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -229,7 +229,7 @@ namespace tejas {
             }
             for (f = tf - 1; f >= 0; f--)
             {
-                sqb = 1ULL << RF2SQ(tr, f);
+                sqb = 1ULL << rf2sq(tr, f);
                 attack_mask |= sqb;
                 if (blockers & sqb)
                 {
@@ -240,26 +240,26 @@ namespace tejas {
             return attack_mask;
         }
 
-        static void InitAttackMaskTableRook(void) {
+        static void initAttackMaskTableRook(void) {
             board::BitBoard mask;
             u8              mask_bits;
 
             for (u8 sq = 0; sq < 64; sq++)
             {
-                mask      = RookMask(static_cast<Square>(sq));
-                mask_bits = utils::BitCount1s(mask);
+                mask      = rookMask(static_cast<Square>(sq));
+                mask_bits = utils::bitCount1s(mask);
 
                 ATTACK_MASK_TABLE_ROOK[sq].mask      = mask;
                 ATTACK_MASK_TABLE_ROOK[sq].mask_bits = mask_bits;
             }
         }
 
-        static board::BitBoard GetVariant(u32 index, u8 bits, board::BitBoard m) {
+        static board::BitBoard getVariant(u32 index, u8 bits, board::BitBoard m) {
             i32             i, j;
             board::BitBoard result = 0ULL;
             for (i = 0; i < bits; i++)
             {
-                j = utils::BitScanForward(&m);
+                j = utils::bitScanForward(&m);
                 if (index & (1 << i))
                 {
                     result |= (1ULL << j);
@@ -268,11 +268,11 @@ namespace tejas {
             return result;
         }
 
-        static u32 Transform(const board::BitBoard b, const board::BitBoard magic, const u8 bits) {
+        static u32 transform(const board::BitBoard b, const board::BitBoard magic, const u8 bits) {
             return (u32) ((b * magic) >> (64 - bits));
         }
 
-        static void InitAttackTableBishop() {
+        static void initAttackTableBishop() {
             board::BitBoard mask, b;
             u8              n;
             u32             magic_index;
@@ -284,15 +284,15 @@ namespace tejas {
 
                 for (i32 i = 0; i < (1 << n); i++)
                 {
-                    b           = GetVariant(i, n, mask);
-                    magic_index = Transform(b, MAGIC_BISHOP[sq], n);
+                    b           = getVariant(i, n, mask);
+                    magic_index = transform(b, MAGIC_BISHOP[sq], n);
                     ATTACK_TABLE_BISHOP[sq][magic_index] =
-                      BishopAttacks(static_cast<Square>(sq), b);
+                      bishopAttacks(static_cast<Square>(sq), b);
                 }
             }
         }
 
-        static void InitAttackTableRook() {
+        static void initAttackTableRook() {
             board::BitBoard mask, b;
             u8              n;
             u32             magic_index;
@@ -304,14 +304,14 @@ namespace tejas {
 
                 for (i32 i = 0; i < (1 << n); i++)
                 {
-                    b                                  = GetVariant(i, n, mask);
-                    magic_index                        = Transform(b, MAGIC_ROOK[sq], n);
-                    ATTACK_TABLE_ROOK[sq][magic_index] = RookAttacks(static_cast<Square>(sq), b);
+                    b                                  = getVariant(i, n, mask);
+                    magic_index                        = transform(b, MAGIC_ROOK[sq], n);
+                    ATTACK_TABLE_ROOK[sq][magic_index] = rookAttacks(static_cast<Square>(sq), b);
                 }
             }
         }
 
-        static void InitAttackTablePawn() {
+        static void initAttackTablePawn() {
             Square          sq;
             board::BitBoard b;
             board::BitBoard attacks;
@@ -321,9 +321,9 @@ namespace tejas {
             {
                 for (u8 f = FILE_A; f <= FILE_H; f++)
                 {
-                    sq                           = RF2SQ(r, f);
+                    sq                           = rf2sq(r, f);
                     b                            = 1ULL << sq;
-                    attacks                      = board::NorthEast(b) | board::NorthWest(b);
+                    attacks                      = board::northEast(b) | board::northWest(b);
                     ATTACK_TABLE_PAWN[WHITE][sq] = attacks;
                 }
             }
@@ -333,15 +333,15 @@ namespace tejas {
             {
                 for (u8 f = FILE_A; f <= FILE_H; f++)
                 {
-                    sq                           = RF2SQ(r, f);
+                    sq                           = rf2sq(r, f);
                     b                            = 1ULL << sq;
-                    attacks                      = board::SouthEast(b) | board::SouthWest(b);
+                    attacks                      = board::southEast(b) | board::southWest(b);
                     ATTACK_TABLE_PAWN[BLACK][sq] = attacks;
                 }
             }
         }
 
-        static void InitAttackTableKnight() {
+        static void initAttackTableKnight() {
             board::BitBoard attacks = 0ULL;
             board::BitBoard b;
 
@@ -363,7 +363,7 @@ namespace tejas {
             }
         }
 
-        static void InitAttackTableKing() {
+        static void initAttackTableKing() {
             board::BitBoard attacks = 0ULL;
             board::BitBoard b;
 
@@ -372,99 +372,99 @@ namespace tejas {
                 b = 1ULL << sq;
 
                 attacks = 0ULL;
-                attacks |= board::North(b);
-                attacks |= board::South(b);
-                attacks |= board::East(b);
-                attacks |= board::West(b);
-                attacks |= board::NorthEast(b);
-                attacks |= board::SouthEast(b);
-                attacks |= board::SouthWest(b);
-                attacks |= board::NorthWest(b);
+                attacks |= board::north(b);
+                attacks |= board::south(b);
+                attacks |= board::east(b);
+                attacks |= board::west(b);
+                attacks |= board::northEast(b);
+                attacks |= board::southEast(b);
+                attacks |= board::southWest(b);
+                attacks |= board::northWest(b);
 
                 ATTACK_TABLE_KING[sq] = attacks;
             }
         }
 
         static board::BitBoard
-        GetPawnMoves(const Square sq, const Color c, const board::BitBoard occupancy) {
+        getPawnAttacks(const Square sq, const Color c, const board::BitBoard occupancy) {
             return ATTACK_TABLE_PAWN[c][sq] & occupancy;
         }
 
-        static board::BitBoard GetKnightMoves(const Square sq, const board::BitBoard occupancy) {
+        static board::BitBoard getKnightAttacks(const Square sq, const board::BitBoard occupancy) {
             return ATTACK_TABLE_KNIGHT[sq] & occupancy;
         }
 
-        static board::BitBoard GetBishopMoves(const Square sq, board::BitBoard occupancy) {
+        static board::BitBoard getBishopAttacks(const Square sq, board::BitBoard occupancy) {
             occupancy = occupancy & ATTACK_MASK_TABLE_BISHOP[sq].mask;
             const u32 index =
-              Transform(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
+              transform(occupancy, MAGIC_BISHOP[sq], ATTACK_MASK_TABLE_BISHOP[sq].mask_bits);
             return ATTACK_TABLE_BISHOP[sq][index];
         }
 
-        static board::BitBoard GetRookMoves(const Square sq, board::BitBoard occupancy) {
+        static board::BitBoard getRookAttacks(const Square sq, board::BitBoard occupancy) {
             occupancy = occupancy & ATTACK_MASK_TABLE_ROOK[sq].mask;
             const u32 index =
-              Transform(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
+              transform(occupancy, MAGIC_ROOK[sq], ATTACK_MASK_TABLE_ROOK[sq].mask_bits);
             return ATTACK_TABLE_ROOK[sq][index];
         }
 
-        static board::BitBoard GetQueenMoves(const Square sq, board::BitBoard occupancy) {
-            return GetBishopMoves(sq, occupancy) | GetRookMoves(sq, occupancy);
+        static board::BitBoard getQueenAttacks(const Square sq, board::BitBoard occupancy) {
+            return getBishopAttacks(sq, occupancy) | getRookAttacks(sq, occupancy);
         }
 
-        static board::BitBoard GetKingMoves(const Square sq, const board::BitBoard occupancy) {
+        static board::BitBoard getKingAttacks(const Square sq, const board::BitBoard occupancy) {
             return ATTACK_TABLE_KING[sq] & occupancy;
         }
 
-        void Initialize() {
-            InitAttackTablePawn();
+        void initialize() {
+            initAttackTablePawn();
 
-            InitAttackTableKnight();
+            initAttackTableKnight();
 
-            InitAttackMaskTableBishop();
-            InitAttackTableBishop();
+            initAttackMaskTableBishop();
+            initAttackTableBishop();
 
-            InitAttackMaskTableRook();
-            InitAttackTableRook();
+            initAttackMaskTableRook();
+            initAttackTableRook();
 
-            InitAttackTableKing();
+            initAttackTableKing();
         }
 
-        bool IsSquareAttacked(const board::Board board, const Square sq, const Color attacked_by) {
-            const board::BitBoard occupancy = ~(board.GetBitboard(Piece::NO_PIECE));
+        bool isSquareAttacked(const board::Board board, const Square sq, const Color attacked_by) {
+            const board::BitBoard occupancy = ~(board.getBitboard(Piece::NO_PIECE));
 
-            Piece piece = PieceCreate(PieceType::QUEEN, attacked_by);
-            if (GetQueenMoves(sq, occupancy) & board.GetBitboard(piece))
+            Piece piece = pieceCreate(PieceType::QUEEN, attacked_by);
+            if (getQueenAttacks(sq, occupancy) & board.getBitboard(piece))
             {
                 return true;
             }
 
-            piece = PieceCreate(PieceType::ROOK, attacked_by);
-            if (GetRookMoves(sq, occupancy) & board.GetBitboard(piece))
+            piece = pieceCreate(PieceType::ROOK, attacked_by);
+            if (getRookAttacks(sq, occupancy) & board.getBitboard(piece))
             {
                 return true;
             }
 
-            piece = PieceCreate(PieceType::BISHOP, attacked_by);
-            if (GetBishopMoves(sq, occupancy) & board.GetBitboard(piece))
+            piece = pieceCreate(PieceType::BISHOP, attacked_by);
+            if (getBishopAttacks(sq, occupancy) & board.getBitboard(piece))
             {
                 return true;
             }
 
-            piece = PieceCreate(PieceType::KNIGHT, attacked_by);
-            if (ATTACK_TABLE_KNIGHT[sq] & board.GetBitboard(piece))
+            piece = pieceCreate(PieceType::KNIGHT, attacked_by);
+            if (ATTACK_TABLE_KNIGHT[sq] & board.getBitboard(piece))
             {
                 return true;
             }
 
-            piece = PieceCreate(PieceType::PAWN, attacked_by);
-            if (ATTACK_TABLE_PAWN[ColorFlip(attacked_by)][sq] & board.GetBitboard(piece))
+            piece = pieceCreate(PieceType::PAWN, attacked_by);
+            if (ATTACK_TABLE_PAWN[colorFlip(attacked_by)][sq] & board.getBitboard(piece))
             {
                 return true;
             }
 
-            piece = PieceCreate(PieceType::KING, attacked_by);
-            if (ATTACK_TABLE_KING[sq] & board.GetBitboard(piece))
+            piece = pieceCreate(PieceType::KING, attacked_by);
+            if (ATTACK_TABLE_KING[sq] & board.getBitboard(piece))
             {
                 return true;
             }

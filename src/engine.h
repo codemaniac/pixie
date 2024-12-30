@@ -11,9 +11,9 @@ namespace tejas {
        public:
         Engine();
         ~Engine();
-        void SetStartpos();
+        void setStartpos();
 #ifdef DEBUG
-        void DisplayBoard();
+        void displayBoard();
 #endif
     };
 

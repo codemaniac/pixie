@@ -39,14 +39,14 @@ namespace tejas {
                  const Square   to,
                  const Piece    captured,
                  const MoveFlag flag);
-            void     SetScore(const u32);
-            Piece    GetPiece() const;
-            Square   GetFrom() const;
-            Square   GetTo() const;
-            Piece    GetCaptured() const;
-            MoveFlag GetFlag() const;
-            u32      GetScore() const;
-            u32      Id() const;
+            void     setScore(const u32);
+            Piece    getPiece() const;
+            Square   getFrom() const;
+            Square   getTo() const;
+            Piece    getCaptured() const;
+            MoveFlag getFlag() const;
+            u32      getScore() const;
+            u32      id() const;
             bool     operator==(Move const& rhs);
         };
 

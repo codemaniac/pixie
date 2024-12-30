@@ -7,9 +7,9 @@ namespace tejas {
 
     namespace movegen {
 
-        void Initialize();
+        void initialize();
 
-        bool IsSquareAttacked(const board::Board board, const Square sq, const Color attacked_by);
+        bool isSquareAttacked(const board::Board board, const Square sq, const Color attacked_by);
 
     }
 

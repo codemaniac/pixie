@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
 
-    tejas::movegen::Initialize();
+    tejas::movegen::initialize();
 
     doctest::Context context;
     context.applyCommandLine(argc, argv);

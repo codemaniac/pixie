@@ -15,16 +15,16 @@ namespace tejas {
         constexpr BitBoard MASK_NOT_AB_FILE = 0xFCFCFCFCFCFCFCFC;
         constexpr BitBoard MASK_NOT_GH_FILE = 0x3F3F3F3F3F3F3F3F;
 
-        constexpr BitBoard North(const BitBoard b) { return b << 8; }
-        constexpr BitBoard South(const BitBoard b) { return b >> 8; }
-        constexpr BitBoard East(const BitBoard b) { return (b & MASK_NOT_H_FILE) << 1; }
-        constexpr BitBoard West(const BitBoard b) { return (b & MASK_NOT_A_FILE) >> 1; }
-        constexpr BitBoard NorthEast(const BitBoard b) { return (b & MASK_NOT_H_FILE) << 9; }
-        constexpr BitBoard SouthEast(const BitBoard b) { return (b & MASK_NOT_H_FILE) >> 7; }
-        constexpr BitBoard SouthWest(const BitBoard b) { return (b & MASK_NOT_A_FILE) >> 9; }
-        constexpr BitBoard NorthWest(const BitBoard b) { return (b & MASK_NOT_A_FILE) << 7; }
+        constexpr BitBoard north(const BitBoard b) { return b << 8; }
+        constexpr BitBoard south(const BitBoard b) { return b >> 8; }
+        constexpr BitBoard east(const BitBoard b) { return (b & MASK_NOT_H_FILE) << 1; }
+        constexpr BitBoard west(const BitBoard b) { return (b & MASK_NOT_A_FILE) >> 1; }
+        constexpr BitBoard northEast(const BitBoard b) { return (b & MASK_NOT_H_FILE) << 9; }
+        constexpr BitBoard southEast(const BitBoard b) { return (b & MASK_NOT_H_FILE) >> 7; }
+        constexpr BitBoard southWest(const BitBoard b) { return (b & MASK_NOT_A_FILE) >> 9; }
+        constexpr BitBoard northWest(const BitBoard b) { return (b & MASK_NOT_A_FILE) << 7; }
 
-        constexpr u8 PieceColorIndex(const Piece p) { return (7 + PieceColorOf(p)); }
+        constexpr u8 bitboardColorSlot(const Piece p) { return (7 + pieceColorOf(p)); }
 
         class Board {
            private:
@@ -34,29 +34,29 @@ namespace tejas {
            public:
             Board();
             ~Board();
-            void     Reset();
-            void     SetPiece(const Piece, const Square);
-            void     ClearPiece(const Piece, const Square);
-            void     SetStartpos();
-            void     MovePiece(const Piece  piece,
+            void     reset();
+            void     setPiece(const Piece, const Square);
+            void     clearPiece(const Piece, const Square);
+            void     setStartpos();
+            void     movePiece(const Piece  piece,
                                const Square from,
                                const Square to,
                                const bool   is_capture   = false,
                                const bool   is_promotion = false,
                                const Piece  promoted     = Piece::NO_PIECE);
-            void     UndoMovePiece(const Piece  piece,
+            void     undoMovePiece(const Piece  piece,
                                    const Square from,
                                    const Square to,
                                    const bool   is_capture   = false,
                                    const Piece  captured     = Piece::NO_PIECE,
                                    const bool   is_promotion = false,
                                    const Piece  promoted     = Piece::NO_PIECE);
-            BitBoard GetBitboard(const u8 index) const;
-            Piece    GetPiece(const Square) const;
-            u8       GetPieceCount(const Piece) const;
-            bool     IsValid() const;
+            BitBoard getBitboard(const u8 index) const;
+            Piece    getPiece(const Square) const;
+            u8       getPieceCount(const Piece) const;
+            bool     isValid() const;
 #ifdef DEBUG
-            void Display() const;
+            void display() const;
 #endif
         };
 

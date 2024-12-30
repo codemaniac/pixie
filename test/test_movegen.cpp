@@ -7,10 +7,10 @@ using namespace tejas;
 
 TEST_SUITE("Movegen") {
 
-    TEST_CASE("IsSquareAttacked") {
+    TEST_CASE("isSquareAttacked") {
         board::Board board;
-        board.SetStartpos();
+        board.setStartpos();
 
-        REQUIRE(movegen::IsSquareAttacked(board, Square::E3, Color::WHITE));
+        REQUIRE(movegen::isSquareAttacked(board, Square::E3, Color::WHITE));
     }
 }

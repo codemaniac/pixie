@@ -86,22 +86,22 @@ namespace tejas {
     };
     // clang-format on
 
-    constexpr PieceType PieceTypeOf(const Piece p) { return static_cast<PieceType>(p & 0x7); }
+    constexpr PieceType pieceTypeOf(const Piece p) { return static_cast<PieceType>(p & 0x7); }
 
-    constexpr Color PieceColorOf(const Piece p) { return static_cast<Color>((p & 0x8) / 8); }
+    constexpr Color pieceColorOf(const Piece p) { return static_cast<Color>((p & 0x8) / 8); }
 
-    constexpr Piece PieceCreate(const PieceType t, Color c) {
+    constexpr Piece pieceCreate(const PieceType t, Color c) {
         return static_cast<Piece>((c << 3) | t);
     }
 
-    constexpr Color ColorFlip(const Color c) { return static_cast<Color>(c ^ 1); }
+    constexpr Color colorFlip(const Color c) { return static_cast<Color>(c ^ 1); }
 
-    constexpr Square RF2SQ(const Rank r, const File f) { return static_cast<Square>(8 * r + f); }
-    constexpr Square RF2SQ(const u8 r, const u8 f) { return static_cast<Square>(8 * r + f); }
+    constexpr Square rf2sq(const Rank r, const File f) { return static_cast<Square>(8 * r + f); }
+    constexpr Square rf2sq(const u8 r, const u8 f) { return static_cast<Square>(8 * r + f); }
 
-    constexpr Rank SQ2Rank(const Square sq) { return static_cast<Rank>(sq >> 3); }
-    constexpr Rank SQ2Rank(const u8 sq) { return static_cast<Rank>(sq >> 3); }
+    constexpr Rank sq2rank(const Square sq) { return static_cast<Rank>(sq >> 3); }
+    constexpr Rank sq2rank(const u8 sq) { return static_cast<Rank>(sq >> 3); }
 
-    constexpr File SQ2File(const Square sq) { return static_cast<File>(sq & 7); }
-    constexpr File SQ2File(const u8 sq) { return static_cast<File>(sq & 7); }
+    constexpr File sq2file(const Square sq) { return static_cast<File>(sq & 7); }
+    constexpr File sq2file(const u8 sq) { return static_cast<File>(sq & 7); }
 }

@@ -3,14 +3,14 @@
 
 namespace tejas {
 
-    Engine::Engine() { movegen::Initialize(); }
+    Engine::Engine() { movegen::initialize(); }
 
     Engine::~Engine() {}
 
-    void Engine::SetStartpos() { board.SetStartpos(); }
+    void Engine::setStartpos() { board.setStartpos(); }
 
 #ifdef DEBUG
-    void Engine::DisplayBoard() { board.Display(); }
+    void Engine::displayBoard() { board.display(); }
 #endif
 
 }
