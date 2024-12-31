@@ -14,9 +14,8 @@ namespace tejas {
             board->reset();
 
             // Parse Piece placement data
-            const std::string pieces_str = ".PNBRQKXXpnbrqk";
-            u8                rank       = Rank::RANK_8;
-            u8                file       = File::FILE_A;
+            u8 rank = Rank::RANK_8;
+            u8 file = File::FILE_A;
             ss >> segment;
             for (const char& ch : segment)
             {
@@ -36,7 +35,7 @@ namespace tejas {
                 }
                 else if (isalpha(ch))
                 {
-                    std::size_t piece_id = pieces_str.find(ch);
+                    std::size_t piece_id = PIECES_STR.find(ch);
                     if (piece_id == std::string::npos)
                     {
                         throw std::invalid_argument("Invalid FEN!");

@@ -6,6 +6,8 @@ namespace tejas {
 
     namespace move {
 
+        static const char* PROMOTION_PIECE_STR = "xxxxxxxxnbrqnbrq";
+
         Move::Move() :
             piece(Piece::NO_PIECE),
             from(Square::NO_SQ),
@@ -43,18 +45,15 @@ namespace tejas {
         u32 Move::id() const { return (flag << 16) | (captured << 12) | (to << 6) | from; }
 
         void Move::display() const {
-            const char* file_str = "abcdefgh";
-
             std::stringstream ss;
 
-            ss << (char) file_str[sq2file(from)];
+            ss << (char) FILE_STR[sq2file(from)];
             ss << (int) (sq2rank(from) + 1);
-            ss << (char) file_str[sq2file(to)];
+            ss << (char) FILE_STR[sq2file(to)];
             ss << (int) (sq2rank(to) + 1);
             if (flag >= MoveFlag::MOVE_PROMOTION_KNIGHT)
             {
-                const char* promotion_piece_str = "xxxxxxxxnbrqnbrq";
-                ss << (char) promotion_piece_str[flag];
+                ss << (char) PROMOTION_PIECE_STR[flag];
             }
 
             std::cout << ss.str() << std::flush;

@@ -486,9 +486,6 @@ namespace tejas {
         bool Board::operator==(Board const& rhs) const { return hash == rhs.getHash(); }
 
         void Board::display() const {
-            const char* pieces_str = ".PNBRQKXXpnbrqk";
-            const char* color_str  = "wb";
-
             std::stringstream ss;
 
             for (i8 rank = Rank::RANK_8; rank >= Rank::RANK_1; rank--)
@@ -496,12 +493,12 @@ namespace tejas {
                 for (u8 file = File::FILE_A; file <= File::FILE_H; file++)
                 {
                     const Square sq = rf2sq(rank, file);
-                    ss << (char) pieces_str[this->pieces[sq]] << " ";
+                    ss << (char) PIECES_STR[this->pieces[sq]] << " ";
                 }
                 ss << "\n";
             }
 
-            ss << "\n" << (char) color_str[active_color];
+            ss << "\n" << (char) COLORS_STR[active_color];
             ss << " " << (int) casteling_rights;
             ss << " " << (int) enpassant_target;
             ss << " " << (int) half_move_clock;

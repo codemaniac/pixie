@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace tejas {
 
     using u8  = unsigned char;
@@ -109,4 +111,8 @@ namespace tejas {
         return static_cast<Rank>(1 + (5 * (c ^ 1)));
     }
     constexpr Rank promotionRankDestOf(const Color c) { return static_cast<Rank>(7 * (c ^ 1)); }
+
+    const std::string PIECES_STR = ".PNBRQKXXpnbrqk";
+    const std::string COLORS_STR = "wb";
+    const std::string FILE_STR   = "abcdefgh";
 }
