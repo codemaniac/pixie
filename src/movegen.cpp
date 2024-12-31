@@ -427,7 +427,7 @@ namespace tejas {
             initAttackTableKing();
         }
 
-        bool isSquareAttacked(const board::Board board, const Square sq, const Color attacked_by) {
+        bool isSquareAttacked(const board::Board& board, const Square sq, const Color attacked_by) {
             const board::BitBoard occupancy = ~(board.getBitboard(Piece::NO_PIECE));
 
             Piece piece = pieceCreate(PieceType::QUEEN, attacked_by);
@@ -467,6 +467,14 @@ namespace tejas {
             }
 
             return false;
+        }
+
+        bool isInCheck(const board::Board& board) {
+            const Piece     king        = pieceCreate(PieceType::KING, board.getActiveColor());
+            board::BitBoard bb          = board.getBitboard(king);
+            const Square    sq          = static_cast<Square>(utils::bitScanForward(&bb));
+            const Color     attacked_by = colorFlip(board.getActiveColor());
+            return isSquareAttacked(board, sq, attacked_by);
         }
 
     }

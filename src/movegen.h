@@ -9,7 +9,9 @@ namespace tejas {
 
         void initialize();
 
-        bool isSquareAttacked(const board::Board board, const Square sq, const Color attacked_by);
+        bool isSquareAttacked(const board::Board& board, const Square sq, const Color attacked_by);
+
+        bool isInCheck(const board::Board& board);
 
     }
 

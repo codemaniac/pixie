@@ -18,4 +18,13 @@ TEST_SUITE("Movegen") {
         REQUIRE(movegen::isSquareAttacked(board, Square::D4, Color::BLACK));
         REQUIRE(movegen::isSquareAttacked(board, Square::F4, Color::BLACK));
     }
+
+    TEST_CASE("isInCheck") {
+        board::Board board;
+
+        std::string fen = "4k3/8/8/8/8/8/3p4/4K3 w - - 0 1";
+        fen::parseFEN(&board, fen);
+
+        REQUIRE(movegen::isInCheck(board));
+    }
 }
