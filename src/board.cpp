@@ -435,7 +435,7 @@ namespace tejas {
             else if (flag == move::MoveFlag::MOVE_CAPTURE_EP)
             {
                 undoMovePiece(piece, from, to);
-                const int8_t stm         = 1 - (2 * active_color);  // WHITE = 1; BLACK = -1
+                const i8     stm         = 1 - (2 * active_color);  // WHITE = 1; BLACK = -1
                 const Square captured_sq = static_cast<Square>(to + (8 * stm));
                 const Piece  captured    = pieceCreate(PieceType::PAWN, active_color);
                 setPiece(captured, captured_sq);
