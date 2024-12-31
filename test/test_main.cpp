@@ -1,9 +1,11 @@
 #define DOCTEST_CONFIG_IMPLEMENT
+#include "board.h"
 #include "doctest/doctest.h"
 #include "movegen.h"
 
 int main(int argc, char** argv) {
 
+    tejas::board::Board::initialize();
     tejas::movegen::initialize();
 
     doctest::Context context;

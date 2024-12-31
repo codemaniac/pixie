@@ -1,4 +1,5 @@
 #include "board.h"
+#include "movegen.h"
 #include "utils.h"
 #include <iostream>
 #include <sstream>
@@ -10,11 +11,23 @@ namespace tejas {
 
     namespace board {
 
+        // Little-Endian Rank-File Mapping
+        // clang-format off
+        static const u8 CASTLE_RIGHTS_MODIFIERS[64] = {
+            13, 15, 15, 15, 12, 15, 15, 14,
+            15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15,
+            15, 15, 15, 15, 15, 15, 15, 15,
+            7,  15, 15, 15,  3, 15, 15, 11
+        };
+        // clang-format on
+
         static u64 ZOBRIST_TABLE[15][64];
-        static u64 ZOBRIST_WKCA;
-        static u64 ZOBRIST_WQCA;
-        static u64 ZOBRIST_BKCA;
-        static u64 ZOBRIST_BQCA;
+        static u64 ZOBRIST_KCA[2];
+        static u64 ZOBRIST_QCA[2];
         static u64 ZOBRIST_BLACK_TO_MOVE;
 
         void Board::initialize() {
@@ -26,11 +39,11 @@ namespace tejas {
                 }
             }
 
-            ZOBRIST_WKCA          = utils::prng();
-            ZOBRIST_WQCA          = utils::prng();
-            ZOBRIST_BKCA          = utils::prng();
-            ZOBRIST_BQCA          = utils::prng();
-            ZOBRIST_BLACK_TO_MOVE = utils::prng();
+            ZOBRIST_KCA[Color::WHITE] = utils::prng();
+            ZOBRIST_KCA[Color::BLACK] = utils::prng();
+            ZOBRIST_QCA[Color::WHITE] = utils::prng();
+            ZOBRIST_QCA[Color::BLACK] = utils::prng();
+            ZOBRIST_BLACK_TO_MOVE     = utils::prng();
         }
 
         Board::Board() { reset(); }
@@ -69,22 +82,22 @@ namespace tejas {
 
             if (casteling_rights & CastleFlag::WKCA)
             {
-                hash ^= ZOBRIST_WKCA;
+                hash ^= ZOBRIST_KCA[Color::WHITE];
             }
 
             if (casteling_rights & CastleFlag::WQCA)
             {
-                hash ^= ZOBRIST_WQCA;
+                hash ^= ZOBRIST_QCA[Color::WHITE];
             }
 
             if (casteling_rights & CastleFlag::BKCA)
             {
-                hash ^= ZOBRIST_BKCA;
+                hash ^= ZOBRIST_KCA[Color::BLACK];
             }
 
             if (casteling_rights & CastleFlag::BQCA)
             {
-                hash ^= ZOBRIST_BQCA;
+                hash ^= ZOBRIST_QCA[Color::BLACK];
             }
 
             for (u8 sq = Square::A1; sq <= Square::H8; sq++)
@@ -216,11 +229,15 @@ namespace tejas {
                 assert(pieceTypeOf(promoted) != PieceType::PAWN);
                 assert(pieceTypeOf(promoted) != PieceType::KING);
                 assert(pieceColorOf(piece) == pieceColorOf(promoted));
+                assert(getPiece(to) == Piece::NO_PIECE);
 #endif
                 setPiece(promoted, to);
             }
             else
             {
+#ifdef DEBUG
+                assert(getPiece(to) == Piece::NO_PIECE);
+#endif
                 setPiece(piece, to);
             }
         }
@@ -269,6 +286,9 @@ namespace tejas {
                 setPiece(captured, to);
             }
 
+#ifdef DEBUG
+            assert(getPiece(from) == Piece::NO_PIECE);
+#endif
             setPiece(piece, from);
         }
 
@@ -283,6 +303,169 @@ namespace tejas {
         void Board::setFullmoveNumber(const u8 n) { full_move_number = n; }
 
         void Board::resetPlyCount() { ply_count = 0; }
+
+        bool Board::doMoveComplete() {
+            const bool is_valid_move = !movegen::isInCheck(*this) && isValid();
+            active_color             = colorFlip(active_color);
+            if (active_color == Color::BLACK)
+            {
+                hash ^= ZOBRIST_BLACK_TO_MOVE;
+            }
+            return is_valid_move;
+        }
+
+        [[nodiscard]] bool Board::doMove(const move::Move move) {
+            const Piece          piece = move.getPiece();
+            const Square         from  = move.getFrom();
+            const Square         to    = move.getTo();
+            const move::MoveFlag flag  = move.getFlag();
+
+            if (pieceColorOf(piece) == colorFlip(active_color))
+            {
+                return false;
+            }
+
+            history.emplace_back(move, casteling_rights, enpassant_target, half_move_clock,
+                                 full_move_number, hash);
+
+            enpassant_target = Square::NO_SQ;
+            half_move_clock++;
+            if (active_color == Color::BLACK)
+            {
+                full_move_number++;
+            }
+            ply_count++;
+
+            if (flag == move::MoveFlag::MOVE_QUIET_PAWN_DBL_PUSH)
+            {
+                movePiece(piece, from, to);
+                const i8 stm     = 1 - (2 * active_color);  // WHITE = 1; BLACK = -1
+                enpassant_target = static_cast<Square>(from + (8 * stm));
+                half_move_clock  = 0;
+                return doMoveComplete();
+            }
+            else if (flag == move::MoveFlag::MOVE_CAPTURE_EP)
+            {
+                movePiece(piece, from, to);
+                const i8     stm         = -1 + (2 * active_color);  // WHITE = -1; BLACK = 1
+                const Square captured_sq = static_cast<Square>(to + (8 * stm));
+                const Piece  captured    = pieceCreate(PieceType::PAWN, colorFlip(active_color));
+                clearPiece(captured, captured_sq);
+                half_move_clock = 0;
+                return doMoveComplete();
+            }
+            else if (flag == move::MoveFlag::MOVE_CASTLE_KING_SIDE)
+            {
+                movePiece(piece, from, to);
+                const Piece rook = pieceCreate(PieceType::ROOK, active_color);
+                movePiece(rook, static_cast<Square>(to + 1), static_cast<Square>(to - 1));
+                casteling_rights &= CASTLE_RIGHTS_MODIFIERS[from];
+                hash ^= ZOBRIST_KCA[active_color];
+                return doMoveComplete();
+            }
+            else if (flag == move::MoveFlag::MOVE_CASTLE_QUEEN_SIDE)
+            {
+                movePiece(piece, from, to);
+                const Piece rook = pieceCreate(PieceType::ROOK, active_color);
+                movePiece(rook, static_cast<Square>(to - 2), static_cast<Square>(to + 1));
+                casteling_rights &= CASTLE_RIGHTS_MODIFIERS[from];
+                hash ^= ZOBRIST_QCA[active_color];
+                return doMoveComplete();
+            }
+
+            Piece promoted;
+
+            switch (flag)
+            {
+                case move::MoveFlag::MOVE_PROMOTION_KNIGHT :
+                case move::MoveFlag::MOVE_CAPTURE_PROMOTION_KNIGHT :
+                    promoted = pieceCreate(PieceType::KNIGHT, active_color);
+                    break;
+                case move::MoveFlag::MOVE_PROMOTION_BISHOP :
+                case move::MoveFlag::MOVE_CAPTURE_PROMOTION_BISHOP :
+                    promoted = pieceCreate(PieceType::BISHOP, active_color);
+                    break;
+                case move::MoveFlag::MOVE_PROMOTION_ROOK :
+                case move::MoveFlag::MOVE_CAPTURE_PROMOTION_ROOK :
+                    promoted = pieceCreate(PieceType::ROOK, active_color);
+                    break;
+                case move::MoveFlag::MOVE_PROMOTION_QUEEN :
+                case move::MoveFlag::MOVE_CAPTURE_PROMOTION_QUEEN :
+                    promoted = pieceCreate(PieceType::QUEEN, active_color);
+                    break;
+                default :
+                    promoted = Piece::NO_PIECE;
+            }
+
+            movePiece(piece, from, to, move::isCapture(flag), move::isPromotion(flag), promoted);
+
+            if (pieceTypeOf(piece) == PieceType::PAWN)
+            {
+                half_move_clock = 0;
+            }
+            casteling_rights &= (CASTLE_RIGHTS_MODIFIERS[from] & CASTLE_RIGHTS_MODIFIERS[to]);
+
+            return doMoveComplete();
+        }
+
+        void Board::undoMove() {
+            const MoveHistoryEntry& history_entry = history.back();
+
+            const move::Move     move              = history_entry.move;
+            const Piece          piece             = move.getPiece();
+            const Square         from              = move.getFrom();
+            const Square         to                = move.getTo();
+            const move::MoveFlag flag              = move.getFlag();
+            const Color          prev_active_color = colorFlip(active_color);
+
+            if (flag == move::MoveFlag::MOVE_CASTLE_KING_SIDE)
+            {
+                undoMovePiece(piece, from, to);
+                const Piece rook = pieceCreate(PieceType::ROOK, prev_active_color);
+                undoMovePiece(rook, static_cast<Square>(to + 1), static_cast<Square>(to - 1));
+                hash ^= ZOBRIST_KCA[prev_active_color];
+            }
+            else if (flag == move::MoveFlag::MOVE_CASTLE_QUEEN_SIDE)
+            {
+                undoMovePiece(piece, from, to);
+                const Piece rook = pieceCreate(PieceType::ROOK, prev_active_color);
+                undoMovePiece(rook, static_cast<Square>(to - 2), static_cast<Square>(to + 1));
+                hash ^= ZOBRIST_QCA[prev_active_color];
+            }
+            else if (flag == move::MoveFlag::MOVE_CAPTURE_EP)
+            {
+                undoMovePiece(piece, from, to);
+                const int8_t stm         = 1 - (2 * active_color);  // WHITE = 1; BLACK = -1
+                const Square captured_sq = static_cast<Square>(to + (8 * stm));
+                const Piece  captured    = pieceCreate(PieceType::PAWN, active_color);
+                setPiece(captured, captured_sq);
+            }
+            else
+            {
+                const Piece promoted = move::isPromotion(flag) ? getPiece(to) : Piece::NO_PIECE;
+                undoMovePiece(piece, from, to, move::isCapture(flag), move.getCaptured(),
+                              move::isPromotion(flag), promoted);
+            }
+
+            if (active_color == Color::BLACK)
+            {
+                hash ^= ZOBRIST_BLACK_TO_MOVE;
+            }
+
+#ifdef DEBUG
+            assert(hash == history_entry.hash);
+            assert(colorFlip(active_color) == prev_active_color);
+#endif
+
+            active_color     = prev_active_color;
+            casteling_rights = history_entry.casteling_rights;
+            enpassant_target = history_entry.enpassant_target;
+            half_move_clock  = history_entry.half_move_clock;
+            full_move_number = history_entry.full_move_number;
+            ply_count--;
+
+            history.pop_back();
+        }
 
         BitBoard Board::getBitboard(const u8 index) const { return bitboards[index]; }
 

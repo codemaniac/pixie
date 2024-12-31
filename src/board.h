@@ -1,6 +1,8 @@
 #pragma once
 
+#include "move.h"
 #include "types.h"
+#include <vector>
 
 namespace tejas {
 
@@ -34,59 +36,94 @@ namespace tejas {
             BQCA = 8
         };
 
+        struct MoveHistoryEntry {
+            move::Move move;
+            u8         casteling_rights;
+            Square     enpassant_target;
+            u8         half_move_clock;
+            u8         full_move_number;
+            u64        hash;
+
+            MoveHistoryEntry() :
+                move(move::Move()),
+                casteling_rights(CastleFlag::NOCA),
+                enpassant_target(Square::NO_SQ),
+                half_move_clock(0),
+                full_move_number(0),
+                hash(0ULL) {}
+
+            MoveHistoryEntry(const move::Move move,
+                             u8               casteling_rights,
+                             Square           enpassant_target,
+                             u8               half_move_clock,
+                             u8               full_move_number,
+                             u64              hash) :
+                move(move),
+                casteling_rights(casteling_rights),
+                enpassant_target(enpassant_target),
+                half_move_clock(half_move_clock),
+                full_move_number(full_move_number),
+                hash(hash) {}
+        };
+
         class Board {
            private:
-            BitBoard bitboards[15];
-            Piece    pieces[64];
-            Color    active_color;
-            u8       casteling_rights;
-            Square   enpassant_target;
-            u8       half_move_clock;
-            u8       full_move_number;
-            i8       ply_count;
-            u64      hash;
+            BitBoard                      bitboards[15];
+            Piece                         pieces[64];
+            Color                         active_color;
+            u8                            casteling_rights;
+            Square                        enpassant_target;
+            u8                            half_move_clock;
+            u8                            full_move_number;
+            i8                            ply_count;
+            u64                           hash;
+            std::vector<MoveHistoryEntry> history;
+
+            bool doMoveComplete();
 
            public:
             static void initialize();
             Board();
             ~Board();
-            void     reset();
-            void     resetHash();
-            void     setPiece(const Piece, const Square);
-            void     clearPiece(const Piece, const Square);
-            void     setStartpos();
-            void     movePiece(const Piece  piece,
-                               const Square from,
-                               const Square to,
-                               const bool   is_capture   = false,
-                               const bool   is_promotion = false,
-                               const Piece  promoted     = Piece::NO_PIECE);
-            void     undoMovePiece(const Piece  piece,
-                                   const Square from,
-                                   const Square to,
-                                   const bool   is_capture   = false,
-                                   const Piece  captured     = Piece::NO_PIECE,
-                                   const bool   is_promotion = false,
-                                   const Piece  promoted     = Piece::NO_PIECE);
-            void     setActiveColor(const Color);
-            void     addCastelingRights(const CastleFlag);
-            void     setEnpassantTarget(const Square);
-            void     setHalfmoveClock(const u8);
-            void     setFullmoveNumber(const u8);
-            void     resetPlyCount();
-            BitBoard getBitboard(const u8 index) const;
-            Piece    getPiece(const Square) const;
-            u8       getPieceCount(const Piece) const;
-            Color    getActiveColor() const;
-            u8       getCastelingRights() const;
-            Square   getEnpassantTarget() const;
-            u8       getHalfmoveClock() const;
-            u8       getFullmoveNumber() const;
-            i8       getPlyCount() const;
-            u64      getHash() const;
-            bool     isValid() const;
-            bool     operator==(Board const& rhs) const;
-            void     display() const;
+            void               reset();
+            void               resetHash();
+            void               setPiece(const Piece, const Square);
+            void               clearPiece(const Piece, const Square);
+            void               setStartpos();
+            void               movePiece(const Piece  piece,
+                                         const Square from,
+                                         const Square to,
+                                         const bool   is_capture   = false,
+                                         const bool   is_promotion = false,
+                                         const Piece  promoted     = Piece::NO_PIECE);
+            void               undoMovePiece(const Piece  piece,
+                                             const Square from,
+                                             const Square to,
+                                             const bool   is_capture   = false,
+                                             const Piece  captured     = Piece::NO_PIECE,
+                                             const bool   is_promotion = false,
+                                             const Piece  promoted     = Piece::NO_PIECE);
+            void               setActiveColor(const Color);
+            void               addCastelingRights(const CastleFlag);
+            void               setEnpassantTarget(const Square);
+            void               setHalfmoveClock(const u8);
+            void               setFullmoveNumber(const u8);
+            void               resetPlyCount();
+            [[nodiscard]] bool doMove(const move::Move);
+            void               undoMove();
+            BitBoard           getBitboard(const u8 index) const;
+            Piece              getPiece(const Square) const;
+            u8                 getPieceCount(const Piece) const;
+            Color              getActiveColor() const;
+            u8                 getCastelingRights() const;
+            Square             getEnpassantTarget() const;
+            u8                 getHalfmoveClock() const;
+            u8                 getFullmoveNumber() const;
+            i8                 getPlyCount() const;
+            u64                getHash() const;
+            bool               isValid() const;
+            bool               operator==(Board const& rhs) const;
+            void               display() const;
         };
 
     }

@@ -41,7 +41,7 @@ namespace tejas {
                     {
                         throw std::invalid_argument("Invalid FEN!");
                     }
-                    board->setPiece(static_cast<Piece>(piece_id), rf2sq(rank, file));
+                    board->setPiece(static_cast<Piece>(piece_id), rf2sq(rank, file++));
                 }
             }
 
