@@ -6,6 +6,7 @@
 #include <array>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <regex>
 #include <string>
 #include <vector>
