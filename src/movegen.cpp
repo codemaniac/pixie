@@ -437,25 +437,24 @@ namespace tejas {
                     const Piece  captured = board.getPiece(to);
                     if (sq2rank(to) == promotion_rank)
                     {
-                        moves->emplace_back(pawn, from, to, captured,
+                        moves->emplace_back(from, to, captured,
                                             move::MoveFlag::MOVE_CAPTURE_PROMOTION_QUEEN);
-                        moves->emplace_back(pawn, from, to, captured,
+                        moves->emplace_back(from, to, captured,
                                             move::MoveFlag::MOVE_CAPTURE_PROMOTION_ROOK);
-                        moves->emplace_back(pawn, from, to, captured,
+                        moves->emplace_back(from, to, captured,
                                             move::MoveFlag::MOVE_CAPTURE_PROMOTION_BISHOP);
-                        moves->emplace_back(pawn, from, to, captured,
+                        moves->emplace_back(from, to, captured,
                                             move::MoveFlag::MOVE_CAPTURE_PROMOTION_KNIGHT);
                     }
                     else if (to == ep_target)
                     {
                         const Piece captured =
                           pieceCreate(PieceType::PAWN, colorFlip(active_color));
-                        moves->emplace_back(pawn, from, to, captured,
-                                            move::MoveFlag::MOVE_CAPTURE_EP);
+                        moves->emplace_back(from, to, captured, move::MoveFlag::MOVE_CAPTURE_EP);
                     }
                     else
                     {
-                        moves->emplace_back(pawn, from, to, captured, move::MoveFlag::MOVE_CAPTURE);
+                        moves->emplace_back(from, to, captured, move::MoveFlag::MOVE_CAPTURE);
                     }
                 }
 
@@ -472,19 +471,18 @@ namespace tejas {
                     const Square to = static_cast<Square>(utils::bitScanForward(&attacks));
                     if (sq2rank(to) == promotion_rank)
                     {
-                        moves->emplace_back(pawn, from, to, Piece::NO_PIECE,
+                        moves->emplace_back(from, to, Piece::NO_PIECE,
                                             move::MoveFlag::MOVE_PROMOTION_QUEEN);
-                        moves->emplace_back(pawn, from, to, Piece::NO_PIECE,
+                        moves->emplace_back(from, to, Piece::NO_PIECE,
                                             move::MoveFlag::MOVE_PROMOTION_ROOK);
-                        moves->emplace_back(pawn, from, to, Piece::NO_PIECE,
+                        moves->emplace_back(from, to, Piece::NO_PIECE,
                                             move::MoveFlag::MOVE_PROMOTION_BISHOP);
-                        moves->emplace_back(pawn, from, to, Piece::NO_PIECE,
+                        moves->emplace_back(from, to, Piece::NO_PIECE,
                                             move::MoveFlag::MOVE_PROMOTION_KNIGHT);
                     }
                     else
                     {
-                        moves->emplace_back(pawn, from, to, Piece::NO_PIECE,
-                                            move::MoveFlag::MOVE_QUIET);
+                        moves->emplace_back(from, to, Piece::NO_PIECE, move::MoveFlag::MOVE_QUIET);
                     }
                 }
                 // Pawn Double push
@@ -501,7 +499,7 @@ namespace tejas {
                 if (attacks)
                 {
                     const Square to = static_cast<Square>(utils::bitScanForward(&attacks));
-                    moves->emplace_back(pawn, from, to, Piece::NO_PIECE,
+                    moves->emplace_back(from, to, Piece::NO_PIECE,
                                         move::MoveFlag::MOVE_QUIET_PAWN_DBL_PUSH);
                 }
             }
@@ -561,13 +559,11 @@ namespace tejas {
                     const Piece  captured = board.getPiece(to);
                     if (type == MovegenType::ALL && captured == Piece::NO_PIECE)
                     {
-                        moves->emplace_back(piece, from, to, Piece::NO_PIECE,
-                                            move::MoveFlag::MOVE_QUIET);
+                        moves->emplace_back(from, to, Piece::NO_PIECE, move::MoveFlag::MOVE_QUIET);
                     }
                     else if (captured != Piece::NO_PIECE && pieceColorOf(captured) != active_color)
                     {
-                        moves->emplace_back(piece, from, to, captured,
-                                            move::MoveFlag::MOVE_CAPTURE);
+                        moves->emplace_back(from, to, captured, move::MoveFlag::MOVE_CAPTURE);
                     }
                 }
             }
@@ -594,8 +590,8 @@ namespace tejas {
                         && board.getPiece(Square::H1) == Piece::WHITE_ROOK
                         && !isSquareAttacked(board, Square::F1, Color::BLACK))
                     {
-                        moves->emplace_back(Piece::WHITE_KING, Square::E1, Square::G1,
-                                            Piece::NO_PIECE, move::MoveFlag::MOVE_CASTLE_KING_SIDE);
+                        moves->emplace_back(Square::E1, Square::G1, Piece::NO_PIECE,
+                                            move::MoveFlag::MOVE_CASTLE_KING_SIDE);
                     }
                 }
                 if (casteling_rights & board::CastleFlag::WQCA)
@@ -607,8 +603,7 @@ namespace tejas {
                         && board.getPiece(Square::A1) == Piece::WHITE_ROOK
                         && !isSquareAttacked(board, Square::D1, Color::BLACK))
                     {
-                        moves->emplace_back(Piece::WHITE_KING, Square::E1, Square::C1,
-                                            Piece::NO_PIECE,
+                        moves->emplace_back(Square::E1, Square::C1, Piece::NO_PIECE,
                                             move::MoveFlag::MOVE_CASTLE_QUEEN_SIDE);
                     }
                 }
@@ -623,8 +618,8 @@ namespace tejas {
                         && board.getPiece(Square::H8) == Piece::BLACK_ROOK
                         && !isSquareAttacked(board, Square::F8, Color::WHITE))
                     {
-                        moves->emplace_back(Piece::BLACK_KING, Square::E8, Square::G8,
-                                            Piece::NO_PIECE, move::MoveFlag::MOVE_CASTLE_KING_SIDE);
+                        moves->emplace_back(Square::E8, Square::G8, Piece::NO_PIECE,
+                                            move::MoveFlag::MOVE_CASTLE_KING_SIDE);
                     }
                 }
                 if (casteling_rights & board::CastleFlag::BQCA)
@@ -636,8 +631,7 @@ namespace tejas {
                         && board.getPiece(Square::A8) == Piece::BLACK_ROOK
                         && !isSquareAttacked(board, Square::D8, Color::WHITE))
                     {
-                        moves->emplace_back(Piece::BLACK_KING, Square::E8, Square::C8,
-                                            Piece::NO_PIECE,
+                        moves->emplace_back(Square::E8, Square::C8, Piece::NO_PIECE,
                                             move::MoveFlag::MOVE_CASTLE_QUEEN_SIDE);
                     }
                 }

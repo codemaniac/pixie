@@ -197,6 +197,11 @@ namespace tejas {
                               const bool   is_capture,
                               const bool   is_promotion,
                               const Piece  promoted) {
+#ifdef DEBUG
+            assert(piece != Piece::NO_PIECE);
+            assert(from != Square::NO_SQ);
+            assert(to != Square::NO_SQ);
+#endif
 
             clearPiece(piece, from);
 
@@ -299,10 +304,10 @@ namespace tejas {
         }
 
         [[nodiscard]] bool Board::doMove(const move::Move move) {
-            const Piece          piece = move.getPiece();
             const Square         from  = move.getFrom();
             const Square         to    = move.getTo();
             const move::MoveFlag flag  = move.getFlag();
+            const Piece          piece = getPiece(from);
 
             if (pieceColorOf(piece) == colorFlip(active_color))
             {
@@ -396,10 +401,10 @@ namespace tejas {
             const MoveHistoryEntry& history_entry = history.back();
 
             const move::Move     move              = history_entry.move;
-            const Piece          piece             = move.getPiece();
             const Square         from              = move.getFrom();
             const Square         to                = move.getTo();
             const move::MoveFlag flag              = move.getFlag();
+            Piece                piece             = getPiece(to);
             const Color          prev_active_color = colorFlip(active_color);
 
             if (flag == move::MoveFlag::MOVE_CASTLE_KING_SIDE)
@@ -427,6 +432,8 @@ namespace tejas {
             else
             {
                 const Piece promoted = move::isPromotion(flag) ? getPiece(to) : Piece::NO_PIECE;
+                piece =
+                  move::isPromotion(flag) ? pieceCreate(PieceType::PAWN, prev_active_color) : piece;
                 undoMovePiece(piece, from, to, move::isCapture(flag), move.getCaptured(),
                               move::isPromotion(flag), promoted);
             }

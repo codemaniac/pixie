@@ -25,7 +25,6 @@ namespace tejas {
 
         class Move {
            private:
-            Piece    piece;
             Square   from;
             Square   to;
             Piece    captured;
@@ -34,13 +33,8 @@ namespace tejas {
 
            public:
             Move();
-            Move(const Piece    piece,
-                 const Square   from,
-                 const Square   to,
-                 const Piece    captured,
-                 const MoveFlag flag);
+            Move(const Square from, const Square to, const Piece captured, const MoveFlag flag);
             void     setScore(const u32);
-            Piece    getPiece() const;
             Square   getFrom() const;
             Square   getTo() const;
             Piece    getCaptured() const;
