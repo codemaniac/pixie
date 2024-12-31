@@ -1,6 +1,5 @@
 #include "movegen.h"
 #include "utils.h"
-#include <concepts>
 
 namespace tejas {
 
