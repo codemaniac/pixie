@@ -1,9 +1,11 @@
 #include "board.h"
 #include "doctest/doctest.h"
 #include "fen.h"
+#include "move.h"
 #include "movegen.h"
 #include "types.h"
 #include <string>
+#include <vector>
 
 using namespace tejas;
 
@@ -26,5 +28,15 @@ TEST_SUITE("Movegen") {
         fen::parseFEN(&board, fen);
 
         REQUIRE(movegen::isInCheck(board));
+    }
+
+    TEST_CASE("generatePseudolegalMoves") {
+        board::Board board;
+        board.setStartpos();
+
+        std::vector<move::Move> moves;
+        movegen::generatePseudolegalMoves(&moves, board, movegen::MovegenType::ALL);
+
+        CHECK(moves.size() == 20);
     }
 }

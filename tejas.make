@@ -171,12 +171,14 @@ GENERATED += $(OBJDIR)/engine.o
 GENERATED += $(OBJDIR)/fen.o
 GENERATED += $(OBJDIR)/move.o
 GENERATED += $(OBJDIR)/movegen.o
+GENERATED += $(OBJDIR)/perft.o
 GENERATED += $(OBJDIR)/utils.o
 OBJECTS += $(OBJDIR)/board.o
 OBJECTS += $(OBJDIR)/engine.o
 OBJECTS += $(OBJDIR)/fen.o
 OBJECTS += $(OBJDIR)/move.o
 OBJECTS += $(OBJDIR)/movegen.o
+OBJECTS += $(OBJDIR)/perft.o
 OBJECTS += $(OBJDIR)/utils.o
 
 ifeq ($(config),debug_macos64)
@@ -197,12 +199,14 @@ GENERATED += $(OBJDIR)/test_fen.o
 GENERATED += $(OBJDIR)/test_main.o
 GENERATED += $(OBJDIR)/test_move.o
 GENERATED += $(OBJDIR)/test_movegen.o
+GENERATED += $(OBJDIR)/test_perft.o
 GENERATED += $(OBJDIR)/test_utils.o
 OBJECTS += $(OBJDIR)/test_board.o
 OBJECTS += $(OBJDIR)/test_fen.o
 OBJECTS += $(OBJDIR)/test_main.o
 OBJECTS += $(OBJDIR)/test_move.o
 OBJECTS += $(OBJDIR)/test_movegen.o
+OBJECTS += $(OBJDIR)/test_perft.o
 OBJECTS += $(OBJDIR)/test_utils.o
 
 else ifeq ($(config),test_linux64)
@@ -211,12 +215,14 @@ GENERATED += $(OBJDIR)/test_fen.o
 GENERATED += $(OBJDIR)/test_main.o
 GENERATED += $(OBJDIR)/test_move.o
 GENERATED += $(OBJDIR)/test_movegen.o
+GENERATED += $(OBJDIR)/test_perft.o
 GENERATED += $(OBJDIR)/test_utils.o
 OBJECTS += $(OBJDIR)/test_board.o
 OBJECTS += $(OBJDIR)/test_fen.o
 OBJECTS += $(OBJDIR)/test_main.o
 OBJECTS += $(OBJDIR)/test_move.o
 OBJECTS += $(OBJDIR)/test_movegen.o
+OBJECTS += $(OBJDIR)/test_perft.o
 OBJECTS += $(OBJDIR)/test_utils.o
 
 else ifeq ($(config),test_windows64)
@@ -225,12 +231,14 @@ GENERATED += $(OBJDIR)/test_fen.o
 GENERATED += $(OBJDIR)/test_main.o
 GENERATED += $(OBJDIR)/test_move.o
 GENERATED += $(OBJDIR)/test_movegen.o
+GENERATED += $(OBJDIR)/test_perft.o
 GENERATED += $(OBJDIR)/test_utils.o
 OBJECTS += $(OBJDIR)/test_board.o
 OBJECTS += $(OBJDIR)/test_fen.o
 OBJECTS += $(OBJDIR)/test_main.o
 OBJECTS += $(OBJDIR)/test_move.o
 OBJECTS += $(OBJDIR)/test_movegen.o
+OBJECTS += $(OBJDIR)/test_perft.o
 OBJECTS += $(OBJDIR)/test_utils.o
 
 else ifeq ($(config),release_macos64)
@@ -324,6 +332,9 @@ $(OBJDIR)/move.o: src/move.cpp
 $(OBJDIR)/movegen.o: src/movegen.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/perft.o: src/perft.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/utils.o: src/utils.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -359,6 +370,9 @@ $(OBJDIR)/test_move.o: test/test_move.cpp
 $(OBJDIR)/test_movegen.o: test/test_movegen.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_perft.o: test/test_perft.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_utils.o: test/test_utils.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -379,6 +393,9 @@ $(OBJDIR)/test_move.o: test/test_move.cpp
 $(OBJDIR)/test_movegen.o: test/test_movegen.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_perft.o: test/test_perft.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_utils.o: test/test_utils.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
@@ -397,6 +414,9 @@ $(OBJDIR)/test_move.o: test/test_move.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_movegen.o: test/test_movegen.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/test_perft.o: test/test_perft.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/test_utils.o: test/test_utils.cpp

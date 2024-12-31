@@ -215,16 +215,8 @@ namespace tejas {
             {
 #ifdef DEBUG
                 assert(pieceTypeOf(piece) == PieceType::PAWN);
-                if (pieceColorOf(piece) == Color::WHITE)
-                {
-                    assert(sq2rank(from) == Rank::RANK_7);
-                    assert(sq2rank(to) == Rank::RANK_8);
-                }
-                else
-                {
-                    assert(sq2rank(from) == Rank::RANK_2);
-                    assert(sq2rank(to) == Rank::RANK_1);
-                }
+                assert(sq2rank(from) == promotionRankSrcOf(pieceColorOf(piece)));
+                assert(sq2rank(to) == promotionRankDestOf(pieceColorOf(piece)));
                 assert(promoted != Piece::NO_PIECE);
                 assert(pieceTypeOf(promoted) != PieceType::PAWN);
                 assert(pieceTypeOf(promoted) != PieceType::KING);
@@ -254,16 +246,8 @@ namespace tejas {
             {
 #ifdef DEBUG
                 assert(pieceTypeOf(piece) == PieceType::PAWN);
-                if (pieceColorOf(piece) == Color::WHITE)
-                {
-                    assert(sq2rank(from) == Rank::RANK_7);
-                    assert(sq2rank(to) == Rank::RANK_8);
-                }
-                else
-                {
-                    assert(sq2rank(from) == Rank::RANK_2);
-                    assert(sq2rank(to) == Rank::RANK_1);
-                }
+                assert(sq2rank(from) == promotionRankSrcOf(pieceColorOf(piece)));
+                assert(sq2rank(to) == promotionRankDestOf(pieceColorOf(piece)));
                 assert(promoted != Piece::NO_PIECE);
                 assert(pieceTypeOf(promoted) != PieceType::PAWN);
                 assert(pieceTypeOf(promoted) != PieceType::KING);

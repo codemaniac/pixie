@@ -104,4 +104,9 @@ namespace tejas {
 
     constexpr File sq2file(const Square sq) { return static_cast<File>(sq & 7); }
     constexpr File sq2file(const u8 sq) { return static_cast<File>(sq & 7); }
+
+    constexpr Rank promotionRankSrcOf(const Color c) {
+        return static_cast<Rank>(1 + (5 * (c ^ 1)));
+    }
+    constexpr Rank promotionRankDestOf(const Color c) { return static_cast<Rank>(7 * (c ^ 1)); }
 }

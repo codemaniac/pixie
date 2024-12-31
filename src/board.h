@@ -11,6 +11,8 @@ namespace tejas {
         using BitBoard = u64;
 
         constexpr BitBoard MASK_RANK_1      = 0x00000000000000FF;
+        constexpr BitBoard MASK_RANK_4      = 0x00000000FF000000;
+        constexpr BitBoard MASK_RANK_5      = 0x000000FF00000000;
         constexpr BitBoard MASK_RANK_8      = 0xFF00000000000000;
         constexpr BitBoard MASK_NOT_A_FILE  = 0xFEFEFEFEFEFEFEFE;
         constexpr BitBoard MASK_NOT_H_FILE  = 0x7F7F7F7F7F7F7F7F;
@@ -27,6 +29,7 @@ namespace tejas {
         constexpr BitBoard northWest(const BitBoard b) { return (b & MASK_NOT_A_FILE) << 7; }
 
         constexpr u8 bitboardColorSlot(const Piece p) { return (7 + pieceColorOf(p)); }
+        constexpr u8 bitboardColorSlot(const Color c) { return (7 + c); }
 
         enum CastleFlag : u8 {
             NOCA = 0,

@@ -6,7 +6,7 @@ namespace tejas {
 
     namespace fen {
 
-        void parseFEN(board::Board* board, std::string& fen, const bool full) {
+        void parseFEN(board::Board* board, std::string fen, const bool full) {
             std::string        segment;
             std::istringstream ss(fen);
 

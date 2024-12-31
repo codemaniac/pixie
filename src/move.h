@@ -47,6 +47,7 @@ namespace tejas {
             MoveFlag getFlag() const;
             u32      getScore() const;
             u32      id() const;
+            void     display() const;
             bool     operator==(Move const& rhs);
         };
 
