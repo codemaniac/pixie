@@ -9,19 +9,13 @@ namespace tejas {
         static const char* PROMOTION_PIECE_STR = "xxxxxxxxnbrqnbrq";
 
         Move::Move() :
-            piece(Piece::NO_PIECE),
             from(Square::NO_SQ),
             to(Square::NO_SQ),
             captured(Piece::NO_PIECE),
             flag(MOVE_QUIET),
             score(0) {}
 
-        Move::Move(const Piece    piece,
-                   const Square   from,
-                   const Square   to,
-                   const Piece    captured,
-                   const MoveFlag flag) :
-            piece(piece),
+        Move::Move(const Square from, const Square to, const Piece captured, const MoveFlag flag) :
             from(from),
             to(to),
             captured(captured),
@@ -29,8 +23,6 @@ namespace tejas {
             score(0) {}
 
         void Move::setScore(const u32 s) { score = s; }
-
-        Piece Move::getPiece() const { return piece; }
 
         Square Move::getFrom() const { return from; }
 
