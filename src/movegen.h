@@ -2,8 +2,8 @@
 
 #include "board.h"
 #include "move.h"
+#include "pch.h"
 #include "types.h"
-#include <vector>
 
 namespace tejas {
 

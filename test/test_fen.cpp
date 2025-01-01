@@ -1,8 +1,8 @@
 #include "board.h"
 #include "doctest/doctest.h"
 #include "fen.h"
+#include "pch.h"
 #include "types.h"
-#include <string>
 
 using namespace tejas;
 

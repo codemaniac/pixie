@@ -3,9 +3,8 @@
 #include "fen.h"
 #include "move.h"
 #include "movegen.h"
+#include "pch.h"
 #include "types.h"
-#include <string>
-#include <vector>
 
 using namespace tejas;
 

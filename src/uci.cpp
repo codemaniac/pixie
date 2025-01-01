@@ -1,6 +1,4 @@
 #include "uci.h"
-#include <iostream>
-#include <sstream>
 
 namespace tejas {
 

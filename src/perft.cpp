@@ -1,8 +1,6 @@
 #include "perft.h"
 #include "move.h"
 #include "movegen.h"
-#include <iostream>
-#include <vector>
 
 namespace tejas {
 

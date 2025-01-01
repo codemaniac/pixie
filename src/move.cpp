@@ -1,6 +1,4 @@
 #include "move.h"
-#include <iostream>
-#include <sstream>
 
 namespace tejas {
 

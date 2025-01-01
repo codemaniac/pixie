@@ -1,11 +1,6 @@
 #include "board.h"
 #include "movegen.h"
 #include "utils.h"
-#include <iostream>
-#include <sstream>
-#ifdef DEBUG
-    #include <cassert>
-#endif
 
 namespace tejas {
 

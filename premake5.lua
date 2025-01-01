@@ -10,6 +10,9 @@ project "tejas"
     targetdir "bin/%{cfg.buildcfg}"
     entrypoint ("main()")
     files { "src/**.h", "src/**.cpp" }
+    pchheader "src/pch.h"
+    pchsource "src/pch.cpp"
+    includedirs { "src" }
     flags { "FatalWarnings", "LinkTimeOptimization" }
     buildoptions { "-Wall", "-Wextra", "-march=native", "-fsanitize=undefined", "-fsanitize=address" }
     linkoptions { "-static", "-fsanitize=undefined", "-fsanitize=address" }
@@ -49,7 +52,7 @@ project "tejas"
         removefiles { "src/main.cpp" }
         includedirs { "src",  "test/lib/doctest" }
         removeflags { "FatalWarnings" }
-        defines { "DEBUG" }
+        defines { "DEBUG", "TEST" }
         optimize "Speed"
 
     filter { "configurations:Release" }

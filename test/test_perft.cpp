@@ -1,15 +1,9 @@
 #include "board.h"
 #include "doctest/doctest.h"
 #include "fen.h"
+#include "pch.h"
 #include "perft.h"
 #include "types.h"
-#include <array>
-#include <filesystem>
-#include <fstream>
-#include <map>
-#include <regex>
-#include <string>
-#include <vector>
 
 using namespace tejas;
 using pair_type = std::pair<std::string, std::vector<u64>>;
