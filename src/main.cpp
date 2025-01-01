@@ -1,9 +1,9 @@
 #include "engine.h"
+#include "uci.h"
 
 int main() {
-    tejas::Engine engine;
-    std::string   fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    engine.setPositionFromFEN(fen);
-    engine.displayBoard();
+    tejas::Engine          engine;
+    tejas::uci::UCIHandler ucihandler(engine);
+    ucihandler.start();
     return 0;
 }

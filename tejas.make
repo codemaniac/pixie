@@ -172,6 +172,7 @@ GENERATED += $(OBJDIR)/fen.o
 GENERATED += $(OBJDIR)/move.o
 GENERATED += $(OBJDIR)/movegen.o
 GENERATED += $(OBJDIR)/perft.o
+GENERATED += $(OBJDIR)/uci.o
 GENERATED += $(OBJDIR)/utils.o
 OBJECTS += $(OBJDIR)/board.o
 OBJECTS += $(OBJDIR)/engine.o
@@ -179,6 +180,7 @@ OBJECTS += $(OBJDIR)/fen.o
 OBJECTS += $(OBJDIR)/move.o
 OBJECTS += $(OBJDIR)/movegen.o
 OBJECTS += $(OBJDIR)/perft.o
+OBJECTS += $(OBJDIR)/uci.o
 OBJECTS += $(OBJDIR)/utils.o
 
 ifeq ($(config),debug_macos64)
@@ -333,6 +335,9 @@ $(OBJDIR)/movegen.o: src/movegen.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/perft.o: src/perft.cpp
+	@echo "$(notdir $<)"
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
+$(OBJDIR)/uci.o: src/uci.cpp
 	@echo "$(notdir $<)"
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/utils.o: src/utils.cpp

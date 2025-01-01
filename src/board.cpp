@@ -44,6 +44,7 @@ namespace tejas {
             ZOBRIST_QCA[Color::WHITE] = utils::prng();
             ZOBRIST_QCA[Color::BLACK] = utils::prng();
             ZOBRIST_BLACK_TO_MOVE     = utils::prng();
+            movegen::initialize();
         }
 
         Board::Board() { reset(); }
